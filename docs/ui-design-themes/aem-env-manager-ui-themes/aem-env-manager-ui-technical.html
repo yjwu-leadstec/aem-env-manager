@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AEM Environment Manager - Technical Theme</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'viewport': '#1F1F1F',
+            'viewport-light': '#2A2A2A',
+            'orange': '#F97316',
+            'orange-dark': '#EA580C',
+            'steel': '#475569',
+            'steel-light': '#64748B',
+            'grid': '#374151',
+            'selection': '#FDE047',
+            'charcoal': '#262626',
+            'metal': '#94A3B8',
+            'border': '#374151',
+            'text': '#E5E7EB',
+            'text-dim': '#6B7280',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { font-family: 'Inter', system-ui, sans-serif; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    .page { display: none; }
+    .page.active { display: block; }
+    .nav-item { position: relative; transition: all 0.15s ease; }
+    .nav-item.active { background: #262626; }
+    .nav-item.active::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: #F97316; }
+    .nav-item:hover:not(.active) { background: #2A2A2A; }
+    .scrollbar-thin::-webkit-scrollbar { width: 6px; }
+    .scrollbar-thin::-webkit-scrollbar-track { background: #1F1F1F; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+    .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #F97316; }
+    .card { background: #262626; border: 1px solid #374151; }
+    .card:hover { border-color: #F97316; }
+    .btn-primary { background: #F97316; color: #1F1F1F; font-weight: 600; }
+    .btn-primary:hover { background: #EA580C; }
+    .btn-secondary { background: #262626; color: #F97316; border: 1px solid #F97316; }
+    .btn-secondary:hover { background: #374151; }
+    .btn-ghost { background: transparent; color: #6B7280; }
+    .btn-ghost:hover { background: #262626; color: #E5E7EB; }
+    .btn-steel { background: #475569; color: #E5E7EB; }
+    .btn-steel:hover { background: #64748B; }
+    .badge-default { background: #374151; color: #6B7280; }
+    .badge-orange { background: #2a1a0a; color: #F97316; border: 1px solid #F97316; }
+    .badge-steel { background: #1a2030; color: #94A3B8; border: 1px solid #475569; }
+    .badge-selection { background: #2a2a0a; color: #FDE047; border: 1px solid #FDE047; }
+    .badge-success { background: #0a2a0a; color: #4ADE80; border: 1px solid #4ADE80; }
+    .status-active { animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    input, select { background: #1F1F1F; border: 1px solid #374151; color: #E5E7EB; }
+    input:focus, select:focus { outline: none; border-color: #F97316; }
+  </style>
+</head>
+<body class="bg-viewport text-text">
+  <div class="flex h-screen">
+    <aside class="w-56 bg-viewport border-r border-border flex flex-col">
+      <div class="p-4 border-b border-border">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 bg-orange rounded flex items-center justify-center text-viewport text-sm font-bold">A</div>
+          <div>
+            <div class="font-semibold text-orange text-sm">AEM Manager</div>
+            <div class="text-xs text-text-dim mono">v1.0.0</div>
+          </div>
+        </div>
+      </div>
+      <nav class="flex-1 py-2 overflow-auto scrollbar-thin">
+        <a href="#" class="nav-item active flex items-center gap-3 px-4 py-2.5 text-sm text-orange" data-page="dashboard"><span>🏠</span><span>首页</span></a>
+        <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 text-sm text-text-dim" data-page="profiles"><span>📋</span><span>环境配置</span><span class="ml-auto badge-default text-xs px-1.5 py-0.5 rounded mono">3</span></a>
+        <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 text-sm text-text-dim" data-page="aem"><span>🖥️</span><span>AEM 实例</span><span class="ml-auto w-2 h-2 rounded-full bg-orange status-active"></span></a>
+        <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 text-sm text-text-dim" data-page="java"><span>☕</span><span>Java</span></a>
+        <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 text-sm text-text-dim" data-page="node"><span>📦</span><span>Node</span></a>
+        <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 text-sm text-text-dim" data-page="maven"><span>🔧</span><span>Maven</span></a>
+        <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 text-sm text-text-dim" data-page="licenses"><span>📜</span><span>许可证</span></a>
+      </nav>
+      <div class="border-t border-border py-2">
+        <a href="#" class="nav-item flex items-center gap-3 px-4 py-2.5 text-sm text-text-dim" data-page="settings"><span>⚙️</span><span>设置</span></a>
+      </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col overflow-hidden">
+      <div class="flex-1 overflow-auto scrollbar-thin p-6">
+        <div id="dashboard" class="page active">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h1 class="text-xl font-semibold text-orange">仪表盘</h1>
+              <p class="text-text-dim text-sm">管理你的开发环境</p>
+            </div>
+            <div class="flex items-center gap-3">
+              <select class="rounded px-3 py-2 text-sm mono"><option>Project A - Cloud</option></select>
+              <button class="btn-primary px-4 py-2 rounded text-sm">切换环境</button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-4 gap-4 mb-6">
+            <div class="card rounded p-4">
+              <div class="flex items-center justify-between mb-3"><span class="text-text-dim text-sm">Java</span><span class="badge-success text-xs px-2 py-0.5 rounded mono">运行中</span></div>
+              <div class="text-2xl font-semibold text-orange mono">11</div>
+              <div class="text-text-dim text-xs mt-1 mono">11.0.21 Corretto</div>
+            </div>
+            <div class="card rounded p-4">
+              <div class="flex items-center justify-between mb-3"><span class="text-text-dim text-sm">Node</span><span class="badge-success text-xs px-2 py-0.5 rounded mono">运行中</span></div>
+              <div class="text-2xl font-semibold text-steel-light mono">18</div>
+              <div class="text-text-dim text-xs mt-1 mono">v18.19.0 LTS</div>
+            </div>
+            <div class="card rounded p-4">
+              <div class="flex items-center justify-between mb-3"><span class="text-text-dim text-sm">Maven</span><span class="badge-success text-xs px-2 py-0.5 rounded mono">已配置</span></div>
+              <div class="text-xl font-semibold text-metal">cloud</div>
+              <div class="text-text-dim text-xs mt-1 mono">settings-cloud.xml</div>
+            </div>
+            <div class="card rounded p-4">
+              <div class="flex items-center justify-between mb-3"><span class="text-text-dim text-sm">项目</span><button class="text-orange text-xs font-medium">打开 →</button></div>
+              <div class="text-lg font-semibold text-text truncate">project-a</div>
+              <div class="text-text-dim text-xs mt-1 mono truncate">~/projects/aem-cloud</div>
+            </div>
+          </div>
+
+          <div class="card rounded p-5 mb-6">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-3"><h2 class="font-semibold text-text">AEM 实例</h2><span class="badge-success text-xs px-2 py-0.5 rounded mono">2 运行中</span></div>
+              <button class="btn-secondary px-3 py-1.5 rounded text-sm">+ 添加实例</button>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="border border-border rounded p-4 bg-viewport">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-orange status-active"></div><span class="font-medium text-text">Author</span><span class="text-xs text-text-dim mono">:4502</span></div>
+                  <span class="badge-success text-xs px-2 py-0.5 rounded mono">运行中</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2 mb-3">
+                  <div class="bg-charcoal rounded p-2"><div class="text-text-dim text-xs">版本</div><div class="text-text text-sm mono">2024.11</div></div>
+                  <div class="bg-charcoal rounded p-2"><div class="text-text-dim text-xs">类型</div><div class="text-text text-sm">Cloud</div></div>
+                  <div class="bg-charcoal rounded p-2"><div class="text-text-dim text-xs">Java</div><div class="text-orange text-sm mono">11</div></div>
+                </div>
+                <div class="flex gap-2">
+                  <button class="flex-1 btn-steel px-2 py-1.5 rounded text-xs">CRXDE</button>
+                  <button class="flex-1 btn-steel px-2 py-1.5 rounded text-xs">PKG</button>
+                  <button class="flex-1 btn-steel px-2 py-1.5 rounded text-xs">OSGi</button>
+                  <button class="btn-ghost px-3 py-1.5 rounded text-xs text-selection border border-selection">停止</button>
+                </div>
+              </div>
+              <div class="border border-border rounded p-4 bg-viewport">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-orange status-active"></div><span class="font-medium text-text">Publish</span><span class="text-xs text-text-dim mono">:4503</span></div>
+                  <span class="badge-success text-xs px-2 py-0.5 rounded mono">运行中</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2 mb-3">
+                  <div class="bg-charcoal rounded p-2"><div class="text-text-dim text-xs">版本</div><div class="text-text text-sm mono">2024.11</div></div>
+                  <div class="bg-charcoal rounded p-2"><div class="text-text-dim text-xs">类型</div><div class="text-text text-sm">Cloud</div></div>
+                  <div class="bg-charcoal rounded p-2"><div class="text-text-dim text-xs">Java</div><div class="text-orange text-sm mono">11</div></div>
+                </div>
+                <div class="flex gap-2">
+                  <button class="flex-1 btn-steel px-2 py-1.5 rounded text-xs">CRXDE</button>
+                  <button class="flex-1 btn-steel px-2 py-1.5 rounded text-xs">PKG</button>
+                  <button class="flex-1 btn-steel px-2 py-1.5 rounded text-xs">OSGi</button>
+                  <button class="btn-ghost px-3 py-1.5 rounded text-xs text-selection border border-selection">停止</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card rounded p-5">
+            <h2 class="font-semibold text-text mb-4">快捷操作</h2>
+            <div class="flex gap-3">
+              <button class="btn-steel px-4 py-2.5 rounded text-sm">🔄 扫描环境</button>
+              <button class="btn-steel px-4 py-2.5 rounded text-sm">📋 新建配置</button>
+              <button class="btn-steel px-4 py-2.5 rounded text-sm">🖥️ 添加实例</button>
+              <button class="btn-steel px-4 py-2.5 rounded text-sm">💻 终端</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="profiles" class="page">
+          <div class="flex items-center justify-between mb-6">
+            <div><h1 class="text-xl font-semibold text-orange">环境配置</h1><p class="text-text-dim text-sm">管理不同项目的开发环境</p></div>
+            <button class="btn-primary px-4 py-2 rounded text-sm">+ 新建配置</button>
+          </div>
+          <div class="space-y-3">
+            <div class="card rounded p-4 border-l-2 border-l-orange">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                  <div class="w-2 h-2 rounded-full bg-orange"></div>
+                  <div><h3 class="font-medium text-text flex items-center gap-2">Project A - Cloud<span class="badge-orange text-xs px-2 py-0.5 rounded mono">当前</span></h3><p class="text-sm text-text-dim">AEM as a Cloud Service 项目</p></div>
+                </div>
+                <div class="flex items-center gap-4 text-xs mono"><span class="text-orange">J11</span><span class="text-steel-light">N18</span><span class="text-metal">cloud</span></div>
+                <div class="flex items-center gap-2">
+                  <button class="btn-ghost p-2 rounded">✏️</button>
+                  <button class="btn-ghost p-2 rounded text-selection">🗑️</button>
+                </div>
+              </div>
+            </div>
+            <div class="card rounded p-4">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                  <div class="w-2 h-2 bg-text-dim rounded-full"></div>
+                  <div><h3 class="font-medium text-text">Project B - AEM 6.5</h3><p class="text-sm text-text-dim">传统 AEM 6.5 项目</p></div>
+                </div>
+                <div class="flex items-center gap-4 text-xs text-text-dim mono"><span>J8</span><span>N14</span><span>client-b</span></div>
+                <div class="flex items-center gap-2">
+                  <button class="btn-primary px-3 py-1.5 rounded text-xs">切换</button>
+                  <button class="btn-ghost p-2 rounded">✏️</button>
+                  <button class="btn-ghost p-2 rounded text-selection">🗑️</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="aem" class="page"><h1 class="text-xl font-semibold text-orange mb-2">AEM 实例管理</h1><p class="text-text-dim text-sm">管理本地 AEM 实例</p></div>
+        <div id="java" class="page"><h1 class="text-xl font-semibold text-orange mb-2">Java 版本管理</h1><p class="text-text-dim text-sm">管理系统中的 Java 版本</p></div>
+        <div id="node" class="page"><h1 class="text-xl font-semibold text-orange mb-2">Node 版本管理</h1><p class="text-text-dim text-sm">管理系统中的 Node.js 版本</p></div>
+        <div id="maven" class="page"><h1 class="text-xl font-semibold text-orange mb-2">Maven 配置管理</h1><p class="text-text-dim text-sm">管理 Maven settings.xml 配置</p></div>
+        <div id="licenses" class="page"><h1 class="text-xl font-semibold text-orange mb-2">许可证管理</h1><p class="text-text-dim text-sm">管理 AEM 许可证文件</p></div>
+        <div id="settings" class="page"><h1 class="text-xl font-semibold text-orange mb-2">设置</h1><p class="text-text-dim text-sm">配置应用程序选项</p></div>
+      </div>
+
+      <div class="bg-charcoal border-t border-border px-4 py-2 flex items-center justify-between text-xs">
+        <div class="flex items-center gap-4">
+          <div class="flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-orange"></div><span class="text-text-dim">Java</span><span class="text-orange mono">11.0.21</span></div>
+          <div class="flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-orange"></div><span class="text-text-dim">Node</span><span class="text-steel-light mono">18.19.0</span></div>
+          <div class="flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-orange"></div><span class="text-text-dim">Maven</span><span class="text-metal mono">cloud</span></div>
+          <div class="flex items-center gap-2"><div class="w-1.5 h-1.5 rounded-full bg-orange status-active"></div><span class="text-text-dim">AEM</span><span class="text-orange mono">2 运行中</span></div>
+        </div>
+        <button class="btn-primary px-3 py-1 rounded text-xs">🔄 同步</button>
+      </div>
+    </main>
+  </div>
+  <script>
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.preventDefault();
+        const page = item.dataset.page;
+        document.querySelectorAll('.nav-item').forEach(nav => { nav.classList.remove('active', 'text-orange'); nav.classList.add('text-text-dim'); });
+        item.classList.add('active', 'text-orange'); item.classList.remove('text-text-dim');
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(page)?.classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>

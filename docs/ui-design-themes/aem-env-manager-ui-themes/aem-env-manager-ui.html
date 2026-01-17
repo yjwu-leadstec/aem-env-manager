@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AEM Environment Manager - UI Design</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            primary: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+            },
+            sidebar: '#1e293b',
+            'sidebar-hover': '#334155',
+            'sidebar-active': '#3b82f6',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { font-family: 'Inter', system-ui, sans-serif; }
+    .page { display: none; }
+    .page.active { display: block; }
+    .nav-item.active { background-color: #3b82f6; }
+    .scrollbar-thin::-webkit-scrollbar { width: 6px; }
+    .scrollbar-thin::-webkit-scrollbar-track { background: #f1f5f9; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+  </style>
+</head>
+<body class="bg-gray-100">
+  <!-- Design Spec Banner -->
+  <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 px-6 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <span class="bg-white/20 px-3 py-1 rounded-full text-sm font-medium">UI Design Prototype</span>
+      <span class="text-white/80">AEM Environment Manager</span>
+    </div>
+    <div class="flex items-center gap-4 text-sm">
+      <span>点击左侧导航切换页面</span>
+      <span class="bg-white/20 px-2 py-1 rounded">v1.0</span>
+    </div>
+  </div>
+
+  <!-- App Container -->
+  <div class="flex h-[calc(100vh-52px)]">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-sidebar text-white flex flex-col">
+      <!-- Logo -->
+      <div class="p-5 border-b border-white/10">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-xl">
+            🎛️
+          </div>
+          <div>
+            <div class="font-semibold text-sm">AEM Env Manager</div>
+            <div class="text-xs text-gray-400">开发环境管理工具</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="flex-1 p-3 space-y-1">
+        <a href="#" class="nav-item active flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors" data-page="dashboard">
+          <span class="text-lg">🏠</span>
+          <span>首页</span>
+        </a>
+        <a href="#" class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium hover:bg-sidebar-hover transition-colors" data-page="profiles">
+          <span class="text-lg">📋</span>
+          <span>环境配置</span>
+        </a>
+        <a href="#" class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium hover:bg-sidebar-hover transition-colors" data-page="aem">
+          <span class="text-lg">🖥️</span>
+          <span>AEM 实例</span>
+        </a>
+        <a href="#" class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium hover:bg-sidebar-hover transition-colors" data-page="java">
+          <span class="text-lg">☕</span>
+          <span>Java</span>
+        </a>
+        <a href="#" class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium hover:bg-sidebar-hover transition-colors" data-page="node">
+          <span class="text-lg">📦</span>
+          <span>Node</span>
+        </a>
+        <a href="#" class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium hover:bg-sidebar-hover transition-colors" data-page="maven">
+          <span class="text-lg">🔧</span>
+          <span>Maven</span>
+        </a>
+        <a href="#" class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium hover:bg-sidebar-hover transition-colors" data-page="licenses">
+          <span class="text-lg">📜</span>
+          <span>许可证</span>
+        </a>
+      </nav>
+
+      <!-- Settings -->
+      <div class="p-3 border-t border-white/10">
+        <a href="#" class="nav-item flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium hover:bg-sidebar-hover transition-colors" data-page="settings">
+          <span class="text-lg">⚙️</span>
+          <span>设置</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col overflow-hidden">
+      <!-- Content Area -->
+      <div class="flex-1 overflow-auto scrollbar-thin p-6">
+        
+        <!-- Dashboard Page -->
+        <div id="dashboard" class="page active">
+          <!-- Current Environment Section -->
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
+            <div class="flex items-center justify-between mb-6">
+              <div class="flex items-center gap-4">
+                <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                <h2 class="text-lg font-semibold text-gray-800">当前环境</h2>
+              </div>
+              <div class="flex items-center gap-3">
+                <select class="bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option>Project A - Cloud</option>
+                  <option>Project B - AEM 6.5</option>
+                  <option>Edge Delivery Project</option>
+                </select>
+                <button class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+                  切换环境
+                </button>
+              </div>
+            </div>
+
+            <!-- Status Cards -->
+            <div class="grid grid-cols-4 gap-4">
+              <!-- Java Card -->
+              <div class="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-100">
+                <div class="flex items-center gap-2 mb-3">
+                  <span class="text-2xl">☕</span>
+                  <span class="text-sm font-medium text-gray-600">Java</span>
+                </div>
+                <div class="text-2xl font-bold text-gray-800 mb-1">11</div>
+                <div class="text-xs text-gray-500">11.0.21</div>
+                <button class="mt-3 text-xs text-amber-600 font-medium hover:text-amber-700">切换版本 →</button>
+              </div>
+
+              <!-- Node Card -->
+              <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border border-green-100">
+                <div class="flex items-center gap-2 mb-3">
+                  <span class="text-2xl">📦</span>
+                  <span class="text-sm font-medium text-gray-600">Node</span>
+                </div>
+                <div class="text-2xl font-bold text-gray-800 mb-1">18</div>
+                <div class="text-xs text-gray-500">v18.19.0</div>
+                <button class="mt-3 text-xs text-green-600 font-medium hover:text-green-700">切换版本 →</button>
+              </div>
+
+              <!-- Maven Card -->
+              <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
+                <div class="flex items-center gap-2 mb-3">
+                  <span class="text-2xl">🔧</span>
+                  <span class="text-sm font-medium text-gray-600">Maven</span>
+                </div>
+                <div class="text-2xl font-bold text-gray-800 mb-1">cloud</div>
+                <div class="text-xs text-gray-500">settings-cloud.xml</div>
+                <button class="mt-3 text-xs text-blue-600 font-medium hover:text-blue-700">切换配置 →</button>
+              </div>
+
+              <!-- Project Dir Card -->
+              <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-100">
+                <div class="flex items-center gap-2 mb-3">
+                  <span class="text-2xl">📁</span>
+                  <span class="text-sm font-medium text-gray-600">项目目录</span>
+                </div>
+                <div class="text-lg font-bold text-gray-800 mb-1 truncate">project-a</div>
+                <div class="text-xs text-gray-500 truncate">~/projects/aem-cloud</div>
+                <button class="mt-3 text-xs text-purple-600 font-medium hover:text-purple-700">打开目录 →</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- AEM Instances Section -->
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
+            <div class="flex items-center justify-between mb-6">
+              <h2 class="text-lg font-semibold text-gray-800">AEM 实例状态</h2>
+              <button class="text-sm text-blue-600 font-medium hover:text-blue-700">+ 添加实例</button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <!-- Author Instance -->
+              <div class="border border-gray-200 rounded-xl p-5 hover:border-blue-300 hover:shadow-md transition-all">
+                <div class="flex items-center justify-between mb-4">
+                  <div class="flex items-center gap-3">
+                    <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                    <span class="font-semibold text-gray-800">Author</span>
+                    <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">localhost:4502</span>
+                  </div>
+                  <span class="text-xs text-green-600 font-medium">运行中</span>
+                </div>
+                
+                <div class="bg-gray-50 rounded-lg p-3 mb-4 space-y-2">
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-500">版本</span>
+                    <span class="font-medium text-gray-700">AEM 2024.11.18459</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-500">类型</span>
+                    <span class="font-medium text-gray-700">Cloud Service</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-500">运行时间</span>
+                    <span class="font-medium text-gray-700">2天 5小时</span>
+                  </div>
+                </div>
+
+                <div class="flex gap-2">
+                  <button class="flex-1 bg-gray-100 text-gray-700 px-3 py-2 rounded-lg text-xs font-medium hover:bg-gray-200 transition-colors">CRXDE</button>
+                  <button class="flex-1 bg-gray-100 text-gray-700 px-3 py-2 rounded-lg text-xs font-medium hover:bg-gray-200 transition-colors">包管理</button>
+                  <button class="flex-1 bg-gray-100 text-gray-700 px-3 py-2 rounded-lg text-xs font-medium hover:bg-gray-200 transition-colors">控制台</button>
+                  <button class="bg-red-100 text-red-600 px-3 py-2 rounded-lg text-xs font-medium hover:bg-red-200 transition-colors">停止</button>
+                </div>
+              </div>
+
+              <!-- Publish Instance -->
+              <div class="border border-gray-200 rounded-xl p-5 hover:border-blue-300 hover:shadow-md transition-all">
+                <div class="flex items-center justify-between mb-4">
+                  <div class="flex items-center gap-3">
+                    <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                    <span class="font-semibold text-gray-800">Publish</span>
+                    <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">localhost:4503</span>
+                  </div>
+                  <span class="text-xs text-green-600 font-medium">运行中</span>
+                </div>
+                
+                <div class="bg-gray-50 rounded-lg p-3 mb-4 space-y-2">
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-500">版本</span>
+                    <span class="font-medium text-gray-700">AEM 2024.11.18459</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-500">类型</span>
+                    <span class="font-medium text-gray-700">Cloud Service</span>
+                  </div>
+                  <div class="flex justify-between text-sm">
+                    <span class="text-gray-500">运行时间</span>
+                    <span class="font-medium text-gray-700">2天 5小时</span>
+                  </div>
+                </div>
+
+                <div class="flex gap-2">
+                  <button class="flex-1 bg-gray-100 text-gray-700 px-3 py-2 rounded-lg text-xs font-medium hover:bg-gray-200 transition-colors">CRXDE</button>
+                  <button class="flex-1 bg-gray-100 text-gray-700 px-3 py-2 rounded-lg text-xs font-medium hover:bg-gray-200 transition-colors">包管理</button>
+                  <button class="flex-1 bg-gray-100 text-gray-700 px-3 py-2 rounded-lg text-xs font-medium hover:bg-gray-200 transition-colors">控制台</button>
+                  <button class="bg-red-100 text-red-600 px-3 py-2 rounded-lg text-xs font-medium hover:bg-red-200 transition-colors">停止</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">快捷操作</h2>
+            <div class="flex gap-3">
+              <button class="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-3 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors">
+                <span>🔄</span> 扫描环境
+              </button>
+              <button class="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-3 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors">
+                <span>📋</span> 新建配置
+              </button>
+              <button class="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-3 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors">
+                <span>🖥️</span> 添加实例
+              </button>
+              <button class="flex items-center gap-2 bg-gray-100 text-gray-700 px-4 py-3 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors">
+                <span>💻</span> 打开终端
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Profiles Page -->
+        <div id="profiles" class="page">
+          <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-bold text-gray-800">环境配置</h1>
+            <button class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors flex items-center gap-2">
+              <span>+</span> 新建配置
+            </button>
+          </div>
+
+          <div class="space-y-4">
+            <!-- Profile Card 1 - Active -->
+            <div class="bg-white rounded-2xl shadow-sm border-2 border-blue-500 p-6">
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-4">
+                  <div class="w-4 h-4 bg-green-500 rounded-full"></div>
+                  <div>
+                    <h3 class="font-semibold text-gray-800 flex items-center gap-2">
+                      Project A - Cloud
+                      <span class="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full">当前</span>
+                    </h3>
+                    <p class="text-sm text-gray-500">AEM as a Cloud Service 项目</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button class="text-gray-400 hover:text-gray-600 p-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                  </button>
+                  <button class="text-gray-400 hover:text-gray-600 p-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                  </button>
+                  <button class="text-gray-400 hover:text-red-500 p-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="flex items-center gap-6 text-sm">
+                <div class="flex items-center gap-2">
+                  <span class="text-gray-400">☕</span>
+                  <span class="text-gray-600">Java 11</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-gray-400">📦</span>
+                  <span class="text-gray-600">Node 18</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-gray-400">🔧</span>
+                  <span class="text-gray-600">maven-cloud</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-gray-400">🖥️</span>
+                  <span class="text-gray-600">Author, Publish</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Profile Card 2 -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hover:border-blue-300 transition-colors">
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-4">
+                  <div class="w-4 h-4 bg-orange-500 rounded-full"></div>
+                  <div>
+                    <h3 class="font-semibold text-gray-800">Project B - AEM 6.5</h3>
+                    <p class="text-sm text-gray-500">传统 AEM 6.5 项目</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+                    切换到此环境
+                  </button>
+                  <button class="text-gray-400 hover:text-gray-600 p-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                  </button>
+                  <button class="text-gray-400 hover:text-gray-600 p-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                  </button>
+                  <button class="text-gray-400 hover:text-red-500 p-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="flex items-center gap-6 text-sm">
+                <div class="flex items-center gap-2">
+                  <span class="text-gray-400">☕</span>
+                  <span class="text-gray-600">Java 8</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-gray-400">📦</span>
+                  <span class="text-gray-600">Node 14</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-gray-400">🔧</span>
+                  <span class="text-gray-600">maven-client-b</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-gray-400">🖥️</span>
+                  <span class="text-gray-600">AEM 6.5 Author</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Profile Card 3 -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hover:border-blue-300 transition-colors">
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-4">
+                  <div class="w-4 h-4 bg-purple-500 rounded-full"></div>
+                  <div>
+                    <h3 class="font-semibold text-gray-800">Edge Delivery Project</h3>
+                    <p class="text-sm text-gray-500">前端开发项目，无需 AEM 实例</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+                    切换到此环境
+                  </button>
+                  <button class="text-gray-400 hover:text-gray-600 p-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                  </button>
+                  <button class="text-gray-400 hover:text-gray-600 p-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                  </button>
+                  <button class="text-gray-400 hover:text-red-500 p-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="flex items-center gap-6 text-sm">
+                <div class="flex items-center gap-2">
+                  <span class="text-gray-400">☕</span>
+                  <span class="text-gray-500">--</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-gray-400">📦</span>
+                  <span class="text-gray-600">Node 20</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-gray-400">🔧</span>
+                  <span class="text-gray-600">default</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-gray-400">🖥️</span>
+                  <span class="text-gray-500">无</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Import/Export -->
+          <div class="flex justify-end gap-3 mt-6">
+            <button class="text-gray-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
+              导入配置
+            </button>
+            <button class="text-gray-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
+              导出全部
+            </button>
+          </div>
+        </div>
+
+        <!-- AEM Page -->
+        <div id="aem" class="page">
+          <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-bold text-gray-800">AEM 实例管理</h1>
+            <button class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors flex items-center gap-2">
+              <span>+</span> 添加实例
+            </button>
+          </div>
+
+          <div class="space-y-4">
+            <!-- Instance 1 - Running -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+              <div class="flex items-start justify-between">
+                <div class="flex-1">
+                  <div class="flex items-center gap-3 mb-4">
+                    <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                    <h3 class="font-semibold text-gray-800">Local Author (Cloud)</h3>
+                    <span class="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded">Author</span>
+                    <span class="text-xs bg-green-100 text-green-600 px-2 py-1 rounded">运行中</span>
+                  </div>
+                  
+                  <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div class="bg-gray-50 rounded-xl p-4">
+                      <div class="text-xs text-gray-500 mb-1">访问地址</div>
+                      <div class="text-sm font-medium text-gray-800">http://localhost:4502</div>
+                    </div>
+                    <div class="bg-gray-50 rounded-xl p-4">
+                      <div class="text-xs text-gray-500 mb-1">AEM 版本</div>
+                      <div class="text-sm font-medium text-gray-800">2024.11.18459.20241031T210302Z-241000</div>
+                    </div>
+                    <div class="bg-gray-50 rounded-xl p-4">
+                      <div class="text-xs text-gray-500 mb-1">类型</div>
+                      <div class="text-sm font-medium text-gray-800">AEM as a Cloud Service</div>
+                    </div>
+                    <div class="bg-gray-50 rounded-xl p-4">
+                      <div class="text-xs text-gray-500 mb-1">运行时间</div>
+                      <div class="text-sm font-medium text-gray-800">2天 5小时 32分钟</div>
+                    </div>
+                    <div class="bg-gray-50 rounded-xl p-4">
+                      <div class="text-xs text-gray-500 mb-1">Java 版本</div>
+                      <div class="text-sm font-medium text-gray-800">11.0.21</div>
+                    </div>
+                    <div class="bg-gray-50 rounded-xl p-4">
+                      <div class="text-xs text-gray-500 mb-1">Oak 版本</div>
+                      <div class="text-sm font-medium text-gray-800">1.62.0</div>
+                    </div>
+                  </div>
+
+                  <div class="flex gap-2">
+                    <button class="bg-blue-100 text-blue-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors">🔗 CRXDE Lite</button>
+                    <button class="bg-blue-100 text-blue-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors">📦 包管理器</button>
+                    <button class="bg-blue-100 text-blue-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors">⚙️ 系统控制台</button>
+                    <button class="bg-blue-100 text-blue-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors">📋 日志</button>
+                    <button class="bg-gray-100 text-gray-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">🔄 刷新</button>
+                  </div>
+                </div>
+                <div class="flex flex-col gap-2 ml-4">
+                  <button class="bg-red-100 text-red-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-200 transition-colors">⏹️ 停止</button>
+                  <button class="bg-gray-100 text-gray-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">✏️ 编辑</button>
+                  <button class="bg-gray-100 text-gray-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">🗑️ 删除</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Instance 2 - Stopped -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 opacity-75">
+              <div class="flex items-start justify-between">
+                <div class="flex-1">
+                  <div class="flex items-center gap-3 mb-4">
+                    <div class="w-3 h-3 bg-gray-400 rounded-full"></div>
+                    <h3 class="font-semibold text-gray-800">Local 6.5 Author</h3>
+                    <span class="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded">Author</span>
+                    <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">已停止</span>
+                  </div>
+                  
+                  <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div class="bg-gray-50 rounded-xl p-4">
+                      <div class="text-xs text-gray-500 mb-1">访问地址</div>
+                      <div class="text-sm font-medium text-gray-800">http://localhost:4504</div>
+                    </div>
+                    <div class="bg-gray-50 rounded-xl p-4">
+                      <div class="text-xs text-gray-500 mb-1">AEM 版本</div>
+                      <div class="text-sm font-medium text-gray-800">6.5.21.0 (上次运行)</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex flex-col gap-2 ml-4">
+                  <button class="bg-green-100 text-green-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-200 transition-colors">▶️ 启动</button>
+                  <button class="bg-gray-100 text-gray-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">✏️ 编辑</button>
+                  <button class="bg-gray-100 text-gray-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">🗑️ 删除</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Java Page -->
+        <div id="java" class="page">
+          <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-bold text-gray-800">Java 版本管理</h1>
+            <div class="flex gap-3">
+              <button class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors flex items-center gap-2">
+                🔄 扫描
+              </button>
+              <button class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors flex items-center gap-2">
+                + 添加路径
+              </button>
+            </div>
+          </div>
+
+          <!-- Current Version -->
+          <div class="bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl p-6 mb-6 text-white">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-sm opacity-80 mb-1">当前使用版本</div>
+                <div class="text-3xl font-bold">Java 11</div>
+                <div class="text-sm opacity-80 mt-1">11.0.21 - Amazon Corretto</div>
+              </div>
+              <div class="text-6xl opacity-50">☕</div>
+            </div>
+          </div>
+
+          <!-- Version List -->
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-200">
+            <div class="p-4 border-b border-gray-100">
+              <h3 class="font-semibold text-gray-800">已注册的版本</h3>
+            </div>
+            <div class="divide-y divide-gray-100">
+              <!-- Java 8 -->
+              <div class="p-4 flex items-center justify-between hover:bg-gray-50">
+                <div class="flex items-center gap-4">
+                  <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center text-xl">☕</div>
+                  <div>
+                    <div class="font-medium text-gray-800">Java 8</div>
+                    <div class="text-sm text-gray-500">1.8.0_392 - /Library/Java/JavaVirtualMachines/jdk1.8.0_392</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs bg-green-100 text-green-600 px-2 py-1 rounded">有效</span>
+                  <button class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">切换</button>
+                  <button class="text-gray-400 hover:text-red-500 p-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Java 11 - Current -->
+              <div class="p-4 flex items-center justify-between bg-blue-50">
+                <div class="flex items-center gap-4">
+                  <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center text-xl text-white">☕</div>
+                  <div>
+                    <div class="font-medium text-gray-800 flex items-center gap-2">
+                      Java 11
+                      <span class="text-xs bg-blue-500 text-white px-2 py-1 rounded">当前</span>
+                    </div>
+                    <div class="text-sm text-gray-500">11.0.21 - /Library/Java/JavaVirtualMachines/jdk-11.0.21</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs bg-green-100 text-green-600 px-2 py-1 rounded">有效</span>
+                  <button class="bg-gray-300 text-gray-500 px-4 py-2 rounded-lg text-sm font-medium cursor-not-allowed">当前版本</button>
+                  <button class="text-gray-400 hover:text-red-500 p-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Java 17 -->
+              <div class="p-4 flex items-center justify-between hover:bg-gray-50">
+                <div class="flex items-center gap-4">
+                  <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center text-xl">☕</div>
+                  <div>
+                    <div class="font-medium text-gray-800">Java 17</div>
+                    <div class="text-sm text-gray-500">17.0.9 - /Library/Java/JavaVirtualMachines/jdk-17.0.9</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs bg-green-100 text-green-600 px-2 py-1 rounded">有效</span>
+                  <button class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">切换</button>
+                  <button class="text-gray-400 hover:text-red-500 p-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Java 21 - New -->
+              <div class="p-4 flex items-center justify-between hover:bg-gray-50 bg-yellow-50">
+                <div class="flex items-center gap-4">
+                  <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center text-xl">☕</div>
+                  <div>
+                    <div class="font-medium text-gray-800 flex items-center gap-2">
+                      Java 21
+                      <span class="text-xs bg-yellow-500 text-white px-2 py-1 rounded">新发现</span>
+                    </div>
+                    <div class="text-sm text-gray-500">21.0.1 - /Library/Java/JavaVirtualMachines/jdk-21.0.1</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors">添加</button>
+                  <button class="text-gray-400 hover:text-gray-600 p-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Version Manager Info -->
+          <div class="mt-6 bg-gray-50 rounded-xl p-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <span class="text-xl">🔧</span>
+              <div>
+                <div class="text-sm font-medium text-gray-700">版本管理工具</div>
+                <div class="text-xs text-gray-500">使用 SDKMAN 管理 Java 版本</div>
+              </div>
+            </div>
+            <button class="text-sm text-blue-600 font-medium hover:text-blue-700">更改设置 →</button>
+          </div>
+        </div>
+
+        <!-- Node Page -->
+        <div id="node" class="page">
+          <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-bold text-gray-800">Node 版本管理</h1>
+            <div class="flex gap-3">
+              <button class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors flex items-center gap-2">
+                🔄 扫描
+              </button>
+              <button class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors flex items-center gap-2">
+                + 添加路径
+              </button>
+            </div>
+          </div>
+
+          <!-- Current Version -->
+          <div class="bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl p-6 mb-6 text-white">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-sm opacity-80 mb-1">当前使用版本</div>
+                <div class="text-3xl font-bold">Node 18</div>
+                <div class="text-sm opacity-80 mt-1">v18.19.0 - via nvm</div>
+              </div>
+              <div class="text-6xl opacity-50">📦</div>
+            </div>
+          </div>
+
+          <!-- Version List -->
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-200">
+            <div class="p-4 border-b border-gray-100">
+              <h3 class="font-semibold text-gray-800">已注册的版本</h3>
+            </div>
+            <div class="divide-y divide-gray-100">
+              <div class="p-4 flex items-center justify-between hover:bg-gray-50">
+                <div class="flex items-center gap-4">
+                  <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center text-xl">📦</div>
+                  <div>
+                    <div class="font-medium text-gray-800">Node 14</div>
+                    <div class="text-sm text-gray-500">v14.21.3 - ~/.nvm/versions/node/v14.21.3</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs bg-green-100 text-green-600 px-2 py-1 rounded">有效</span>
+                  <button class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">切换</button>
+                </div>
+              </div>
+
+              <div class="p-4 flex items-center justify-between bg-blue-50">
+                <div class="flex items-center gap-4">
+                  <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center text-xl text-white">📦</div>
+                  <div>
+                    <div class="font-medium text-gray-800 flex items-center gap-2">
+                      Node 18
+                      <span class="text-xs bg-blue-500 text-white px-2 py-1 rounded">当前</span>
+                    </div>
+                    <div class="text-sm text-gray-500">v18.19.0 - ~/.nvm/versions/node/v18.19.0</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs bg-green-100 text-green-600 px-2 py-1 rounded">有效</span>
+                  <button class="bg-gray-300 text-gray-500 px-4 py-2 rounded-lg text-sm font-medium cursor-not-allowed">当前版本</button>
+                </div>
+              </div>
+
+              <div class="p-4 flex items-center justify-between hover:bg-gray-50">
+                <div class="flex items-center gap-4">
+                  <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center text-xl">📦</div>
+                  <div>
+                    <div class="font-medium text-gray-800">Node 20</div>
+                    <div class="text-sm text-gray-500">v20.11.0 - ~/.nvm/versions/node/v20.11.0</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs bg-green-100 text-green-600 px-2 py-1 rounded">有效</span>
+                  <button class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">切换</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Version Manager Info -->
+          <div class="mt-6 bg-gray-50 rounded-xl p-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <span class="text-xl">🔧</span>
+              <div>
+                <div class="text-sm font-medium text-gray-700">版本管理工具</div>
+                <div class="text-xs text-gray-500">使用 nvm 管理 Node 版本</div>
+              </div>
+            </div>
+            <button class="text-sm text-blue-600 font-medium hover:text-blue-700">更改设置 →</button>
+          </div>
+        </div>
+
+        <!-- Maven Page -->
+        <div id="maven" class="page">
+          <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-bold text-gray-800">Maven 配置管理</h1>
+            <button class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors flex items-center gap-2">
+              + 新建配置
+            </button>
+          </div>
+
+          <!-- Current Config -->
+          <div class="bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl p-6 mb-6 text-white">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-sm opacity-80 mb-1">当前使用配置</div>
+                <div class="text-3xl font-bold">maven-cloud</div>
+                <div class="text-sm opacity-80 mt-1">settings-cloud.xml</div>
+              </div>
+              <div class="text-6xl opacity-50">🔧</div>
+            </div>
+          </div>
+
+          <!-- Config List -->
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-200">
+            <div class="p-4 border-b border-gray-100">
+              <h3 class="font-semibold text-gray-800">配置文件列表</h3>
+            </div>
+            <div class="divide-y divide-gray-100">
+              <div class="p-4 flex items-center justify-between hover:bg-gray-50">
+                <div class="flex items-center gap-4">
+                  <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-xl">🔧</div>
+                  <div>
+                    <div class="font-medium text-gray-800">default</div>
+                    <div class="text-sm text-gray-500">settings.xml - 默认配置</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">切换</button>
+                  <button class="text-gray-400 hover:text-gray-600 p-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="p-4 flex items-center justify-between bg-blue-50">
+                <div class="flex items-center gap-4">
+                  <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center text-xl text-white">🔧</div>
+                  <div>
+                    <div class="font-medium text-gray-800 flex items-center gap-2">
+                      maven-cloud
+                      <span class="text-xs bg-blue-500 text-white px-2 py-1 rounded">当前</span>
+                    </div>
+                    <div class="text-sm text-gray-500">settings-cloud.xml - AEM Cloud 项目配置</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button class="bg-gray-300 text-gray-500 px-4 py-2 rounded-lg text-sm font-medium cursor-not-allowed">当前配置</button>
+                  <button class="text-gray-400 hover:text-gray-600 p-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="p-4 flex items-center justify-between hover:bg-gray-50">
+                <div class="flex items-center gap-4">
+                  <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-xl">🔧</div>
+                  <div>
+                    <div class="font-medium text-gray-800">maven-client-b</div>
+                    <div class="text-sm text-gray-500">settings-client-b.xml - Client B 专用配置</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">切换</button>
+                  <button class="text-gray-400 hover:text-gray-600 p-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                  </button>
+                  <button class="text-gray-400 hover:text-red-500 p-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Maven Info -->
+          <div class="mt-6 bg-gray-50 rounded-xl p-4">
+            <div class="flex items-center gap-3 mb-2">
+              <span class="text-xl">📁</span>
+              <div class="text-sm font-medium text-gray-700">Maven 配置目录</div>
+            </div>
+            <div class="text-sm text-gray-500 ml-8">~/.m2/</div>
+          </div>
+        </div>
+
+        <!-- Licenses Page -->
+        <div id="licenses" class="page">
+          <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-bold text-gray-800">AEM 许可证管理</h1>
+            <button class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors flex items-center gap-2">
+              + 导入许可证
+            </button>
+          </div>
+
+          <!-- Info Banner -->
+          <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 flex items-start gap-3">
+            <span class="text-xl">ℹ️</span>
+            <div>
+              <div class="text-sm font-medium text-blue-800">关于 AEM 许可证</div>
+              <div class="text-sm text-blue-600 mt-1">此功能用于管理 AEM 6.5 (On-Premise) 的 license.properties 文件。AEM as a Cloud Service 使用云端订阅模式，无需本地许可证。</div>
+            </div>
+          </div>
+
+          <!-- License List -->
+          <div class="space-y-4">
+            <!-- License 1 - Valid -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+              <div class="flex items-start justify-between">
+                <div class="flex-1">
+                  <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center text-xl">📜</div>
+                    <div>
+                      <h3 class="font-semibold text-gray-800 flex items-center gap-2">
+                        Client A 生产许可证
+                        <span class="text-xs bg-green-100 text-green-600 px-2 py-1 rounded">有效</span>
+                      </h3>
+                      <p class="text-sm text-gray-500">license-client-a.properties</p>
+                    </div>
+                  </div>
+                  
+                  <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div class="bg-gray-50 rounded-xl p-4">
+                      <div class="text-xs text-gray-500 mb-1">客户名称</div>
+                      <div class="text-sm font-medium text-gray-800">Client A Corporation</div>
+                    </div>
+                    <div class="bg-gray-50 rounded-xl p-4">
+                      <div class="text-xs text-gray-500 mb-1">产品版本</div>
+                      <div class="text-sm font-medium text-gray-800">Adobe Experience Manager 6.5</div>
+                    </div>
+                    <div class="bg-gray-50 rounded-xl p-4">
+                      <div class="text-xs text-gray-500 mb-1">到期日期</div>
+                      <div class="text-sm font-medium text-green-600">2025-12-31 (剩余 350 天)</div>
+                    </div>
+                    <div class="bg-gray-50 rounded-xl p-4">
+                      <div class="text-xs text-gray-500 mb-1">关联实例</div>
+                      <div class="text-sm font-medium text-gray-800">Local 6.5 Author</div>
+                    </div>
+                  </div>
+
+                  <div class="flex gap-2">
+                    <button class="bg-blue-100 text-blue-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors">📋 查看详情</button>
+                    <button class="bg-blue-100 text-blue-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors">🔗 关联实例</button>
+                    <button class="bg-green-100 text-green-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-200 transition-colors">📤 应用到实例</button>
+                  </div>
+                </div>
+                <div class="flex flex-col gap-2 ml-4">
+                  <button class="bg-gray-100 text-gray-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">✏️ 编辑</button>
+                  <button class="bg-gray-100 text-gray-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">🗑️ 删除</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- License 2 - Expiring Soon -->
+            <div class="bg-white rounded-2xl shadow-sm border-2 border-yellow-300 p-6">
+              <div class="flex items-start justify-between">
+                <div class="flex-1">
+                  <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center text-xl">📜</div>
+                    <div>
+                      <h3 class="font-semibold text-gray-800 flex items-center gap-2">
+                        开发测试许可证
+                        <span class="text-xs bg-yellow-100 text-yellow-600 px-2 py-1 rounded">即将到期</span>
+                      </h3>
+                      <p class="text-sm text-gray-500">license-dev.properties</p>
+                    </div>
+                  </div>
+                  
+                  <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div class="bg-gray-50 rounded-xl p-4">
+                      <div class="text-xs text-gray-500 mb-1">客户名称</div>
+                      <div class="text-sm font-medium text-gray-800">Development Team</div>
+                    </div>
+                    <div class="bg-gray-50 rounded-xl p-4">
+                      <div class="text-xs text-gray-500 mb-1">产品版本</div>
+                      <div class="text-sm font-medium text-gray-800">Adobe Experience Manager 6.5</div>
+                    </div>
+                    <div class="bg-yellow-50 rounded-xl p-4 border border-yellow-200">
+                      <div class="text-xs text-gray-500 mb-1">到期日期</div>
+                      <div class="text-sm font-medium text-yellow-600">2025-02-15 (剩余 30 天) ⚠️</div>
+                    </div>
+                    <div class="bg-gray-50 rounded-xl p-4">
+                      <div class="text-xs text-gray-500 mb-1">关联实例</div>
+                      <div class="text-sm font-medium text-gray-500">未关联</div>
+                    </div>
+                  </div>
+
+                  <div class="flex gap-2">
+                    <button class="bg-blue-100 text-blue-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors">📋 查看详情</button>
+                    <button class="bg-blue-100 text-blue-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors">🔗 关联实例</button>
+                  </div>
+                </div>
+                <div class="flex flex-col gap-2 ml-4">
+                  <button class="bg-gray-100 text-gray-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">✏️ 编辑</button>
+                  <button class="bg-gray-100 text-gray-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">🗑️ 删除</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- License 3 - Expired -->
+            <div class="bg-white rounded-2xl shadow-sm border-2 border-red-300 p-6 opacity-75">
+              <div class="flex items-start justify-between">
+                <div class="flex-1">
+                  <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center text-xl">📜</div>
+                    <div>
+                      <h3 class="font-semibold text-gray-800 flex items-center gap-2">
+                        旧项目许可证
+                        <span class="text-xs bg-red-100 text-red-600 px-2 py-1 rounded">已过期</span>
+                      </h3>
+                      <p class="text-sm text-gray-500">license-old-project.properties</p>
+                    </div>
+                  </div>
+                  
+                  <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div class="bg-gray-50 rounded-xl p-4">
+                      <div class="text-xs text-gray-500 mb-1">客户名称</div>
+                      <div class="text-sm font-medium text-gray-800">Old Project Inc</div>
+                    </div>
+                    <div class="bg-gray-50 rounded-xl p-4">
+                      <div class="text-xs text-gray-500 mb-1">产品版本</div>
+                      <div class="text-sm font-medium text-gray-800">Adobe Experience Manager 6.5</div>
+                    </div>
+                    <div class="bg-red-50 rounded-xl p-4 border border-red-200">
+                      <div class="text-xs text-gray-500 mb-1">到期日期</div>
+                      <div class="text-sm font-medium text-red-600">2024-06-30 (已过期 200 天) ❌</div>
+                    </div>
+                    <div class="bg-gray-50 rounded-xl p-4">
+                      <div class="text-xs text-gray-500 mb-1">关联实例</div>
+                      <div class="text-sm font-medium text-gray-500">未关联</div>
+                    </div>
+                  </div>
+
+                  <div class="flex gap-2">
+                    <button class="bg-blue-100 text-blue-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors">📋 查看详情</button>
+                  </div>
+                </div>
+                <div class="flex flex-col gap-2 ml-4">
+                  <button class="bg-gray-100 text-gray-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">🗑️ 删除</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- License Storage Info -->
+          <div class="mt-6 bg-gray-50 rounded-xl p-4">
+            <div class="flex items-center gap-3 mb-2">
+              <span class="text-xl">📁</span>
+              <div class="text-sm font-medium text-gray-700">许可证存储目录</div>
+            </div>
+            <div class="text-sm text-gray-500 ml-8">~/.aem-env-manager/licenses/</div>
+          </div>
+        </div>
+
+        <!-- Settings Page -->
+        <div id="settings" class="page">
+          <h1 class="text-2xl font-bold text-gray-800 mb-6">设置</h1>
+
+          <div class="space-y-6">
+            <!-- Path Settings -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+              <h3 class="font-semibold text-gray-800 mb-4">路径配置</h3>
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Java 扫描目录</label>
+                  <div class="flex gap-2">
+                    <input type="text" value="/Library/Java/JavaVirtualMachines" class="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-sm">
+                    <button class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200">浏览</button>
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Node 扫描目录</label>
+                  <div class="flex gap-2">
+                    <input type="text" value="~/.nvm/versions/node" class="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-sm">
+                    <button class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200">浏览</button>
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">Maven 配置目录</label>
+                  <div class="flex gap-2">
+                    <input type="text" value="~/.m2" class="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-sm">
+                    <button class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200">浏览</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sync Settings -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+              <h3 class="font-semibold text-gray-800 mb-4">环境同步</h3>
+              <div class="space-y-4">
+                <label class="flex items-center justify-between">
+                  <div>
+                    <div class="text-sm font-medium text-gray-700">启动时自动检测环境变更</div>
+                    <div class="text-xs text-gray-500">应用启动时自动扫描环境变化</div>
+                  </div>
+                  <div class="relative">
+                    <input type="checkbox" class="sr-only peer">
+                    <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-blue-600 transition-colors"></div>
+                    <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
+                  </div>
+                </label>
+                <label class="flex items-center justify-between">
+                  <div>
+                    <div class="text-sm font-medium text-gray-700">后台定时检测</div>
+                    <div class="text-xs text-gray-500">在后台定期检测环境变化</div>
+                  </div>
+                  <div class="relative">
+                    <input type="checkbox" class="sr-only peer">
+                    <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-blue-600 transition-colors"></div>
+                    <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
+                  </div>
+                </label>
+              </div>
+              <div class="mt-4 pt-4 border-t border-gray-100">
+                <button class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors flex items-center gap-2">
+                  🔄 立即扫描环境
+                </button>
+              </div>
+            </div>
+
+            <!-- Data Management -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+              <h3 class="font-semibold text-gray-800 mb-4">数据管理</h3>
+              <div class="space-y-3">
+                <button class="w-full flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+                  <div class="flex items-center gap-3">
+                    <span class="text-xl">📤</span>
+                    <div>
+                      <div class="text-sm font-medium text-gray-700">导出配置</div>
+                      <div class="text-xs text-gray-500">将所有配置导出为备份文件</div>
+                    </div>
+                  </div>
+                  <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </button>
+                <button class="w-full flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+                  <div class="flex items-center gap-3">
+                    <span class="text-xl">📥</span>
+                    <div>
+                      <div class="text-sm font-medium text-gray-700">导入配置</div>
+                      <div class="text-xs text-gray-500">从备份文件恢复配置</div>
+                    </div>
+                  </div>
+                  <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </button>
+                <button class="w-full flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+                  <div class="flex items-center gap-3">
+                    <span class="text-xl">🔄</span>
+                    <div>
+                      <div class="text-sm font-medium text-gray-700">重置设置</div>
+                      <div class="text-xs text-gray-500">仅重置设置项，不影响配置</div>
+                    </div>
+                  </div>
+                  <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </button>
+                <button class="w-full flex items-center justify-between p-4 bg-red-50 rounded-xl hover:bg-red-100 transition-colors">
+                  <div class="flex items-center gap-3">
+                    <span class="text-xl">⚠️</span>
+                    <div>
+                      <div class="text-sm font-medium text-red-700">完全重置</div>
+                      <div class="text-xs text-red-500">清除所有数据，恢复到初始状态</div>
+                    </div>
+                  </div>
+                  <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- About -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+              <h3 class="font-semibold text-gray-800 mb-4">关于</h3>
+              <div class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                  <span class="text-gray-500">版本</span>
+                  <span class="text-gray-800">1.0.0</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-500">构建</span>
+                  <span class="text-gray-800">Tauri + React</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Status Bar -->
+      <div class="bg-white border-t border-gray-200 px-6 py-3 flex items-center justify-between text-sm">
+        <div class="flex items-center gap-4">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+            <span class="text-gray-600">Java 11</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+            <span class="text-gray-600">Node 18</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+            <span class="text-gray-600">Maven: cloud</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+            <span class="text-gray-600">AEM: 2 运行中</span>
+          </div>
+        </div>
+        <button class="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
+          🔄 同步
+        </button>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Navigation
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.preventDefault();
+        const page = item.dataset.page;
+        
+        // Update nav
+        document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+        item.classList.add('active');
+        
+        // Update page
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(page).classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>

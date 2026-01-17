@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AEM Environment Manager - Photo Editor Theme</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            'workspace': '#2D2D2D',
+            'workspace-dark': '#1F1F1F',
+            'workspace-light': '#3D3D3D',
+            'magenta': '#EC4899',
+            'magenta-light': '#F472B6',
+            'cyan': '#06B6D4',
+            'cyan-light': '#22D3EE',
+            'highlight': '#FDE047',
+            'slider-red': '#FF0000',
+            'slider-green': '#00FF00',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { font-family: 'Inter', system-ui, sans-serif; }
+    .page { display: none; }
+    .page.active { display: block; }
+    .nav-item { position: relative; transition: all 0.2s ease; }
+    .nav-item.active { background: linear-gradient(90deg, rgba(236, 72, 153, 0.2), transparent); }
+    .nav-item.active::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: linear-gradient(180deg, #EC4899, #06B6D4); }
+    .nav-item:hover:not(.active) { background: rgba(255, 255, 255, 0.05); }
+    .scrollbar-thin::-webkit-scrollbar { width: 6px; }
+    .scrollbar-thin::-webkit-scrollbar-track { background: #1F1F1F; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #EC4899, #06B6D4); border-radius: 3px; }
+    .card { background: #3D3D3D; border: 1px solid #4D4D4D; transition: all 0.2s ease; }
+    .card:hover { border-color: #6B7280; }
+    .card-active { border-color: #EC4899; box-shadow: 0 0 0 1px rgba(236, 72, 153, 0.3); }
+    .btn-magenta { background: linear-gradient(135deg, #EC4899, #DB2777); color: white; font-weight: 600; }
+    .btn-magenta:hover { box-shadow: 0 0 20px rgba(236, 72, 153, 0.4); }
+    .btn-cyan { background: linear-gradient(135deg, #06B6D4, #0891B2); color: white; font-weight: 600; }
+    .btn-cyan:hover { box-shadow: 0 0 20px rgba(6, 182, 212, 0.4); }
+    .btn-workspace { background: linear-gradient(180deg, #4D4D4D, #3D3D3D); color: #E5E5E5; border: 1px solid #5D5D5D; }
+    .btn-workspace:hover { background: linear-gradient(180deg, #5D5D5D, #4D4D4D); }
+    .btn-ghost { background: transparent; color: #A3A3A3; }
+    .btn-ghost:hover { background: rgba(255, 255, 255, 0.08); color: #FFFFFF; }
+    .badge-magenta { background: rgba(236, 72, 153, 0.2); color: #F472B6; border: 1px solid rgba(236, 72, 153, 0.4); }
+    .badge-cyan { background: rgba(6, 182, 212, 0.2); color: #22D3EE; border: 1px solid rgba(6, 182, 212, 0.4); }
+    .badge-highlight { background: rgba(253, 224, 71, 0.2); color: #FDE047; border: 1px solid rgba(253, 224, 71, 0.4); }
+    .badge-success { background: rgba(34, 197, 94, 0.2); color: #4ADE80; border: 1px solid rgba(34, 197, 94, 0.4); }
+    .slider-track { background: linear-gradient(90deg, #FF0000, #FFFF00, #00FF00); height: 4px; border-radius: 2px; }
+    .slider-track-magenta { background: linear-gradient(90deg, #DB2777, #EC4899, #F472B6); height: 4px; border-radius: 2px; }
+    .slider-track-cyan { background: linear-gradient(90deg, #0891B2, #06B6D4, #22D3EE); height: 4px; border-radius: 2px; }
+    .slider-thumb { width: 14px; height: 14px; background: white; border: 2px solid #3D3D3D; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+    .swatch { width: 24px; height: 24px; border-radius: 4px; border: 2px solid rgba(255,255,255,0.2); cursor: pointer; transition: all 0.15s ease; }
+    .swatch:hover { transform: scale(1.1); border-color: rgba(255,255,255,0.5); }
+    .status-pulse { animation: pulse-glow 2s infinite; }
+    @keyframes pulse-glow { 0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5); } 50% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); } }
+    .tool-icon { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 6px; color: white; font-size: 18px; transition: all 0.15s ease; cursor: pointer; }
+    .tool-icon:hover { background: rgba(255, 255, 255, 0.1); }
+    .tool-icon.active { background: linear-gradient(135deg, rgba(236, 72, 153, 0.3), rgba(6, 182, 212, 0.3)); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2); }
+    .input-field { background: #1F1F1F; border: 1px solid #4D4D4D; color: #E5E5E5; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+    .input-field:focus { outline: none; border-color: #EC4899; box-shadow: 0 0 0 2px rgba(236, 72, 153, 0.2); }
+    .divider { height: 1px; background: linear-gradient(90deg, transparent, #4D4D4D, transparent); }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    .gradient-text { background: linear-gradient(135deg, #EC4899, #06B6D4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  </style>
+</head>
+<body class="bg-workspace-dark">
+  <!-- Header -->
+  <div class="bg-workspace border-b border-workspace-light flex items-center justify-between px-4 py-2">
+    <div class="flex items-center gap-4">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 bg-gradient-to-br from-magenta to-cyan rounded-lg flex items-center justify-center text-white font-bold">🎛️</div>
+        <span class="font-bold text-white">AEM Manager</span>
+      </div>
+      <div class="h-4 w-px bg-workspace-light"></div>
+      <div class="flex items-center gap-1">
+        <button class="btn-ghost px-3 py-1.5 rounded text-sm">File</button>
+        <button class="btn-ghost px-3 py-1.5 rounded text-sm">Edit</button>
+        <button class="btn-ghost px-3 py-1.5 rounded text-sm">View</button>
+        <button class="btn-ghost px-3 py-1.5 rounded text-sm">Help</button>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-1 px-2">
+        <div class="swatch w-5 h-5 bg-magenta"></div>
+        <div class="swatch w-5 h-5 bg-cyan"></div>
+        <div class="swatch w-5 h-5 bg-highlight"></div>
+        <div class="swatch w-5 h-5 bg-white"></div>
+      </div>
+      <select class="input-field rounded px-3 py-1.5 min-w-[180px]">
+        <option>Project A - Cloud</option>
+        <option>Project B - AEM 6.5</option>
+      </select>
+      <button class="btn-magenta px-4 py-1.5 rounded text-sm">Apply</button>
+    </div>
+  </div>
+
+  <div class="flex h-[calc(100vh-48px)]">
+    <!-- Tool Bar -->
+    <aside class="w-12 bg-workspace border-r border-workspace-light flex flex-col items-center py-2 gap-1">
+      <div class="tool-icon active" data-page="dashboard">🏠</div>
+      <div class="tool-icon" data-page="profiles">📋</div>
+      <div class="tool-icon" data-page="aem">🖥️</div>
+      <div class="divider w-6 my-1"></div>
+      <div class="tool-icon" data-page="java">☕</div>
+      <div class="tool-icon" data-page="node">📦</div>
+      <div class="tool-icon" data-page="maven">🔧</div>
+      <div class="divider w-6 my-1"></div>
+      <div class="tool-icon" data-page="licenses">📜</div>
+      <div class="flex-1"></div>
+      <div class="tool-icon" data-page="settings">⚙️</div>
+    </aside>
+
+    <!-- Navigator -->
+    <aside class="w-56 bg-workspace border-r border-workspace-light flex flex-col">
+      <div class="p-3 border-b border-workspace-light">
+        <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Navigator</div>
+      </div>
+      <nav class="flex-1 overflow-auto scrollbar-thin py-1">
+        <a href="#" class="nav-item active flex items-center gap-3 px-3 py-2.5 text-sm text-magenta" data-page="dashboard">
+          <span class="text-white">🏠</span><span>Dashboard</span>
+        </a>
+        <a href="#" class="nav-item flex items-center gap-3 px-3 py-2.5 text-sm text-gray-400" data-page="profiles">
+          <span class="text-white">📋</span><span>Profiles</span>
+          <span class="ml-auto badge-cyan text-xs px-1.5 py-0.5 rounded">3</span>
+        </a>
+        <a href="#" class="nav-item flex items-center gap-3 px-3 py-2.5 text-sm text-gray-400" data-page="aem">
+          <span class="text-white">🖥️</span><span>AEM Instances</span>
+          <span class="ml-auto w-2 h-2 bg-green-500 rounded-full status-pulse"></span>
+        </a>
+        <div class="divider my-2"></div>
+        <a href="#" class="nav-item flex items-center gap-3 px-3 py-2.5 text-sm text-gray-400" data-page="java">
+          <span class="text-white">☕</span><span>Java</span>
+        </a>
+        <a href="#" class="nav-item flex items-center gap-3 px-3 py-2.5 text-sm text-gray-400" data-page="node">
+          <span class="text-white">📦</span><span>Node</span>
+        </a>
+        <a href="#" class="nav-item flex items-center gap-3 px-3 py-2.5 text-sm text-gray-400" data-page="maven">
+          <span class="text-white">🔧</span><span>Maven</span>
+        </a>
+        <div class="divider my-2"></div>
+        <a href="#" class="nav-item flex items-center gap-3 px-3 py-2.5 text-sm text-gray-400" data-page="licenses">
+          <span class="text-white">📜</span><span>Licenses</span>
+          <span class="ml-auto w-2 h-2 bg-highlight rounded-full"></span>
+        </a>
+        <a href="#" class="nav-item flex items-center gap-3 px-3 py-2.5 text-sm text-gray-400" data-page="settings">
+          <span class="text-white">⚙️</span><span>Settings</span>
+        </a>
+      </nav>
+      <div class="border-t border-workspace-light p-3">
+        <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Quick Info</div>
+        <div class="space-y-2 text-xs">
+          <div class="flex justify-between"><span class="text-gray-500">Java</span><span class="mono text-magenta">11.0.21</span></div>
+          <div class="flex justify-between"><span class="text-gray-500">Node</span><span class="mono text-cyan">18.19.0</span></div>
+          <div class="flex justify-between"><span class="text-gray-500">Maven</span><span class="mono text-highlight">cloud</span></div>
+          <div class="flex justify-between"><span class="text-gray-500">AEM</span><span class="mono text-green-400">2 active</span></div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col overflow-hidden bg-workspace-dark">
+      <div class="flex-1 overflow-auto scrollbar-thin p-5">
+        
+        <!-- Dashboard -->
+        <div id="dashboard" class="page active">
+          <div class="flex items-center justify-between mb-5">
+            <div>
+              <h1 class="text-xl font-bold gradient-text">Dashboard</h1>
+              <p class="text-gray-500 text-sm">Environment Overview</p>
+            </div>
+            <div class="bg-workspace rounded-lg px-4 py-2 flex items-end gap-1 h-10">
+              <div class="w-1.5 h-3 bg-magenta/60 rounded-t"></div>
+              <div class="w-1.5 h-5 bg-magenta/70 rounded-t"></div>
+              <div class="w-1.5 h-7 bg-magenta rounded-t"></div>
+              <div class="w-1.5 h-6 bg-gradient-to-t from-magenta to-cyan rounded-t"></div>
+              <div class="w-1.5 h-4 bg-cyan rounded-t"></div>
+              <div class="w-1.5 h-5 bg-cyan/70 rounded-t"></div>
+              <div class="w-1.5 h-3 bg-cyan/60 rounded-t"></div>
+            </div>
+          </div>
+
+          <!-- Status Cards -->
+          <div class="grid grid-cols-4 gap-4 mb-5">
+            <div class="card rounded-lg p-4">
+              <div class="flex items-center justify-between mb-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-magenta/30 to-magenta/10 border border-magenta/40 rounded-lg flex items-center justify-center text-xl">☕</div>
+                <span class="badge-success text-xs px-2 py-0.5 rounded">Active</span>
+              </div>
+              <div class="text-gray-500 text-xs uppercase tracking-wider">Java</div>
+              <div class="text-2xl font-bold text-magenta mono">11</div>
+              <div class="text-gray-400 text-xs mono mt-1">11.0.21 Corretto</div>
+              <div class="mt-3 relative h-4 flex items-center">
+                <div class="slider-track-magenta w-full"></div>
+                <div class="slider-thumb absolute" style="left: calc(70% - 7px)"></div>
+              </div>
+            </div>
+
+            <div class="card rounded-lg p-4">
+              <div class="flex items-center justify-between mb-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-cyan/30 to-cyan/10 border border-cyan/40 rounded-lg flex items-center justify-center text-xl">📦</div>
+                <span class="badge-success text-xs px-2 py-0.5 rounded">Active</span>
+              </div>
+              <div class="text-gray-500 text-xs uppercase tracking-wider">Node</div>
+              <div class="text-2xl font-bold text-cyan mono">18</div>
+              <div class="text-gray-400 text-xs mono mt-1">v18.19.0 LTS</div>
+              <div class="mt-3 relative h-4 flex items-center">
+                <div class="slider-track-cyan w-full"></div>
+                <div class="slider-thumb absolute" style="left: calc(80% - 7px)"></div>
+              </div>
+            </div>
+
+            <div class="card rounded-lg p-4">
+              <div class="flex items-center justify-between mb-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-highlight/30 to-highlight/10 border border-highlight/40 rounded-lg flex items-center justify-center text-xl">🔧</div>
+                <span class="badge-success text-xs px-2 py-0.5 rounded">Active</span>
+              </div>
+              <div class="text-gray-500 text-xs uppercase tracking-wider">Maven</div>
+              <div class="text-xl font-bold text-highlight">cloud</div>
+              <div class="text-gray-400 text-xs mono mt-1">settings-cloud.xml</div>
+              <div class="mt-3 relative h-4 flex items-center">
+                <div class="slider-track w-full"></div>
+                <div class="slider-thumb absolute" style="left: calc(100% - 7px)"></div>
+              </div>
+            </div>
+
+            <div class="card rounded-lg p-4">
+              <div class="flex items-center justify-between mb-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-white/20 to-white/5 border border-white/30 rounded-lg flex items-center justify-center text-xl">📁</div>
+                <button class="text-magenta text-xs font-semibold hover:text-magenta-light">Open →</button>
+              </div>
+              <div class="text-gray-500 text-xs uppercase tracking-wider">Project</div>
+              <div class="text-lg font-bold text-white truncate">project-a</div>
+              <div class="text-gray-400 text-xs mono mt-1 truncate">~/projects/aem-cloud</div>
+              <div class="mt-3 flex gap-1">
+                <div class="w-4 h-4 rounded bg-magenta"></div>
+                <div class="w-4 h-4 rounded bg-cyan"></div>
+                <div class="w-4 h-4 rounded bg-highlight"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- AEM Instances -->
+          <div class="card rounded-lg p-5 mb-5">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-3">
+                <h2 class="font-semibold text-white">AEM Instances</h2>
+                <span class="badge-success text-xs px-2 py-0.5 rounded">2 Running</span>
+              </div>
+              <button class="btn-workspace px-4 py-2 rounded text-sm">+ Add Instance</button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div class="bg-workspace-dark border border-workspace-light rounded-lg p-4">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="flex items-center gap-2">
+                    <div class="w-2.5 h-2.5 bg-green-500 rounded-full status-pulse"></div>
+                    <span class="font-semibold text-white">Author</span>
+                    <span class="text-xs text-gray-500 bg-workspace px-2 py-0.5 rounded mono">:4502</span>
+                  </div>
+                  <span class="badge-success text-xs px-2 py-0.5 rounded">Running</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2 mb-3">
+                  <div class="bg-workspace rounded p-2">
+                    <div class="text-gray-500 text-xs">Version</div>
+                    <div class="text-gray-200 text-sm font-semibold mono">2024.11</div>
+                  </div>
+                  <div class="bg-workspace rounded p-2">
+                    <div class="text-gray-500 text-xs">Type</div>
+                    <div class="text-gray-200 text-sm font-semibold">Cloud</div>
+                  </div>
+                  <div class="bg-workspace rounded p-2">
+                    <div class="text-gray-500 text-xs">Uptime</div>
+                    <div class="text-cyan text-sm font-semibold mono">2d 5h</div>
+                  </div>
+                </div>
+                <div class="h-1 rounded-full overflow-hidden flex mb-3">
+                  <div class="flex-1 bg-magenta"></div>
+                  <div class="flex-1 bg-cyan"></div>
+                  <div class="flex-1 bg-highlight"></div>
+                </div>
+                <div class="flex gap-2">
+                  <button class="flex-1 btn-ghost px-2 py-1.5 rounded text-xs border border-workspace-light">CRXDE</button>
+                  <button class="flex-1 btn-ghost px-2 py-1.5 rounded text-xs border border-workspace-light">PKG</button>
+                  <button class="flex-1 btn-ghost px-2 py-1.5 rounded text-xs border border-workspace-light">OSGi</button>
+                  <button class="btn-ghost px-3 py-1.5 rounded text-xs text-red-400 border border-red-400/30">Stop</button>
+                </div>
+              </div>
+
+              <div class="bg-workspace-dark border border-workspace-light rounded-lg p-4">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="flex items-center gap-2">
+                    <div class="w-2.5 h-2.5 bg-green-500 rounded-full status-pulse"></div>
+                    <span class="font-semibold text-white">Publish</span>
+                    <span class="text-xs text-gray-500 bg-workspace px-2 py-0.5 rounded mono">:4503</span>
+                  </div>
+                  <span class="badge-success text-xs px-2 py-0.5 rounded">Running</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2 mb-3">
+                  <div class="bg-workspace rounded p-2">
+                    <div class="text-gray-500 text-xs">Version</div>
+                    <div class="text-gray-200 text-sm font-semibold mono">2024.11</div>
+                  </div>
+                  <div class="bg-workspace rounded p-2">
+                    <div class="text-gray-500 text-xs">Type</div>
+                    <div class="text-gray-200 text-sm font-semibold">Cloud</div>
+                  </div>
+                  <div class="bg-workspace rounded p-2">
+                    <div class="text-gray-500 text-xs">Uptime</div>
+                    <div class="text-cyan text-sm font-semibold mono">2d 5h</div>
+                  </div>
+                </div>
+                <div class="h-1 rounded-full overflow-hidden flex mb-3">
+                  <div class="flex-1 bg-magenta"></div>
+                  <div class="flex-1 bg-cyan"></div>
+                  <div class="flex-1 bg-highlight"></div>
+                </div>
+                <div class="flex gap-2">
+                  <button class="flex-1 btn-ghost px-2 py-1.5 rounded text-xs border border-workspace-light">CRXDE</button>
+                  <button class="flex-1 btn-ghost px-2 py-1.5 rounded text-xs border border-workspace-light">PKG</button>
+                  <button class="flex-1 btn-ghost px-2 py-1.5 rounded text-xs border border-workspace-light">OSGi</button>
+                  <button class="btn-ghost px-3 py-1.5 rounded text-xs text-red-400 border border-red-400/30">Stop</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Tools -->
+          <div class="card rounded-lg p-5">
+            <h2 class="font-semibold text-white mb-4">Quick Tools</h2>
+            <div class="flex gap-3">
+              <button class="btn-workspace px-5 py-3 rounded text-sm flex items-center gap-2">🔄 Scan</button>
+              <button class="btn-workspace px-5 py-3 rounded text-sm flex items-center gap-2">📋 New Profile</button>
+              <button class="btn-workspace px-5 py-3 rounded text-sm flex items-center gap-2">🖥️ Add Instance</button>
+              <button class="btn-workspace px-5 py-3 rounded text-sm flex items-center gap-2">💻 Terminal</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Other Pages -->
+        <div id="profiles" class="page"><h1 class="text-xl font-bold gradient-text mb-4">Profiles</h1></div>
+        <div id="aem" class="page"><h1 class="text-xl font-bold gradient-text mb-4">AEM Instances</h1></div>
+        <div id="java" class="page"><h1 class="text-xl font-bold gradient-text mb-4">Java Versions</h1></div>
+        <div id="node" class="page"><h1 class="text-xl font-bold gradient-text mb-4">Node Versions</h1></div>
+        <div id="maven" class="page"><h1 class="text-xl font-bold gradient-text mb-4">Maven Config</h1></div>
+        <div id="licenses" class="page"><h1 class="text-xl font-bold gradient-text mb-4">Licenses</h1></div>
+        <div id="settings" class="page"><h1 class="text-xl font-bold gradient-text mb-4">Settings</h1></div>
+
+      </div>
+
+      <!-- Status Bar -->
+      <div class="bg-workspace border-t border-workspace-light px-4 py-2 flex items-center justify-between text-xs">
+        <div class="flex items-center gap-4">
+          <div class="flex items-center gap-2">
+            <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+            <span class="text-gray-500">Java:</span>
+            <span class="text-magenta mono">11.0.21</span>
+          </div>
+          <div class="h-3 w-px bg-workspace-light"></div>
+          <div class="flex items-center gap-2">
+            <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+            <span class="text-gray-500">Node:</span>
+            <span class="text-cyan mono">18.19.0</span>
+          </div>
+          <div class="h-3 w-px bg-workspace-light"></div>
+          <div class="flex items-center gap-2">
+            <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+            <span class="text-gray-500">Maven:</span>
+            <span class="text-highlight mono">cloud</span>
+          </div>
+          <div class="h-3 w-px bg-workspace-light"></div>
+          <div class="flex items-center gap-2">
+            <div class="w-2 h-2 bg-green-500 rounded-full status-pulse"></div>
+            <span class="text-gray-500">AEM:</span>
+            <span class="text-green-400 mono">2 running</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-3 bg-gradient-to-r from-slider-red via-yellow-400 to-slider-green rounded"></div>
+          <button class="btn-magenta px-3 py-1 rounded text-xs">🔄 Sync</button>
+        </div>
+      </div>
+    </main>
+
+    <!-- Adjustments Panel -->
+    <aside class="w-60 bg-workspace border-l border-workspace-light flex flex-col">
+      <div class="p-3 border-b border-workspace-light">
+        <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Adjustments</div>
+      </div>
+      <div class="flex-1 overflow-auto scrollbar-thin p-3 space-y-4">
+        <div>
+          <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Environment</div>
+          <div class="mb-4">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs text-gray-300">Java Version</span>
+              <input type="text" value="11" class="input-field w-12 text-center rounded px-2 py-1 text-xs">
+            </div>
+            <div class="relative h-4 flex items-center">
+              <div class="slider-track-magenta w-full"></div>
+              <div class="slider-thumb absolute" style="left: calc(70% - 7px)"></div>
+            </div>
+          </div>
+          <div class="mb-4">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs text-gray-300">Node Version</span>
+              <input type="text" value="18" class="input-field w-12 text-center rounded px-2 py-1 text-xs">
+            </div>
+            <div class="relative h-4 flex items-center">
+              <div class="slider-track-cyan w-full"></div>
+              <div class="slider-thumb absolute" style="left: calc(80% - 7px)"></div>
+            </div>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div>
+          <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Resources</div>
+          <div class="mb-3">
+            <div class="flex justify-between mb-1"><span class="text-xs text-gray-500">CPU</span><span class="text-xs text-magenta mono">45%</span></div>
+            <div class="h-1.5 bg-workspace-dark rounded-full overflow-hidden">
+              <div class="h-full bg-gradient-to-r from-cyan to-magenta rounded-full" style="width: 45%"></div>
+            </div>
+          </div>
+          <div class="mb-3">
+            <div class="flex justify-between mb-1"><span class="text-xs text-gray-500">Memory</span><span class="text-xs text-cyan mono">8.4 GB</span></div>
+            <div class="h-1.5 bg-workspace-dark rounded-full overflow-hidden">
+              <div class="h-full bg-gradient-to-r from-cyan to-magenta rounded-full" style="width: 65%"></div>
+            </div>
+          </div>
+          <div>
+            <div class="flex justify-between mb-1"><span class="text-xs text-gray-500">Disk</span><span class="text-xs text-highlight mono">120 GB</span></div>
+            <div class="h-1.5 bg-workspace-dark rounded-full overflow-hidden">
+              <div class="h-full bg-gradient-to-r from-slider-green to-highlight rounded-full" style="width: 35%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="border-t border-workspace-light p-3">
+        <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Color Palette</div>
+        <div class="flex gap-2 flex-wrap">
+          <div class="swatch bg-magenta"></div>
+          <div class="swatch bg-magenta-light"></div>
+          <div class="swatch bg-cyan"></div>
+          <div class="swatch bg-cyan-light"></div>
+          <div class="swatch bg-highlight"></div>
+          <div class="swatch bg-white"></div>
+          <div class="swatch bg-slider-red"></div>
+          <div class="swatch bg-slider-green"></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+    document.querySelectorAll('.nav-item, .tool-icon[data-page]').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.preventDefault();
+        const page = item.dataset.page;
+        if (!page) return;
+        document.querySelectorAll('.nav-item').forEach(nav => { nav.classList.remove('active', 'text-magenta'); nav.classList.add('text-gray-400'); });
+        const activeNav = document.querySelector(`.nav-item[data-page="${page}"]`);
+        if (activeNav) { activeNav.classList.add('active', 'text-magenta'); activeNav.classList.remove('text-gray-400'); }
+        document.querySelectorAll('.tool-icon').forEach(icon => icon.classList.remove('active'));
+        const activeIcon = document.querySelector(`.tool-icon[data-page="${page}"]`);
+        if (activeIcon) activeIcon.classList.add('active');
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(page)?.classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>
