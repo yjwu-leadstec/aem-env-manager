@@ -25,8 +25,8 @@ export function SettingsPage() {
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Settings</h1>
-        <p className="text-slate-500 mt-1">Configure application preferences</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Settings</h1>
+        <p className="text-slate-500 dark:text-slate-400 mt-1">Configure application preferences</p>
       </div>
 
       <div className="flex gap-6">
@@ -75,7 +75,9 @@ function SettingsNavItem({ icon, label, active, onClick }: SettingsNavItemProps)
     <button
       onClick={onClick}
       className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${
-        active ? 'bg-azure-50 text-azure-700 font-medium' : 'text-slate-600 hover:bg-slate-50'
+        active
+          ? 'bg-azure-50 dark:bg-azure-900/30 text-azure-700 dark:text-azure-400 font-medium'
+          : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'
       }`}
     >
       {icon}
@@ -106,8 +108,10 @@ function GeneralSettings() {
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium text-slate-700">Theme</p>
-              <p className="text-sm text-slate-500">Choose your preferred color scheme</p>
+              <p className="font-medium text-slate-700 dark:text-slate-300">Theme</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Choose your preferred color scheme
+              </p>
             </div>
             <div className="flex gap-2">
               <ThemeButton
@@ -237,20 +241,20 @@ function DataSettings() {
               Import Configuration
             </Button>
           </div>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             Export includes all profiles, instances, and settings. Sensitive data like passwords are
             encrypted.
           </p>
         </CardContent>
       </Card>
 
-      <Card className="border-error-200">
+      <Card className="border-error-200 dark:border-error-800">
         <CardHeader title="Danger Zone" subtitle="Irreversible actions" />
         <CardContent>
-          <div className="flex items-center justify-between p-4 bg-error-50 rounded-lg">
+          <div className="flex items-center justify-between p-4 bg-error-50 dark:bg-error-900/30 rounded-lg">
             <div>
-              <p className="font-medium text-error-700">Reset all settings</p>
-              <p className="text-sm text-error-600">
+              <p className="font-medium text-error-700 dark:text-error-400">Reset all settings</p>
+              <p className="text-sm text-error-600 dark:text-error-500">
                 This will delete all profiles, instances, and reset to defaults
               </p>
             </div>
@@ -276,7 +280,9 @@ function ThemeButton({ icon, label, active, onClick }: ThemeButtonProps) {
     <button
       onClick={onClick}
       className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-        active ? 'bg-azure-100 text-azure-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+        active
+          ? 'bg-azure-100 dark:bg-azure-900/50 text-azure-700 dark:text-azure-400'
+          : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600'
       }`}
     >
       {icon}
@@ -297,16 +303,18 @@ function ToggleSetting({ icon, title, description, enabled, onChange }: ToggleSe
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-start gap-3">
-        <div className="p-2 rounded-lg bg-slate-100 text-slate-600">{icon}</div>
+        <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400">
+          {icon}
+        </div>
         <div>
-          <p className="font-medium text-slate-700">{title}</p>
-          <p className="text-sm text-slate-500">{description}</p>
+          <p className="font-medium text-slate-700 dark:text-slate-300">{title}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{description}</p>
         </div>
       </div>
       <button
         onClick={() => onChange(!enabled)}
         className={`relative w-11 h-6 rounded-full transition-colors ${
-          enabled ? 'bg-azure' : 'bg-slate-300'
+          enabled ? 'bg-azure' : 'bg-slate-300 dark:bg-slate-600'
         }`}
       >
         <div
@@ -322,7 +330,9 @@ function ToggleSetting({ icon, title, description, enabled, onChange }: ToggleSe
 function PathInput({ label, placeholder }: { label: string; placeholder: string }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-slate-700 mb-1">{label}</label>
+      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+        {label}
+      </label>
       <div className="flex gap-2">
         <input type="text" placeholder={placeholder} className="input flex-1" />
         <Button variant="outline" icon={<FolderOpen size={16} />}>
