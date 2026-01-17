@@ -5,8 +5,9 @@ mod platform;
 
 use commands::{
     // Profile commands
-    create_profile, delete_profile, get_active_profile, get_profile, list_profiles, switch_profile,
-    update_profile,
+    create_profile, delete_profile, duplicate_profile, export_profile, get_active_profile,
+    get_profile, import_profile, list_profiles, load_app_config, save_app_config, switch_profile,
+    update_profile, validate_profile,
     // Version commands
     detect_version_managers, get_current_java_version, get_current_maven_config,
     get_current_node_version, get_managed_versions, import_maven_config, install_java_version,
@@ -14,8 +15,8 @@ use commands::{
     switch_java_version, switch_maven_config, switch_node_version,
     // Instance commands
     add_instance, check_instance_health, delete_instance, get_credentials, get_instance,
-    list_instances, open_in_browser, start_instance, stop_instance, store_credentials,
-    update_instance,
+    get_instance_urls, list_instances, open_in_browser, start_instance, stop_instance,
+    store_credentials, update_instance,
 };
 
 /// Initialize and run the Tauri application
@@ -32,6 +33,12 @@ pub fn run() {
             delete_profile,
             switch_profile,
             get_active_profile,
+            validate_profile,
+            load_app_config,
+            save_app_config,
+            export_profile,
+            import_profile,
+            duplicate_profile,
             // Version commands - Java
             scan_java_versions,
             get_current_java_version,
@@ -62,6 +69,7 @@ pub fn run() {
             store_credentials,
             get_credentials,
             open_in_browser,
+            get_instance_urls,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
