@@ -11,7 +11,32 @@ export default {
         sans: ['Inter', 'system-ui', 'sans-serif'],
       },
       colors: {
-        // Primary Azure
+        // Technical Theme Colors (for dark mode)
+        'viewport': {
+          DEFAULT: '#1F1F1F',
+          light: '#2A2A2A',
+        },
+        'charcoal': '#262626',
+        'steel': {
+          DEFAULT: '#475569',
+          light: '#64748B',
+          dark: '#334155',
+        },
+        // Orange accent for Technical theme
+        'tech-orange': {
+          DEFAULT: '#F97316',
+          50: '#FFF7ED',
+          100: '#FFEDD5',
+          200: '#FED7AA',
+          300: '#FDBA74',
+          400: '#FB923C',
+          500: '#F97316',
+          600: '#EA580C',
+          700: '#C2410C',
+          800: '#9A3412',
+          900: '#7C2D12',
+        },
+        // Primary Azure (for light mode)
         'azure': {
           DEFAULT: '#0EA5E9',
           50: '#F0F9FF',

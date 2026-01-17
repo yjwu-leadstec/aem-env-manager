@@ -1,0 +1,246 @@
+{
+  "app": {
+    "title": "AEM 环境管理器",
+    "version": "v0.1.0"
+  },
+  "nav": {
+    "dashboard": "首页",
+    "profiles": "环境配置",
+    "instances": "AEM 实例",
+    "java": "Java",
+    "node": "Node",
+    "maven": "Maven",
+    "licenses": "许可证",
+    "settings": "设置"
+  },
+  "common": {
+    "save": "保存",
+    "cancel": "取消",
+    "delete": "删除",
+    "edit": "编辑",
+    "add": "添加",
+    "refresh": "刷新",
+    "search": "搜索",
+    "loading": "加载中...",
+    "error": "错误",
+    "success": "成功",
+    "warning": "警告",
+    "info": "信息",
+    "confirm": "确认",
+    "close": "关闭",
+    "yes": "是",
+    "no": "否",
+    "browse": "浏览",
+    "unknown": "未知",
+    "none": "无"
+  },
+  "dashboard": {
+    "title": "仪表板",
+    "welcome": "欢迎使用 AEM 环境管理器",
+    "quickActions": "快捷操作",
+    "scanEnv": "扫描环境",
+    "newProfile": "新建配置",
+    "addInstance": "添加实例",
+    "openTerminal": "打开终端",
+    "aemInstances": "AEM 实例",
+    "viewAll": "查看全部",
+    "noInstances": "暂无配置的 AEM 实例",
+    "moreInstances": "还有 {count} 个实例...",
+    "profileSwitcher": {
+      "selectProfile": "选择配置",
+      "current": "当前",
+      "switchEnv": "切换环境",
+      "noProfiles": "暂无配置"
+    },
+    "stats": {
+      "profiles": "配置文件",
+      "instances": "实例",
+      "javaVersions": "Java 版本",
+      "nodeVersions": "Node 版本"
+    },
+    "scanning": "扫描中...",
+    "scanningVersions": "正在扫描版本并检查实例",
+    "scanComplete": "扫描完成",
+    "allDataUpdated": "所有数据已更新",
+    "scanFailed": "扫描失败",
+    "featureInProgress": "功能开发中..."
+  },
+  "instance": {
+    "title": "AEM 实例",
+    "subtitle": "管理您的 AEM 实例",
+    "add": "添加实例",
+    "status": {
+      "running": "运行中",
+      "stopped": "已停止",
+      "starting": "启动中",
+      "stopping": "停止中",
+      "error": "错误"
+    },
+    "type": {
+      "author": "Author",
+      "publish": "Publish"
+    },
+    "actions": {
+      "start": "启动",
+      "stop": "停止",
+      "crxde": "CRXDE",
+      "packageManager": "包管理",
+      "console": "控制台",
+      "openBrowser": "在浏览器中打开"
+    },
+    "notifications": {
+      "started": "实例已启动",
+      "runningMessage": "实例正在运行",
+      "stopped": "实例已停止",
+      "stoppedMessage": "实例已停止运行",
+      "startFailed": "启动失败",
+      "cannotStart": "无法启动实例",
+      "stopFailed": "停止失败",
+      "cannotStop": "无法停止实例",
+      "openBrowserFailed": "打开浏览器失败",
+      "startingProgress": "正在启动...",
+      "stoppingProgress": "正在停止..."
+    },
+    "fields": {
+      "name": "名称",
+      "host": "主机",
+      "port": "端口",
+      "type": "类型",
+      "version": "版本",
+      "runningTime": "运行时间"
+    }
+  },
+  "profile": {
+    "title": "环境配置",
+    "subtitle": "管理您的开发环境配置",
+    "add": "添加配置",
+    "fields": {
+      "name": "配置名称",
+      "description": "描述",
+      "javaVersion": "Java 版本",
+      "nodeVersion": "Node 版本",
+      "mavenVersion": "Maven 版本"
+    },
+    "notifications": {
+      "switched": "配置已切换",
+      "switchedTo": "已成功切换到 {name}",
+      "switchFailed": "切换失败",
+      "saved": "配置已保存",
+      "deleted": "配置已删除"
+    }
+  },
+  "java": {
+    "title": "Java 版本",
+    "subtitle": "管理已安装的 Java 版本",
+    "scan": "扫描 Java",
+    "noVersions": "未找到 Java 版本",
+    "fields": {
+      "version": "版本",
+      "vendor": "供应商",
+      "path": "路径",
+      "isDefault": "默认"
+    }
+  },
+  "node": {
+    "title": "Node 版本",
+    "subtitle": "管理已安装的 Node.js 版本",
+    "scan": "扫描 Node",
+    "noVersions": "未找到 Node 版本",
+    "fields": {
+      "version": "版本",
+      "path": "路径",
+      "isDefault": "默认"
+    }
+  },
+  "maven": {
+    "title": "Maven",
+    "subtitle": "管理 Maven 配置",
+    "fields": {
+      "version": "版本",
+      "home": "主目录",
+      "settingsPath": "配置文件路径"
+    }
+  },
+  "settings": {
+    "title": "设置",
+    "subtitle": "配置应用程序偏好设置",
+    "tabs": {
+      "general": "通用",
+      "paths": "路径",
+      "data": "数据"
+    },
+    "general": {
+      "appearance": "外观",
+      "appearanceDesc": "自定义应用程序外观",
+      "theme": "主题",
+      "themeDesc": "选择您喜欢的配色方案",
+      "themeLight": "浅色",
+      "themeDark": "深色",
+      "themeSystem": "系统",
+      "themeUpdated": "主题已更新",
+      "themeChangedTo": "已切换到{theme}模式",
+      "language": "语言",
+      "languageDesc": "选择界面显示语言",
+      "notifications": "通知",
+      "notificationsDesc": "配置提醒偏好设置",
+      "showNotifications": "显示通知",
+      "showNotificationsDesc": "为重要事件显示桌面通知",
+      "behavior": "行为",
+      "behaviorDesc": "应用程序行为设置",
+      "autoSwitch": "自动切换配置",
+      "autoSwitchDesc": "选择配置文件时自动切换环境",
+      "startMinimized": "启动时最小化",
+      "startMinimizedDesc": "启动应用程序时最小化到系统托盘"
+    },
+    "paths": {
+      "scanDirs": "扫描目录",
+      "scanDirsDesc": "搜索 Java 和 Node 安装的目录",
+      "javaPaths": "Java 扫描路径",
+      "nodePaths": "Node 扫描路径",
+      "mavenHome": "Maven 主目录",
+      "aemDirs": "AEM 目录",
+      "aemDirsDesc": "AEM 安装的默认路径",
+      "aemBaseDir": "AEM 基础目录",
+      "logsDir": "日志目录",
+      "addPath": "添加路径",
+      "saveSettings": "保存设置",
+      "saving": "保存中...",
+      "loadFailed": "加载失败",
+      "saveFailed": "保存失败",
+      "saveSuccess": "保存成功",
+      "pathsSaved": "扫描路径配置已保存"
+    },
+    "data": {
+      "exportImport": "导出 / 导入",
+      "exportImportDesc": "备份和恢复您的配置",
+      "export": "导出配置",
+      "exporting": "导出中...",
+      "import": "导入配置",
+      "importing": "导入中...",
+      "exportImportNote": "导出包含所有配置文件、实例和设置。敏感数据如密码会被加密。",
+      "exportSuccess": "导出成功",
+      "exportedCount": "已导出 {profiles} 个配置文件和 {instances} 个实例",
+      "exportFailed": "导出失败",
+      "importSuccess": "导入成功",
+      "importedCount": "已导入 {profiles} 个配置文件和 {instances} 个实例",
+      "importFailed": "导入失败",
+      "dangerZone": "危险区域",
+      "dangerZoneDesc": "不可逆的操作",
+      "resetAll": "重置所有设置",
+      "resetAllDesc": "这将删除所有配置文件、实例并重置为默认值",
+      "reset": "重置",
+      "resetting": "重置中...",
+      "confirmReset": "确认重置",
+      "cannotUndo": "此操作不可撤销",
+      "confirmResetMessage": "您确定要重置所有设置吗？这将删除所有配置文件、AEM 实例配置和应用程序设置。此操作无法恢复。",
+      "resetSuccess": "重置成功",
+      "resetCount": "已删除 {profiles} 个配置文件和 {instances} 个实例",
+      "resetFailed": "重置失败"
+    }
+  },
+  "language": {
+    "zhCN": "简体中文",
+    "zhTW": "繁體中文",
+    "en": "English"
+  }
+}

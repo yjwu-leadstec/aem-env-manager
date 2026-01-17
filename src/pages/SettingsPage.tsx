@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Settings,
   FolderOpen,
@@ -23,6 +24,7 @@ import * as settingsApi from '@/api/settings';
 type SettingsTab = 'general' | 'paths' | 'data';
 
 export function SettingsPage() {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<SettingsTab>('general');
 
   return (
@@ -30,9 +32,10 @@ export function SettingsPage() {
       {/* Page Header */}
       <div>
         <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-          <span className="mr-2">⚙️</span>设置
+          <span className="mr-2">⚙️</span>
+          {t('settings.title')}
         </h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1">配置应用程序偏好设置</p>
+        <p className="text-slate-500 dark:text-slate-400 mt-1">{t('settings.subtitle')}</p>
       </div>
 
       <div className="flex gap-6">
@@ -40,19 +43,19 @@ export function SettingsPage() {
         <div className="w-48 space-y-1">
           <SettingsNavItem
             icon={<Settings size={18} />}
-            label="通用"
+            label={t('settings.tabs.general')}
             active={activeTab === 'general'}
             onClick={() => setActiveTab('general')}
           />
           <SettingsNavItem
             icon={<FolderOpen size={18} />}
-            label="路径"
+            label={t('settings.tabs.paths')}
             active={activeTab === 'paths'}
             onClick={() => setActiveTab('paths')}
           />
           <SettingsNavItem
             icon={<Database size={18} />}
-            label="数据"
+            label={t('settings.tabs.data')}
             active={activeTab === 'data'}
             onClick={() => setActiveTab('data')}
           />
@@ -93,6 +96,7 @@ function SettingsNavItem({ icon, label, active, onClick }: SettingsNavItemProps)
 }
 
 function GeneralSettings() {
+  const { t } = useTranslation();
   const config = useConfig();
   const updateConfig = useAppStore((s) => s.updateConfig);
   const addNotification = useAppStore((s) => s.addNotification);
@@ -101,8 +105,15 @@ function GeneralSettings() {
     updateConfig({ theme });
     addNotification({
       type: 'success',
-      title: '主题已更新',
-      message: `已切换到${theme === 'light' ? '浅色' : theme === 'dark' ? '深色' : '系统'}模式`,
+      title: t('settings.general.themeUpdated'),
+      message: t('settings.general.themeChangedTo', {
+        theme:
+          theme === 'light'
+            ? t('settings.general.themeLight')
+            : theme === 'dark'
+              ? t('settings.general.themeDark')
+              : t('settings.general.themeSystem'),
+      }),
     });
   };
 
@@ -110,29 +121,36 @@ function GeneralSettings() {
     <div className="space-y-6">
       {/* Appearance */}
       <Card>
-        <CardHeader title="外观" subtitle="自定义应用程序外观" />
+        <CardHeader
+          title={t('settings.general.appearance')}
+          subtitle={t('settings.general.appearanceDesc')}
+        />
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium text-slate-700 dark:text-slate-300">主题</p>
-              <p className="text-sm text-slate-500 dark:text-slate-400">选择您喜欢的配色方案</p>
+              <p className="font-medium text-slate-700 dark:text-slate-300">
+                {t('settings.general.theme')}
+              </p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                {t('settings.general.themeDesc')}
+              </p>
             </div>
             <div className="flex gap-2">
               <ThemeButton
                 icon={<Sun size={16} />}
-                label="浅色"
+                label={t('settings.general.themeLight')}
                 active={config.theme === 'light'}
                 onClick={() => handleThemeChange('light')}
               />
               <ThemeButton
                 icon={<Moon size={16} />}
-                label="深色"
+                label={t('settings.general.themeDark')}
                 active={config.theme === 'dark'}
                 onClick={() => handleThemeChange('dark')}
               />
               <ThemeButton
                 icon={<Monitor size={16} />}
-                label="系统"
+                label={t('settings.general.themeSystem')}
                 active={config.theme === 'system'}
                 onClick={() => handleThemeChange('system')}
               />
@@ -143,12 +161,15 @@ function GeneralSettings() {
 
       {/* Notifications */}
       <Card>
-        <CardHeader title="通知" subtitle="配置提醒偏好设置" />
+        <CardHeader
+          title={t('settings.general.notifications')}
+          subtitle={t('settings.general.notificationsDesc')}
+        />
         <CardContent className="space-y-4">
           <ToggleSetting
             icon={<Bell size={18} />}
-            title="显示通知"
-            description="为重要事件显示桌面通知"
+            title={t('settings.general.showNotifications')}
+            description={t('settings.general.showNotificationsDesc')}
             enabled={config.showNotifications}
             onChange={(enabled) => updateConfig({ showNotifications: enabled })}
           />
@@ -157,19 +178,22 @@ function GeneralSettings() {
 
       {/* Behavior */}
       <Card>
-        <CardHeader title="行为" subtitle="应用程序行为设置" />
+        <CardHeader
+          title={t('settings.general.behavior')}
+          subtitle={t('settings.general.behaviorDesc')}
+        />
         <CardContent className="space-y-4">
           <ToggleSetting
             icon={<Settings size={18} />}
-            title="自动切换配置"
-            description="选择配置文件时自动切换环境"
+            title={t('settings.general.autoSwitch')}
+            description={t('settings.general.autoSwitchDesc')}
             enabled={config.autoSwitchProfile}
             onChange={(enabled) => updateConfig({ autoSwitchProfile: enabled })}
           />
           <ToggleSetting
             icon={<Monitor size={18} />}
-            title="启动时最小化"
-            description="启动应用程序时最小化到系统托盘"
+            title={t('settings.general.startMinimized')}
+            description={t('settings.general.startMinimizedDesc')}
             enabled={config.startMinimized}
             onChange={(enabled) => updateConfig({ startMinimized: enabled })}
           />
@@ -180,6 +204,7 @@ function GeneralSettings() {
 }
 
 function PathsSettings() {
+  const { t } = useTranslation();
   const addNotification = useAppStore((s) => s.addNotification);
   const [scanPaths, setScanPaths] = useState<settingsApi.ScanPaths | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -194,15 +219,15 @@ function PathsSettings() {
       } catch (error) {
         addNotification({
           type: 'error',
-          title: '加载失败',
-          message: error instanceof Error ? error.message : '未知错误',
+          title: t('settings.paths.loadFailed'),
+          message: error instanceof Error ? error.message : t('common.unknown'),
         });
       } finally {
         setIsLoading(false);
       }
     };
     loadPaths();
-  }, [addNotification]);
+  }, [addNotification, t]);
 
   const handleSave = useCallback(async () => {
     if (!scanPaths) return;
@@ -212,19 +237,19 @@ function PathsSettings() {
       await settingsApi.saveScanPaths(scanPaths);
       addNotification({
         type: 'success',
-        title: '保存成功',
-        message: '扫描路径配置已保存',
+        title: t('settings.paths.saveSuccess'),
+        message: t('settings.paths.pathsSaved'),
       });
     } catch (error) {
       addNotification({
         type: 'error',
-        title: '保存失败',
-        message: error instanceof Error ? error.message : '未知错误',
+        title: t('settings.paths.saveFailed'),
+        message: error instanceof Error ? error.message : t('common.unknown'),
       });
     } finally {
       setIsSaving(false);
     }
-  }, [scanPaths, addNotification]);
+  }, [scanPaths, addNotification, t]);
 
   const handleBrowseFolder = async (
     field: 'maven_home' | 'aem_base_dir' | 'logs_dir',
@@ -283,11 +308,14 @@ function PathsSettings() {
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader title="扫描目录" subtitle="搜索 Java 和 Node 安装的目录" />
+        <CardHeader
+          title={t('settings.paths.scanDirs')}
+          subtitle={t('settings.paths.scanDirsDesc')}
+        />
         <CardContent className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              Java 扫描路径
+              {t('settings.paths.javaPaths')}
             </label>
             <div className="space-y-2">
               {scanPaths?.java_paths.map((path, index) => (
@@ -302,7 +330,7 @@ function PathsSettings() {
                   <Button
                     variant="outline"
                     icon={<FolderOpen size={16} />}
-                    onClick={() => handleBrowseArrayPath('java_paths', index, '选择 Java 目录')}
+                    onClick={() => handleBrowseArrayPath('java_paths', index, t('java.title'))}
                   />
                   <Button
                     variant="ghost"
@@ -317,14 +345,14 @@ function PathsSettings() {
                 onClick={() => handleAddPath('java_paths')}
                 className="mt-2"
               >
-                添加路径
+                {t('settings.paths.addPath')}
               </Button>
             </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              Node 扫描路径
+              {t('settings.paths.nodePaths')}
             </label>
             <div className="space-y-2">
               {scanPaths?.node_paths.map((path, index) => (
@@ -339,7 +367,7 @@ function PathsSettings() {
                   <Button
                     variant="outline"
                     icon={<FolderOpen size={16} />}
-                    onClick={() => handleBrowseArrayPath('node_paths', index, '选择 Node 目录')}
+                    onClick={() => handleBrowseArrayPath('node_paths', index, t('node.title'))}
                   />
                   <Button
                     variant="ghost"
@@ -354,37 +382,43 @@ function PathsSettings() {
                 onClick={() => handleAddPath('node_paths')}
                 className="mt-2"
               >
-                添加路径
+                {t('settings.paths.addPath')}
               </Button>
             </div>
           </div>
 
           <PathInputSingle
-            label="Maven 主目录"
+            label={t('settings.paths.mavenHome')}
             value={scanPaths?.maven_home || ''}
             placeholder="~/.m2"
             onChange={(value) => scanPaths && setScanPaths({ ...scanPaths, maven_home: value })}
-            onBrowse={() => handleBrowseFolder('maven_home', '选择 Maven 目录')}
+            onBrowse={() => handleBrowseFolder('maven_home', t('maven.title'))}
+            browseLabel={t('common.browse')}
           />
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader title="AEM 目录" subtitle="AEM 安装的默认路径" />
+        <CardHeader
+          title={t('settings.paths.aemDirs')}
+          subtitle={t('settings.paths.aemDirsDesc')}
+        />
         <CardContent className="space-y-4">
           <PathInputSingle
-            label="AEM 基础目录"
+            label={t('settings.paths.aemBaseDir')}
             value={scanPaths?.aem_base_dir || ''}
             placeholder="/opt/aem"
             onChange={(value) => scanPaths && setScanPaths({ ...scanPaths, aem_base_dir: value })}
-            onBrowse={() => handleBrowseFolder('aem_base_dir', '选择 AEM 目录')}
+            onBrowse={() => handleBrowseFolder('aem_base_dir', t('settings.paths.aemBaseDir'))}
+            browseLabel={t('common.browse')}
           />
           <PathInputSingle
-            label="日志目录"
+            label={t('settings.paths.logsDir')}
             value={scanPaths?.logs_dir || ''}
             placeholder="/var/log/aem"
             onChange={(value) => scanPaths && setScanPaths({ ...scanPaths, logs_dir: value })}
-            onBrowse={() => handleBrowseFolder('logs_dir', '选择日志目录')}
+            onBrowse={() => handleBrowseFolder('logs_dir', t('settings.paths.logsDir'))}
+            browseLabel={t('common.browse')}
           />
         </CardContent>
       </Card>
@@ -395,7 +429,7 @@ function PathsSettings() {
           disabled={isSaving}
           icon={isSaving ? undefined : <Check size={16} />}
         >
-          {isSaving ? '保存中...' : '保存设置'}
+          {isSaving ? t('settings.paths.saving') : t('settings.paths.saveSettings')}
         </Button>
       </div>
     </div>
@@ -403,6 +437,7 @@ function PathsSettings() {
 }
 
 function DataSettings() {
+  const { t } = useTranslation();
   const addNotification = useAppStore((s) => s.addNotification);
   const reset = useAppStore((s) => s.reset);
   const [isExporting, setIsExporting] = useState(false);
@@ -417,21 +452,24 @@ function DataSettings() {
       if (result.success) {
         addNotification({
           type: 'success',
-          title: '导出成功',
-          message: `已导出 ${result.profiles_count} 个配置文件和 ${result.instances_count} 个实例`,
+          title: t('settings.data.exportSuccess'),
+          message: t('settings.data.exportedCount', {
+            profiles: result.profiles_count,
+            instances: result.instances_count,
+          }),
         });
       } else if (result.error !== '操作已取消') {
         addNotification({
           type: 'error',
-          title: '导出失败',
-          message: result.error || '未知错误',
+          title: t('settings.data.exportFailed'),
+          message: result.error || t('common.unknown'),
         });
       }
     } catch (error) {
       addNotification({
         type: 'error',
-        title: '导出失败',
-        message: error instanceof Error ? error.message : '未知错误',
+        title: t('settings.data.exportFailed'),
+        message: error instanceof Error ? error.message : t('common.unknown'),
       });
     } finally {
       setIsExporting(false);
@@ -445,23 +483,26 @@ function DataSettings() {
       if (result.success) {
         addNotification({
           type: 'success',
-          title: '导入成功',
-          message: `已导入 ${result.profiles_imported} 个配置文件和 ${result.instances_imported} 个实例`,
+          title: t('settings.data.importSuccess'),
+          message: t('settings.data.importedCount', {
+            profiles: result.profiles_imported,
+            instances: result.instances_imported,
+          }),
         });
         // Reload the page to reflect imported data
         window.location.reload();
       } else if (result.errors[0] !== '操作已取消') {
         addNotification({
           type: 'error',
-          title: '导入失败',
+          title: t('settings.data.importFailed'),
           message: result.errors.join('; '),
         });
       }
     } catch (error) {
       addNotification({
         type: 'error',
-        title: '导入失败',
-        message: error instanceof Error ? error.message : '未知错误',
+        title: t('settings.data.importFailed'),
+        message: error instanceof Error ? error.message : t('common.unknown'),
       });
     } finally {
       setIsImporting(false);
@@ -477,8 +518,11 @@ function DataSettings() {
         reset();
         addNotification({
           type: 'success',
-          title: '重置成功',
-          message: `已删除 ${result.profiles_deleted} 个配置文件和 ${result.instances_deleted} 个实例`,
+          title: t('settings.data.resetSuccess'),
+          message: t('settings.data.resetCount', {
+            profiles: result.profiles_deleted,
+            instances: result.instances_deleted,
+          }),
         });
         setShowResetConfirm(false);
         // Reload the page to reflect reset state
@@ -486,15 +530,15 @@ function DataSettings() {
       } else {
         addNotification({
           type: 'error',
-          title: '重置失败',
-          message: result.error || '未知错误',
+          title: t('settings.data.resetFailed'),
+          message: result.error || t('common.unknown'),
         });
       }
     } catch (error) {
       addNotification({
         type: 'error',
-        title: '重置失败',
-        message: error instanceof Error ? error.message : '未知错误',
+        title: t('settings.data.resetFailed'),
+        message: error instanceof Error ? error.message : t('common.unknown'),
       });
     } finally {
       setIsResetting(false);
@@ -504,7 +548,10 @@ function DataSettings() {
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader title="导出 / 导入" subtitle="备份和恢复您的配置" />
+        <CardHeader
+          title={t('settings.data.exportImport')}
+          subtitle={t('settings.data.exportImportDesc')}
+        />
         <CardContent className="space-y-4">
           <div className="flex gap-4">
             <Button
@@ -513,7 +560,7 @@ function DataSettings() {
               onClick={handleExport}
               disabled={isExporting}
             >
-              {isExporting ? '导出中...' : '导出配置'}
+              {isExporting ? t('settings.data.exporting') : t('settings.data.export')}
             </Button>
             <Button
               variant="outline"
@@ -521,23 +568,28 @@ function DataSettings() {
               onClick={handleImport}
               disabled={isImporting}
             >
-              {isImporting ? '导入中...' : '导入配置'}
+              {isImporting ? t('settings.data.importing') : t('settings.data.import')}
             </Button>
           </div>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            导出包含所有配置文件、实例和设置。敏感数据如密码会被加密。
+            {t('settings.data.exportImportNote')}
           </p>
         </CardContent>
       </Card>
 
       <Card className="border-error-200 dark:border-error-800">
-        <CardHeader title="危险区域" subtitle="不可逆的操作" />
+        <CardHeader
+          title={t('settings.data.dangerZone')}
+          subtitle={t('settings.data.dangerZoneDesc')}
+        />
         <CardContent>
           <div className="flex items-center justify-between p-4 bg-error-50 dark:bg-error-900/30 rounded-lg">
             <div>
-              <p className="font-medium text-error-700 dark:text-error-400">重置所有设置</p>
+              <p className="font-medium text-error-700 dark:text-error-400">
+                {t('settings.data.resetAll')}
+              </p>
               <p className="text-sm text-error-600 dark:text-error-500">
-                这将删除所有配置文件、实例并重置为默认值
+                {t('settings.data.resetAllDesc')}
               </p>
             </div>
             <Button
@@ -545,7 +597,7 @@ function DataSettings() {
               icon={<RotateCcw size={16} />}
               onClick={() => setShowResetConfirm(true)}
             >
-              重置
+              {t('settings.data.reset')}
             </Button>
           </div>
         </CardContent>
@@ -562,21 +614,22 @@ function DataSettings() {
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                    确认重置
+                    {t('settings.data.confirmReset')}
                   </h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">此操作不可撤销</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {t('settings.data.cannotUndo')}
+                  </p>
                 </div>
               </div>
               <p className="text-slate-600 dark:text-slate-400 mb-6">
-                您确定要重置所有设置吗？这将删除所有配置文件、AEM
-                实例配置和应用程序设置。此操作无法恢复。
+                {t('settings.data.confirmResetMessage')}
               </p>
               <div className="flex justify-end gap-3">
                 <Button variant="outline" onClick={() => setShowResetConfirm(false)}>
-                  取消
+                  {t('common.cancel')}
                 </Button>
                 <Button variant="danger" onClick={handleReset} disabled={isResetting}>
-                  {isResetting ? '重置中...' : '确认重置'}
+                  {isResetting ? t('settings.data.resetting') : t('settings.data.confirmReset')}
                 </Button>
               </div>
             </div>
@@ -652,9 +705,17 @@ interface PathInputSingleProps {
   placeholder: string;
   onChange: (value: string) => void;
   onBrowse: () => void;
+  browseLabel?: string;
 }
 
-function PathInputSingle({ label, value, placeholder, onChange, onBrowse }: PathInputSingleProps) {
+function PathInputSingle({
+  label,
+  value,
+  placeholder,
+  onChange,
+  onBrowse,
+  browseLabel = '浏览',
+}: PathInputSingleProps) {
   return (
     <div>
       <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
@@ -669,7 +730,7 @@ function PathInputSingle({ label, value, placeholder, onChange, onBrowse }: Path
           className="input flex-1"
         />
         <Button variant="outline" icon={<FolderOpen size={16} />} onClick={onBrowse}>
-          浏览
+          {browseLabel}
         </Button>
       </div>
     </div>

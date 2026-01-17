@@ -14,9 +14,10 @@
     @apply bg-slate-50 text-slate-900 antialiased;
   }
 
-  /* Dark mode base */
+  /* Dark mode base - Technical Theme */
   .dark body {
-    @apply bg-slate-900 text-slate-100;
+    background-color: #1f1f1f;
+    color: #e5e7eb;
   }
 }
 
@@ -46,17 +47,30 @@
     @apply bg-white/60;
   }
 
-  /* Panels */
+  /* Panels - Technical Theme in dark mode */
   .panel {
-    @apply bg-white dark:bg-slate-800 rounded-2xl shadow-panel dark:shadow-none dark:border dark:border-slate-700;
+    @apply bg-white rounded-2xl shadow-panel;
+  }
+  .dark .panel {
+    background-color: #262626;
+    border: 1px solid #475569;
+    box-shadow: none;
   }
 
   .panel-soft {
-    @apply bg-white dark:bg-slate-800 rounded-xl shadow-soft dark:shadow-none dark:border dark:border-slate-700;
+    @apply bg-white rounded-xl shadow-soft;
+  }
+  .dark .panel-soft {
+    background-color: #262626;
+    border: 1px solid #475569;
+    box-shadow: none;
   }
 
   .panel-flat {
-    @apply bg-slate-50 dark:bg-slate-700/50 rounded-xl;
+    @apply bg-slate-50 rounded-xl;
+  }
+  .dark .panel-flat {
+    background-color: #2a2a2a;
   }
 
   /* Buttons */
@@ -64,44 +78,78 @@
     @apply px-4 py-2 rounded-xl font-semibold text-white transition-all duration-200;
     background: linear-gradient(135deg, #0ea5e9, #0284c7);
   }
-
   .btn-azure:hover {
     @apply shadow-glow-azure -translate-y-0.5;
     background: linear-gradient(135deg, #38bdf8, #0ea5e9);
+  }
+  /* Dark mode: use orange accent */
+  .dark .btn-azure {
+    background: linear-gradient(135deg, #f97316, #ea580c);
+  }
+  .dark .btn-azure:hover {
+    background: linear-gradient(135deg, #fb923c, #f97316);
+    box-shadow: 0 4px 14px -2px rgba(249, 115, 22, 0.25);
   }
 
   .btn-teal {
     @apply px-4 py-2 rounded-xl font-semibold text-white transition-all duration-200;
     background: linear-gradient(135deg, #14b8a6, #0d9488);
   }
-
   .btn-teal:hover {
     @apply shadow-glow-teal -translate-y-0.5;
     background: linear-gradient(135deg, #2dd4bf, #14b8a6);
   }
-
-  .btn-soft {
-    @apply px-4 py-2 rounded-xl font-medium text-azure-500 bg-azure-50 dark:bg-azure-900/30 dark:text-azure-400 transition-all duration-200;
+  /* Dark mode: use orange accent */
+  .dark .btn-teal {
+    background: linear-gradient(135deg, #f97316, #ea580c);
+  }
+  .dark .btn-teal:hover {
+    background: linear-gradient(135deg, #fb923c, #f97316);
+    box-shadow: 0 4px 14px -2px rgba(249, 115, 22, 0.25);
   }
 
+  .btn-soft {
+    @apply px-4 py-2 rounded-xl font-medium text-azure-500 bg-azure-50 transition-all duration-200;
+  }
+  .dark .btn-soft {
+    color: #fb923c;
+    background-color: rgba(249, 115, 22, 0.15);
+  }
   .btn-soft:hover {
-    @apply bg-azure-100 dark:bg-azure-900/50;
+    @apply bg-azure-100;
+  }
+  .dark .btn-soft:hover {
+    background-color: rgba(249, 115, 22, 0.25);
   }
 
   .btn-outline {
-    @apply px-4 py-2 rounded-xl font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border-[1.5px] border-slate-200 dark:border-slate-600 transition-all duration-200;
+    @apply px-4 py-2 rounded-xl font-medium text-slate-600 bg-white border-[1.5px] border-slate-200 transition-all duration-200;
   }
-
+  .dark .btn-outline {
+    color: #e5e7eb;
+    background-color: #262626;
+    border-color: #475569;
+  }
   .btn-outline:hover {
-    @apply bg-slate-50 dark:bg-slate-700 border-slate-300 dark:border-slate-500;
+    @apply bg-slate-50 border-slate-300;
+  }
+  .dark .btn-outline:hover {
+    background-color: #2a2a2a;
+    border-color: #64748b;
   }
 
   .btn-ghost {
-    @apply px-4 py-2 rounded-xl font-medium text-slate-500 dark:text-slate-400 transition-all duration-200;
+    @apply px-4 py-2 rounded-xl font-medium text-slate-500 transition-all duration-200;
   }
-
+  .dark .btn-ghost {
+    color: #9ca3af;
+  }
   .btn-ghost:hover {
-    @apply bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300;
+    @apply bg-slate-100 text-slate-600;
+  }
+  .dark .btn-ghost:hover {
+    background-color: #2a2a2a;
+    color: #e5e7eb;
   }
 
   /* Badges */
@@ -145,8 +193,8 @@
   }
 
   :is(.dark .badge-azure) {
-    color: #38bdf8;
-    background: linear-gradient(135deg, rgba(14, 165, 233, 0.2), rgba(56, 189, 248, 0.2));
+    color: #fb923c;
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.2), rgba(251, 146, 60, 0.2));
   }
 
   .badge-teal {
@@ -155,8 +203,8 @@
   }
 
   :is(.dark .badge-teal) {
-    color: #2dd4bf;
-    background: linear-gradient(135deg, rgba(20, 184, 166, 0.2), rgba(45, 212, 191, 0.2));
+    color: #fb923c;
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.2), rgba(251, 146, 60, 0.2));
   }
 
   .badge-slate {
@@ -189,33 +237,53 @@
     @apply bg-error-500;
   }
 
-  /* Cards */
+  /* Cards - Technical Theme in dark mode */
   .card {
-    @apply bg-white dark:bg-slate-800 rounded-xl p-4 shadow-soft dark:shadow-none dark:border dark:border-slate-700 transition-all duration-200;
+    @apply bg-white rounded-xl p-4 shadow-soft transition-all duration-200;
+  }
+  .dark .card {
+    background-color: #262626;
+    border: 1px solid #475569;
+    box-shadow: none;
   }
 
   .card:hover {
-    @apply shadow-panel dark:shadow-none -translate-y-0.5;
+    @apply shadow-panel -translate-y-0.5;
+  }
+  .dark .card:hover {
+    box-shadow: none;
   }
 
   .card-interactive {
     @apply cursor-pointer;
   }
 
-  /* Inputs */
+  /* Inputs - Technical Theme in dark mode */
   .input {
-    @apply w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100
-           placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-all duration-200
+    @apply w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900
+           placeholder:text-slate-400 transition-all duration-200
            focus:outline-none focus:ring-2 focus:ring-azure-500/20 focus:border-azure-500;
+  }
+  .dark .input {
+    background-color: #2a2a2a;
+    border-color: #475569;
+    color: #e5e7eb;
+  }
+  .dark .input::placeholder {
+    color: #6b7280;
+  }
+  .dark .input:focus {
+    border-color: #f97316;
+    box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2);
   }
 
   .input-error {
     @apply border-error-500 focus:ring-error-500/20 focus:border-error-500;
   }
 
-  /* Select */
+  /* Select - Technical Theme in dark mode */
   .select {
-    @apply w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100
+    @apply w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900
            appearance-none cursor-pointer transition-all duration-200
            focus:outline-none focus:ring-2 focus:ring-azure-500/20 focus:border-azure-500;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394A3B8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
@@ -223,6 +291,15 @@
     background-position: right 12px center;
     background-size: 20px;
     padding-right: 44px;
+  }
+  .dark .select {
+    background-color: #2a2a2a;
+    border-color: #475569;
+    color: #e5e7eb;
+  }
+  .dark .select:focus {
+    border-color: #f97316;
+    box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2);
   }
 
   /* Scrollbar */

@@ -1,0 +1,246 @@
+{
+  "app": {
+    "title": "AEM Environment Manager",
+    "version": "v0.1.0"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "profiles": "Profiles",
+    "instances": "AEM Instances",
+    "java": "Java",
+    "node": "Node",
+    "maven": "Maven",
+    "licenses": "Licenses",
+    "settings": "Settings"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "refresh": "Refresh",
+    "search": "Search",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "warning": "Warning",
+    "info": "Info",
+    "confirm": "Confirm",
+    "close": "Close",
+    "yes": "Yes",
+    "no": "No",
+    "browse": "Browse",
+    "unknown": "Unknown",
+    "none": "None"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome to AEM Environment Manager",
+    "quickActions": "Quick Actions",
+    "scanEnv": "Scan Environment",
+    "newProfile": "New Profile",
+    "addInstance": "Add Instance",
+    "openTerminal": "Open Terminal",
+    "aemInstances": "AEM Instances",
+    "viewAll": "View All",
+    "noInstances": "No AEM instances configured",
+    "moreInstances": "{count} more instances...",
+    "profileSwitcher": {
+      "selectProfile": "Select Profile",
+      "current": "Current",
+      "switchEnv": "Switch Environment",
+      "noProfiles": "No profiles available"
+    },
+    "stats": {
+      "profiles": "Profiles",
+      "instances": "Instances",
+      "javaVersions": "Java Versions",
+      "nodeVersions": "Node Versions"
+    },
+    "scanning": "Scanning...",
+    "scanningVersions": "Scanning versions and checking instances",
+    "scanComplete": "Scan Complete",
+    "allDataUpdated": "All data has been updated",
+    "scanFailed": "Scan Failed",
+    "featureInProgress": "Feature in development..."
+  },
+  "instance": {
+    "title": "AEM Instances",
+    "subtitle": "Manage your AEM instances",
+    "add": "Add Instance",
+    "status": {
+      "running": "Running",
+      "stopped": "Stopped",
+      "starting": "Starting",
+      "stopping": "Stopping",
+      "error": "Error"
+    },
+    "type": {
+      "author": "Author",
+      "publish": "Publish"
+    },
+    "actions": {
+      "start": "Start",
+      "stop": "Stop",
+      "crxde": "CRXDE",
+      "packageManager": "Package Manager",
+      "console": "Console",
+      "openBrowser": "Open in Browser"
+    },
+    "notifications": {
+      "started": "Instance Started",
+      "runningMessage": "Instance is running",
+      "stopped": "Instance Stopped",
+      "stoppedMessage": "Instance has been stopped",
+      "startFailed": "Start Failed",
+      "cannotStart": "Cannot start instance",
+      "stopFailed": "Stop Failed",
+      "cannotStop": "Cannot stop instance",
+      "openBrowserFailed": "Failed to open browser",
+      "startingProgress": "Starting...",
+      "stoppingProgress": "Stopping..."
+    },
+    "fields": {
+      "name": "Name",
+      "host": "Host",
+      "port": "Port",
+      "type": "Type",
+      "version": "Version",
+      "runningTime": "Running Time"
+    }
+  },
+  "profile": {
+    "title": "Profiles",
+    "subtitle": "Manage your development environment profiles",
+    "add": "Add Profile",
+    "fields": {
+      "name": "Profile Name",
+      "description": "Description",
+      "javaVersion": "Java Version",
+      "nodeVersion": "Node Version",
+      "mavenVersion": "Maven Version"
+    },
+    "notifications": {
+      "switched": "Profile Switched",
+      "switchedTo": "Successfully switched to {name}",
+      "switchFailed": "Switch Failed",
+      "saved": "Profile Saved",
+      "deleted": "Profile Deleted"
+    }
+  },
+  "java": {
+    "title": "Java Versions",
+    "subtitle": "Manage installed Java versions",
+    "scan": "Scan Java",
+    "noVersions": "No Java versions found",
+    "fields": {
+      "version": "Version",
+      "vendor": "Vendor",
+      "path": "Path",
+      "isDefault": "Default"
+    }
+  },
+  "node": {
+    "title": "Node Versions",
+    "subtitle": "Manage installed Node.js versions",
+    "scan": "Scan Node",
+    "noVersions": "No Node versions found",
+    "fields": {
+      "version": "Version",
+      "path": "Path",
+      "isDefault": "Default"
+    }
+  },
+  "maven": {
+    "title": "Maven",
+    "subtitle": "Manage Maven configuration",
+    "fields": {
+      "version": "Version",
+      "home": "Home Directory",
+      "settingsPath": "Settings File Path"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "subtitle": "Configure application preferences",
+    "tabs": {
+      "general": "General",
+      "paths": "Paths",
+      "data": "Data"
+    },
+    "general": {
+      "appearance": "Appearance",
+      "appearanceDesc": "Customize application appearance",
+      "theme": "Theme",
+      "themeDesc": "Choose your preferred color scheme",
+      "themeLight": "Light",
+      "themeDark": "Dark",
+      "themeSystem": "System",
+      "themeUpdated": "Theme Updated",
+      "themeChangedTo": "Switched to {theme} mode",
+      "language": "Language",
+      "languageDesc": "Select interface display language",
+      "notifications": "Notifications",
+      "notificationsDesc": "Configure notification preferences",
+      "showNotifications": "Show Notifications",
+      "showNotificationsDesc": "Display desktop notifications for important events",
+      "behavior": "Behavior",
+      "behaviorDesc": "Application behavior settings",
+      "autoSwitch": "Auto Switch Profile",
+      "autoSwitchDesc": "Automatically switch environment when selecting a profile",
+      "startMinimized": "Start Minimized",
+      "startMinimizedDesc": "Minimize to system tray when starting the application"
+    },
+    "paths": {
+      "scanDirs": "Scan Directories",
+      "scanDirsDesc": "Directories to search for Java and Node installations",
+      "javaPaths": "Java Scan Paths",
+      "nodePaths": "Node Scan Paths",
+      "mavenHome": "Maven Home",
+      "aemDirs": "AEM Directories",
+      "aemDirsDesc": "Default paths for AEM installations",
+      "aemBaseDir": "AEM Base Directory",
+      "logsDir": "Logs Directory",
+      "addPath": "Add Path",
+      "saveSettings": "Save Settings",
+      "saving": "Saving...",
+      "loadFailed": "Load Failed",
+      "saveFailed": "Save Failed",
+      "saveSuccess": "Save Successful",
+      "pathsSaved": "Scan paths configuration saved"
+    },
+    "data": {
+      "exportImport": "Export / Import",
+      "exportImportDesc": "Backup and restore your configuration",
+      "export": "Export Configuration",
+      "exporting": "Exporting...",
+      "import": "Import Configuration",
+      "importing": "Importing...",
+      "exportImportNote": "Export includes all profiles, instances, and settings. Sensitive data like passwords will be encrypted.",
+      "exportSuccess": "Export Successful",
+      "exportedCount": "Exported {profiles} profiles and {instances} instances",
+      "exportFailed": "Export Failed",
+      "importSuccess": "Import Successful",
+      "importedCount": "Imported {profiles} profiles and {instances} instances",
+      "importFailed": "Import Failed",
+      "dangerZone": "Danger Zone",
+      "dangerZoneDesc": "Irreversible operations",
+      "resetAll": "Reset All Settings",
+      "resetAllDesc": "This will delete all profiles, instances and reset to defaults",
+      "reset": "Reset",
+      "resetting": "Resetting...",
+      "confirmReset": "Confirm Reset",
+      "cannotUndo": "This action cannot be undone",
+      "confirmResetMessage": "Are you sure you want to reset all settings? This will delete all profiles, AEM instance configurations, and application settings. This action cannot be recovered.",
+      "resetSuccess": "Reset Successful",
+      "resetCount": "Deleted {profiles} profiles and {instances} instances",
+      "resetFailed": "Reset Failed"
+    }
+  },
+  "language": {
+    "zhCN": "简体中文",
+    "zhTW": "繁體中文",
+    "en": "English"
+  }
+}

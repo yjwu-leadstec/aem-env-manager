@@ -1,8 +1,10 @@
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../../store';
 import * as versionApi from '../../api/version';
 
 export function QuickActionsPanel() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const addNotification = useAppStore((s) => s.addNotification);
 
@@ -10,8 +12,8 @@ export function QuickActionsPanel() {
     try {
       addNotification({
         type: 'info',
-        title: '扫描中...',
-        message: '正在扫描版本并检查实例',
+        title: t('dashboard.scanning'),
+        message: t('dashboard.scanningVersions'),
         duration: 2000,
       });
 
@@ -19,55 +21,56 @@ export function QuickActionsPanel() {
 
       addNotification({
         type: 'success',
-        title: '扫描完成',
-        message: '所有数据已更新',
+        title: t('dashboard.scanComplete'),
+        message: t('dashboard.allDataUpdated'),
       });
     } catch (error) {
       addNotification({
         type: 'error',
-        title: '扫描失败',
-        message: error instanceof Error ? error.message : '未知错误',
+        title: t('dashboard.scanFailed'),
+        message: error instanceof Error ? error.message : t('common.unknown'),
       });
     }
   };
 
   return (
     <div className="panel p-6">
-      <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-4">快捷操作</h2>
+      <h2 className="text-lg font-bold text-slate-900 dark:text-gray-100 mb-4">
+        {t('dashboard.quickActions')}
+      </h2>
       <div className="flex flex-wrap gap-3">
         <button
           className="btn-outline px-5 py-3 text-sm flex items-center gap-2"
           onClick={handleRefresh}
         >
-          <span>🔄</span> 扫描环境
+          <span>🔄</span> {t('dashboard.scanEnv')}
         </button>
 
         <button
           className="btn-outline px-5 py-3 text-sm flex items-center gap-2"
           onClick={() => navigate('/profiles?action=new')}
         >
-          <span>📋</span> 新建配置
+          <span>📋</span> {t('dashboard.newProfile')}
         </button>
 
         <button
           className="btn-outline px-5 py-3 text-sm flex items-center gap-2"
           onClick={() => navigate('/instances?action=new')}
         >
-          <span>🖥️</span> 添加实例
+          <span>🖥️</span> {t('dashboard.addInstance')}
         </button>
 
         <button
           className="btn-outline px-5 py-3 text-sm flex items-center gap-2"
           onClick={() => {
-            // Open terminal
             addNotification({
               type: 'info',
-              title: '终端',
-              message: '功能开发中...',
+              title: t('dashboard.openTerminal'),
+              message: t('dashboard.featureInProgress'),
             });
           }}
         >
-          <span>💻</span> 打开终端
+          <span>💻</span> {t('dashboard.openTerminal')}
         </button>
       </div>
     </div>
