@@ -48,15 +48,15 @@
 
   /* Panels */
   .panel {
-    @apply bg-white rounded-2xl shadow-panel;
+    @apply bg-white dark:bg-slate-800 rounded-2xl shadow-panel dark:shadow-none dark:border dark:border-slate-700;
   }
 
   .panel-soft {
-    @apply bg-white rounded-xl shadow-soft;
+    @apply bg-white dark:bg-slate-800 rounded-xl shadow-soft dark:shadow-none dark:border dark:border-slate-700;
   }
 
   .panel-flat {
-    @apply bg-slate-50 rounded-xl;
+    @apply bg-slate-50 dark:bg-slate-700/50 rounded-xl;
   }
 
   /* Buttons */
@@ -81,27 +81,27 @@
   }
 
   .btn-soft {
-    @apply px-4 py-2 rounded-xl font-medium text-azure-500 bg-azure-50 transition-all duration-200;
+    @apply px-4 py-2 rounded-xl font-medium text-azure-500 bg-azure-50 dark:bg-azure-900/30 dark:text-azure-400 transition-all duration-200;
   }
 
   .btn-soft:hover {
-    @apply bg-azure-100;
+    @apply bg-azure-100 dark:bg-azure-900/50;
   }
 
   .btn-outline {
-    @apply px-4 py-2 rounded-xl font-medium text-slate-600 bg-white border-[1.5px] border-slate-200 transition-all duration-200;
+    @apply px-4 py-2 rounded-xl font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border-[1.5px] border-slate-200 dark:border-slate-600 transition-all duration-200;
   }
 
   .btn-outline:hover {
-    @apply bg-slate-50 border-slate-300;
+    @apply bg-slate-50 dark:bg-slate-700 border-slate-300 dark:border-slate-500;
   }
 
   .btn-ghost {
-    @apply px-4 py-2 rounded-xl font-medium text-slate-500 transition-all duration-200;
+    @apply px-4 py-2 rounded-xl font-medium text-slate-500 dark:text-slate-400 transition-all duration-200;
   }
 
   .btn-ghost:hover {
-    @apply bg-slate-100 text-slate-600;
+    @apply bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300;
   }
 
   /* Badges */
@@ -110,32 +110,52 @@
   }
 
   .badge-success {
-    @apply text-success-600;
+    @apply text-success-600 dark:text-success-400;
     background: linear-gradient(135deg, #dcfce7, #d1fae5);
   }
 
+  :is(.dark .badge-success) {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(16, 185, 129, 0.2));
+  }
+
   .badge-warning {
-    @apply text-warning-600;
+    @apply text-warning-600 dark:text-warning-400;
     background: linear-gradient(135deg, #fef3c7, #fef9c3);
   }
 
+  :is(.dark .badge-warning) {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(234, 179, 8, 0.2));
+  }
+
   .badge-error {
-    @apply text-error-600;
+    @apply text-error-600 dark:text-error-400;
     background: linear-gradient(135deg, #fee2e2, #fecaca);
   }
 
+  :is(.dark .badge-error) {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(248, 113, 113, 0.2));
+  }
+
   .badge-azure {
-    @apply text-azure-600;
+    @apply text-azure-600 dark:text-azure-400;
     background: linear-gradient(135deg, #e0f2fe, #dbeafe);
   }
 
+  :is(.dark .badge-azure) {
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.2), rgba(56, 189, 248, 0.2));
+  }
+
   .badge-teal {
-    @apply text-teal-600;
+    @apply text-teal-600 dark:text-teal-400;
     background: linear-gradient(135deg, #ccfbf1, #d1fae5);
   }
 
+  :is(.dark .badge-teal) {
+    background: linear-gradient(135deg, rgba(20, 184, 166, 0.2), rgba(45, 212, 191, 0.2));
+  }
+
   .badge-slate {
-    @apply text-slate-500 bg-slate-100;
+    @apply text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-700;
   }
 
   /* Status indicators */
@@ -162,11 +182,11 @@
 
   /* Cards */
   .card {
-    @apply bg-white rounded-xl p-4 shadow-soft transition-all duration-200;
+    @apply bg-white dark:bg-slate-800 rounded-xl p-4 shadow-soft dark:shadow-none dark:border dark:border-slate-700 transition-all duration-200;
   }
 
   .card:hover {
-    @apply shadow-panel -translate-y-0.5;
+    @apply shadow-panel dark:shadow-none -translate-y-0.5;
   }
 
   .card-interactive {
@@ -175,8 +195,8 @@
 
   /* Inputs */
   .input {
-    @apply w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900
-           placeholder:text-slate-400 transition-all duration-200
+    @apply w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100
+           placeholder:text-slate-400 dark:placeholder:text-slate-500 transition-all duration-200
            focus:outline-none focus:ring-2 focus:ring-azure-500/20 focus:border-azure-500;
   }
 
@@ -186,7 +206,7 @@
 
   /* Select */
   .select {
-    @apply w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900
+    @apply w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100
            appearance-none cursor-pointer transition-all duration-200
            focus:outline-none focus:ring-2 focus:ring-azure-500/20 focus:border-azure-500;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394A3B8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");

@@ -1,7 +1,4 @@
 import { useNavigate } from 'react-router-dom';
-import { Play, Server, RefreshCw, FolderPlus, Settings, Download, FileUp } from 'lucide-react';
-import { Card, CardHeader, CardContent } from '../common/Card';
-import { Button } from '../common/Button';
 import { useAppStore } from '../../store';
 import * as versionApi from '../../api/version';
 
@@ -13,7 +10,7 @@ export function QuickActionsPanel() {
     try {
       addNotification({
         type: 'info',
-        title: '刷新中...',
+        title: '扫描中...',
         message: '正在扫描版本并检查实例',
         duration: 2000,
       });
@@ -22,84 +19,57 @@ export function QuickActionsPanel() {
 
       addNotification({
         type: 'success',
-        title: '刷新完成',
+        title: '扫描完成',
         message: '所有数据已更新',
       });
     } catch (error) {
       addNotification({
         type: 'error',
-        title: '刷新失败',
+        title: '扫描失败',
         message: error instanceof Error ? error.message : '未知错误',
       });
     }
   };
 
   return (
-    <Card>
-      <CardHeader title="快捷操作" />
-      <CardContent className="space-y-3">
-        <Button
-          variant="primary"
-          fullWidth
-          icon={<Play size={16} />}
-          onClick={() => navigate('/profiles')}
+    <div className="panel p-6">
+      <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-4">快捷操作</h2>
+      <div className="flex flex-wrap gap-3">
+        <button
+          className="btn-outline px-5 py-3 text-sm flex items-center gap-2"
+          onClick={handleRefresh}
         >
-          切换配置
-        </Button>
+          <span>🔄</span> 扫描环境
+        </button>
 
-        <Button
-          variant="secondary"
-          fullWidth
-          icon={<Server size={16} />}
-          onClick={() => navigate('/instances')}
-        >
-          管理实例
-        </Button>
-
-        <Button variant="outline" fullWidth icon={<RefreshCw size={16} />} onClick={handleRefresh}>
-          刷新状态
-        </Button>
-
-        <hr className="border-slate-200 dark:border-slate-700 my-2" />
-
-        <Button
-          variant="ghost"
-          fullWidth
-          icon={<FolderPlus size={16} />}
+        <button
+          className="btn-outline px-5 py-3 text-sm flex items-center gap-2"
           onClick={() => navigate('/profiles?action=new')}
         >
-          新建配置
-        </Button>
+          <span>📋</span> 新建配置
+        </button>
 
-        <Button
-          variant="ghost"
-          fullWidth
-          icon={<FileUp size={16} />}
-          onClick={() => navigate('/profiles?action=import')}
+        <button
+          className="btn-outline px-5 py-3 text-sm flex items-center gap-2"
+          onClick={() => navigate('/instances?action=new')}
         >
-          导入配置
-        </Button>
+          <span>🖥️</span> 添加实例
+        </button>
 
-        <Button
-          variant="ghost"
-          fullWidth
-          icon={<Download size={16} />}
-          onClick={() => navigate('/profiles?action=export')}
+        <button
+          className="btn-outline px-5 py-3 text-sm flex items-center gap-2"
+          onClick={() => {
+            // Open terminal
+            addNotification({
+              type: 'info',
+              title: '终端',
+              message: '功能开发中...',
+            });
+          }}
         >
-          导出配置
-        </Button>
-
-        <hr className="border-slate-200 dark:border-slate-700 my-2" />
-
-        <Button
-          variant="ghost"
-          fullWidth
-          icon={<Settings size={16} />}
-          onClick={() => navigate('/settings')}
-        >
-          设置
-        </Button>
-      </CardContent>
-    </Card>
+          <span>💻</span> 打开终端
+        </button>
+      </div>
+    </div>
   );
 }

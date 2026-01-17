@@ -19,6 +19,7 @@ export function ProfileSwitcher({ onSwitchStart, onSwitchComplete }: ProfileSwit
   const [isOpen, setIsOpen] = useState(false);
   const [isSwitching, setIsSwitching] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null);
 
   const loadProfiles = useCallback(async () => {
     setIsLoading(true);
@@ -31,6 +32,7 @@ export function ProfileSwitcher({ onSwitchStart, onSwitchComplete }: ProfileSwit
       const active = apiProfiles.find((p) => p.is_active);
       if (active) {
         setActiveProfile(mapApiProfileToFrontend(active));
+        setSelectedProfileId(active.id);
       }
     } catch {
       // Failed to load profiles
@@ -44,30 +46,37 @@ export function ProfileSwitcher({ onSwitchStart, onSwitchComplete }: ProfileSwit
     loadProfiles();
   }, [loadProfiles]);
 
-  const handleSwitch = async (profileId: string) => {
-    if (profileId === activeProfile?.id || isSwitching) return;
+  // Update selected when active changes
+  useEffect(() => {
+    if (activeProfile) {
+      setSelectedProfileId(activeProfile.id);
+    }
+  }, [activeProfile]);
+
+  const handleSwitch = async () => {
+    if (!selectedProfileId || selectedProfileId === activeProfile?.id || isSwitching) return;
 
     setIsSwitching(true);
     setIsOpen(false);
     onSwitchStart?.();
 
     try {
-      const result = await profileApi.switchProfile(profileId);
+      const result = await profileApi.switchProfile(selectedProfileId);
 
       if (result.success) {
         // Reload profiles to get updated state
         await loadProfiles();
         addNotification({
           type: 'success',
-          title: 'Profile switched',
-          message: `Successfully switched to ${profiles.find((p) => p.id === profileId)?.name}`,
+          title: '配置已切换',
+          message: `已成功切换到 ${profiles.find((p) => p.id === selectedProfileId)?.name}`,
         });
         onSwitchComplete?.(true);
       } else {
-        const errorMsg = result.errors.join(', ') || 'Unknown error';
+        const errorMsg = result.errors.join(', ') || '未知错误';
         addNotification({
           type: 'error',
-          title: 'Switch failed',
+          title: '切换失败',
           message: errorMsg,
         });
         onSwitchComplete?.(false);
@@ -75,8 +84,8 @@ export function ProfileSwitcher({ onSwitchStart, onSwitchComplete }: ProfileSwit
     } catch (error) {
       addNotification({
         type: 'error',
-        title: 'Switch failed',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        title: '切换失败',
+        message: error instanceof Error ? error.message : '未知错误',
       });
       onSwitchComplete?.(false);
     } finally {
@@ -84,69 +93,97 @@ export function ProfileSwitcher({ onSwitchStart, onSwitchComplete }: ProfileSwit
     }
   };
 
+  const handleSelect = (profileId: string) => {
+    setSelectedProfileId(profileId);
+    setIsOpen(false);
+  };
+
+  const selectedProfile = profiles.find((p) => p.id === selectedProfileId);
+  const isCurrentProfile = selectedProfileId === activeProfile?.id;
+
   return (
-    <div className="relative">
+    <div className="flex items-center gap-3">
+      {/* Profile Selector Dropdown */}
+      <div className="relative">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          disabled={isSwitching || isLoading}
+          className={`
+            flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600
+            bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100
+            hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-soft
+            ${isSwitching || isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+            min-w-[200px]
+          `}
+        >
+          {isSwitching || isLoading ? (
+            <RefreshCw size={16} className="animate-spin text-azure" />
+          ) : null}
+          <span className="flex-1 text-left font-medium truncate">
+            {selectedProfile?.name || activeProfile?.name || '选择配置'}
+          </span>
+          <ChevronDown
+            size={16}
+            className={`text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          />
+        </button>
+
+        {isOpen && (
+          <>
+            <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
+            <div className="absolute top-full left-0 right-0 mt-2 z-20 bg-white dark:bg-slate-800 rounded-xl shadow-panel border border-slate-200 dark:border-slate-600 overflow-hidden">
+              <div className="py-1 max-h-60 overflow-auto">
+                {profiles.length === 0 ? (
+                  <div className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400 text-center">
+                    暂无配置
+                  </div>
+                ) : (
+                  profiles.map((profile) => (
+                    <button
+                      key={profile.id}
+                      onClick={() => handleSelect(profile.id)}
+                      className={`
+                        w-full flex items-center gap-3 px-4 py-2.5 text-left
+                        hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors
+                        ${profile.id === selectedProfileId ? 'bg-azure-50 dark:bg-azure-900/30' : ''}
+                      `}
+                    >
+                      <div className="flex-1">
+                        <div className="font-medium text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                          {profile.name}
+                          {profile.id === activeProfile?.id && (
+                            <span className="badge-azure text-xs px-2 py-0.5 rounded-full">
+                              当前
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400">
+                          Java {profile.javaVersion || '-'} · Node {profile.nodeVersion || '-'}
+                        </div>
+                      </div>
+                      {profile.id === selectedProfileId && (
+                        <Check size={16} className="text-azure" />
+                      )}
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Switch Button */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        disabled={isSwitching || isLoading}
+        onClick={handleSwitch}
+        disabled={isCurrentProfile || isSwitching || isLoading}
         className={`
-          flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600
-          bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100
-          hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors
-          ${isSwitching || isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-          min-w-[200px]
+          btn-teal px-5 py-2.5 text-sm
+          ${isCurrentProfile || isSwitching || isLoading ? 'opacity-50 cursor-not-allowed' : ''}
         `}
       >
-        {isSwitching || isLoading ? (
-          <RefreshCw size={16} className="animate-spin text-azure" />
-        ) : (
-          <div className="w-2 h-2 rounded-full bg-success-500" />
-        )}
-        <span className="flex-1 text-left font-medium truncate">
-          {activeProfile?.name || 'Select Profile'}
-        </span>
-        <ChevronDown
-          size={16}
-          className={`text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-        />
+        {isSwitching ? <RefreshCw size={16} className="animate-spin" /> : '切换环境'}
       </button>
-
-      {isOpen && (
-        <>
-          <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
-          <div className="absolute top-full left-0 right-0 mt-2 z-20 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-600 overflow-hidden">
-            <div className="py-1 max-h-60 overflow-auto">
-              {profiles.length === 0 ? (
-                <div className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400 text-center">
-                  No profiles available
-                </div>
-              ) : (
-                profiles.map((profile) => (
-                  <button
-                    key={profile.id}
-                    onClick={() => handleSwitch(profile.id)}
-                    className={`
-                      w-full flex items-center gap-3 px-4 py-2.5 text-left
-                      hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors
-                      ${profile.id === activeProfile?.id ? 'bg-azure-50 dark:bg-azure-900/30' : ''}
-                    `}
-                  >
-                    <div className="flex-1">
-                      <div className="font-medium text-slate-900 dark:text-slate-100">
-                        {profile.name}
-                      </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400">
-                        Java {profile.javaVersion || '-'} · Node {profile.nodeVersion || '-'}
-                      </div>
-                    </div>
-                    {profile.id === activeProfile?.id && <Check size={16} className="text-azure" />}
-                  </button>
-                ))
-              )}
-            </div>
-          </div>
-        </>
-      )}
     </div>
   );
 }

@@ -1,40 +1,73 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Coffee, Hexagon, FileCode, Folder, RefreshCw } from 'lucide-react';
-import { Card } from '../common/Card';
+import { useNavigate } from 'react-router-dom';
+import { RefreshCw, ExternalLink } from 'lucide-react';
 import * as versionApi from '../../api/version';
 
 interface StatusCardProps {
-  icon: React.ReactNode;
+  icon: string;
+  iconBgClass: string;
   label: string;
   value: string | number;
   subtext: string;
+  isActive?: boolean;
   isLoading?: boolean;
   onClick?: () => void;
+  actionLabel?: string;
+  onAction?: () => void;
 }
 
-function StatusCard({ icon, label, value, subtext, isLoading, onClick }: StatusCardProps) {
+function StatusCard({
+  icon,
+  iconBgClass,
+  label,
+  value,
+  subtext,
+  isActive = true,
+  isLoading,
+  onClick,
+  actionLabel,
+  onAction,
+}: StatusCardProps) {
   return (
-    <Card className={onClick ? 'cursor-pointer' : ''} hover={!!onClick} onClick={onClick}>
-      <div className="flex items-start justify-between">
-        <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-700">{icon}</div>
-        {isLoading && <RefreshCw size={14} className="animate-spin text-slate-400" />}
+    <div
+      className={`panel p-5 ${onClick ? 'cursor-pointer hover:shadow-elevated transition-shadow' : ''}`}
+      onClick={onClick}
+    >
+      <div className="flex items-center justify-between mb-4">
+        <div
+          className={`w-12 h-12 ${iconBgClass} rounded-xl flex items-center justify-center shadow-soft`}
+        >
+          <span className="text-2xl">{icon}</span>
+        </div>
+        {isLoading ? (
+          <RefreshCw size={14} className="animate-spin text-slate-400" />
+        ) : isActive ? (
+          <span className="badge-success text-xs px-2.5 py-1 rounded-full">Active</span>
+        ) : actionLabel && onAction ? (
+          <button
+            className="text-azure text-xs font-semibold hover:text-azure-600 transition-colors flex items-center gap-1"
+            onClick={(e) => {
+              e.stopPropagation();
+              onAction();
+            }}
+          >
+            {actionLabel} <ExternalLink size={12} />
+          </button>
+        ) : null}
       </div>
-      <div className="mt-4">
-        <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 truncate">
-          {isLoading ? '...' : value}
-        </p>
-        <p className="text-sm font-medium text-slate-600 dark:text-slate-300 mt-1">{label}</p>
-        <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">{subtext}</p>
+      <div className="text-slate-500 dark:text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">
+        {label}
       </div>
-    </Card>
+      <div className="text-3xl font-bold text-slate-900 dark:text-slate-100 truncate">
+        {isLoading ? '...' : value}
+      </div>
+      <div className="text-slate-400 dark:text-slate-500 text-sm mt-1 truncate">{subtext}</div>
+    </div>
   );
 }
 
-interface StatusCardsProps {
-  onCardClick?: (type: 'java' | 'node' | 'maven' | 'project') => void;
-}
-
-export function StatusCards({ onCardClick }: StatusCardsProps) {
+export function StatusCards() {
+  const navigate = useNavigate();
   const [versionInfo, setVersionInfo] = useState<versionApi.VersionInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -54,57 +87,70 @@ export function StatusCards({ onCardClick }: StatusCardsProps) {
     loadVersionInfo();
   }, [loadVersionInfo]);
 
-  const javaValue = versionInfo?.java.current || 'Not detected';
-  const nodeValue = versionInfo?.node.current || 'Not detected';
-  const mavenValue = versionInfo?.maven.current?.name || 'Default';
+  // Extract Java major version number
+  const javaVersion = versionInfo?.java.current;
+  const javaDisplay = javaVersion ? javaVersion.split('.')[0] : '--';
+  const javaSubtext = versionInfo?.java.current
+    ? `${versionInfo.java.current} Corretto`
+    : '未检测到';
 
-  const javaSubtext = versionInfo
-    ? `${versionInfo.java.versions.length} versions available`
-    : 'Loading...';
+  // Extract Node major version number
+  const nodeVersion = versionInfo?.node.current;
+  const nodeDisplay = nodeVersion ? nodeVersion.replace('v', '').split('.')[0] : '--';
+  const nodeSubtext = versionInfo?.node.current ? `${versionInfo.node.current} LTS` : '未检测到';
 
-  const nodeSubtext = versionInfo
-    ? `${versionInfo.node.versions.length} versions available`
-    : 'Loading...';
-
-  const mavenSubtext = versionInfo
-    ? `${versionInfo.maven.configs.length} configurations`
-    : 'Loading...';
+  // Maven config
+  const mavenDisplay = versionInfo?.maven.current?.name || 'default';
+  const mavenSubtext = versionInfo?.maven.current?.path
+    ? versionInfo.maven.current.path.split('/').pop() || 'settings.xml'
+    : 'settings.xml';
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
       <StatusCard
-        icon={<Coffee className="text-warning-500" size={20} />}
-        label="Java Version"
-        value={javaValue}
+        icon="☕"
+        iconBgClass="bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30"
+        label="Java"
+        value={javaDisplay}
         subtext={javaSubtext}
+        isActive={!!versionInfo?.java.current}
         isLoading={isLoading}
-        onClick={() => onCardClick?.('java')}
+        onClick={() => navigate('/java')}
       />
 
       <StatusCard
-        icon={<Hexagon className="text-success-500" size={20} />}
-        label="Node Version"
-        value={nodeValue}
+        icon="📦"
+        iconBgClass="bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30"
+        label="Node"
+        value={nodeDisplay}
         subtext={nodeSubtext}
+        isActive={!!versionInfo?.node.current}
         isLoading={isLoading}
-        onClick={() => onCardClick?.('node')}
+        onClick={() => navigate('/node')}
       />
 
       <StatusCard
-        icon={<FileCode className="text-azure-500" size={20} />}
-        label="Maven Config"
-        value={mavenValue}
+        icon="🔧"
+        iconBgClass="bg-gradient-to-br from-sky-100 to-blue-100 dark:from-sky-900/30 dark:to-blue-900/30"
+        label="Maven"
+        value={mavenDisplay}
         subtext={mavenSubtext}
+        isActive={!!versionInfo?.maven.current}
         isLoading={isLoading}
-        onClick={() => onCardClick?.('maven')}
+        onClick={() => navigate('/maven')}
       />
 
       <StatusCard
-        icon={<Folder className="text-teal-500" size={20} />}
-        label="Project Directory"
-        value="Not set"
-        subtext="No active project"
-        onClick={() => onCardClick?.('project')}
+        icon="📁"
+        iconBgClass="bg-gradient-to-br from-yellow-100 to-amber-100 dark:from-yellow-900/30 dark:to-amber-900/30"
+        label="项目"
+        value="project-a"
+        subtext="~/projects/aem-cloud"
+        isActive={false}
+        actionLabel="打开 →"
+        onAction={() => {
+          /* Open project folder */
+        }}
       />
     </div>
   );

@@ -151,3 +151,96 @@ import { useProfiles } from '@/store';
 - **Profile**: A saved configuration combining Java version, Node version, Maven settings, and AEM instances
 - **AEM Instance**: Author or Publish instance with host, port, and status
 - **Version Manager**: Tools like SDKMAN, nvm, fnm that manage runtime versions
+
+## Design Documentation
+
+### Design Reference Files
+
+All design documentation is located in the `docs/` folder:
+
+```
+docs/
+├── AEM-Environment-Manager-PRD.md          # Product Requirements Document
+├── AEM-Environment-Manager-Design.md       # Technical Design Document
+├── IMPLEMENTATION_PLAN.md                  # Implementation phases
+├── QUICK_START_BRIEF.md                    # Quick start guide
+├── PRD/                                    # PRD versions
+├── design/                                 # Design documents
+└── ui-design-themes/                       # UI Design Prototypes
+    └── aem-env-manager-ui-themes/          # All theme variations
+```
+
+### 🎯 Target UI Design: Cloud Theme
+
+**The official UI design to implement is:**
+`docs/ui-design-themes/aem-env-manager-ui-themes/aem-env-manager-ui-cloud.html`
+
+This is a fully interactive HTML prototype with the following design specifications:
+
+#### Color System
+```css
+/* Primary Azure */
+'azure': '#0EA5E9'
+'azure-light': '#38BDF8'
+'azure-dark': '#0284C7'
+'azure-50': '#F0F9FF'
+
+/* Secondary Slate */
+'slate': '#64748B'
+'slate-light': '#94A3B8'
+'slate-dark': '#475569'
+'slate-900': '#0F172A'
+
+/* Accents */
+'teal': '#14B8A6'
+'teal-light': '#2DD4BF'
+'teal-50': '#F0FDFA'
+'folder': '#FCD34D'
+'folder-dark': '#F59E0B'
+
+/* Sky gradients */
+'sky-start': '#E0F2FE'
+'sky-end': '#DBEAFE'
+
+/* Semantic */
+'success': '#22C55E'
+'warning': '#F59E0B'
+'error': '#EF4444'
+```
+
+#### Design Characteristics
+- **Background**: Sky gradient (`linear-gradient(180deg, #E0F2FE 0%, #DBEAFE 50%, #EFF6FF 100%)`)
+- **Panels**: White with soft shadows, rounded corners (16px for main, 12px for soft, 10px for flat)
+- **Navigation**: Left sidebar with 264px width, frosted glass effect (`backdrop-blur-xl`)
+- **Active nav**: White background with azure left border gradient
+- **Buttons**:
+  - Primary: Azure gradient with glow shadow on hover
+  - Teal: Teal gradient for secondary actions
+  - Soft: Light azure background
+  - Outline: White with border
+  - Ghost: Transparent with hover background
+- **Badges**: Gradient backgrounds (success, warning, error, azure, teal, slate)
+- **Status indicators**: Pulse animation for running status
+
+#### Key UI Components from Design
+1. **Dashboard**: 4-column status cards + AEM instances grid + Quick actions
+2. **Profiles Page**: Profile cards with environment badges
+3. **AEM Instances**: Detailed instance cards with status, version info, quick links
+4. **Java/Node/Maven Pages**: Version list with current highlight
+5. **Licenses Page**: License cards with expiry status
+6. **Settings Page**: Grouped settings panels with toggles
+
+#### Shadow System
+```css
+'soft': '0 2px 8px -2px rgba(0, 0, 0, 0.08), 0 4px 16px -4px rgba(0, 0, 0, 0.06)'
+'panel': '0 4px 20px -4px rgba(0, 0, 0, 0.1), 0 8px 32px -8px rgba(0, 0, 0, 0.08)'
+'elevated': '0 8px 30px -6px rgba(0, 0, 0, 0.12), 0 16px 48px -12px rgba(0, 0, 0, 0.1)'
+'glow-azure': '0 4px 14px -2px rgba(14, 165, 233, 0.25)'
+'glow-teal': '0 4px 14px -2px rgba(20, 184, 166, 0.25)'
+```
+
+### Other Available Themes (for reference)
+- `aem-env-manager-ui-dark.html` - Dark mode version
+- `aem-env-manager-ui-material.html` - Material Design
+- `aem-env-manager-ui-fluent.html` - Microsoft Fluent
+- And 15+ other creative themes
