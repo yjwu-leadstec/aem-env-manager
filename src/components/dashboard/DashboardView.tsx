@@ -23,9 +23,7 @@ export function DashboardView() {
       {/* Page Header */}
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
-        <p className="text-slate-500 mt-1">
-          Overview of your AEM development environment
-        </p>
+        <p className="text-slate-500 mt-1">Overview of your AEM development environment</p>
       </div>
 
       {/* Quick Stats */}
@@ -78,11 +76,7 @@ export function DashboardView() {
             >
               Manage Instances
             </Button>
-            <Button
-              variant="outline"
-              fullWidth
-              icon={<RefreshCw size={16} />}
-            >
+            <Button variant="outline" fullWidth icon={<RefreshCw size={16} />}>
               Refresh Status
             </Button>
           </CardContent>
@@ -109,11 +103,7 @@ export function DashboardView() {
               <EmptyState
                 message="No AEM instances configured"
                 action={
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentView('instances')}
-                  >
+                  <Button variant="outline" size="sm" onClick={() => setCurrentView('instances')}>
                     Add Instance
                   </Button>
                 }

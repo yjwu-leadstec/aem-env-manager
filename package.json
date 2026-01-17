@@ -12,7 +12,19 @@
     "tauri": "tauri",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts,.tsx",
-    "format": "prettier --write \"src/**/*.{ts,tsx,css}\""
+    "lint:fix": "eslint src --ext .ts,.tsx --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\"",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "src/**/*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "src/**/*.css": [
+      "prettier --write"
+    ]
   },
   "dependencies": {
     "@tanstack/react-router": "^1.150.0",
@@ -21,11 +33,13 @@
     "lucide-react": "^0.562.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "react-router-dom": "^6.30.3",
     "zustand": "^5.0.10"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
     "@tauri-apps/cli": "^2",
+    "@types/node": "^25.0.9",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "@typescript-eslint/eslint-plugin": "^8.53.0",
@@ -33,9 +47,14 @@
     "@vitejs/plugin-react": "^4.6.0",
     "autoprefixer": "^10.4.23",
     "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
     "postcss": "^8.5.6",
+    "prettier": "^3.8.0",
     "tailwindcss": "^3.4.19",
     "typescript": "~5.8.3",
     "vite": "^7.0.4"

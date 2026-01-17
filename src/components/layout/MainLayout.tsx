@@ -1,12 +1,9 @@
+import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { NotificationToast } from '../common/NotificationToast';
 
-interface MainLayoutProps {
-  children: React.ReactNode;
-}
-
-export function MainLayout({ children }: MainLayoutProps) {
+export function MainLayout() {
   return (
     <div className="flex h-screen bg-sky-gradient">
       <Sidebar />
@@ -15,7 +12,7 @@ export function MainLayout({ children }: MainLayoutProps) {
         <Header />
 
         <main className="flex-1 overflow-auto p-6">
-          {children}
+          <Outlet />
         </main>
       </div>
 

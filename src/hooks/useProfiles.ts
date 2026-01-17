@@ -43,90 +43,99 @@ export function useProfileManager() {
   }, [setProfiles, setActiveProfile, setLoading, setError, addNotification]);
 
   // Switch to a profile
-  const switchProfile = useCallback(async (profileId: string) => {
-    setLoading(true);
-    try {
-      const result = await profileService.switch(profileId);
-      if (result.success) {
-        const profile = profiles.find((p) => p.id === profileId);
-        if (profile) {
-          setActiveProfile(profile);
-          updateProfile(profileId, { lastUsedAt: new Date().toISOString(), isActive: true });
+  const switchProfile = useCallback(
+    async (profileId: string) => {
+      setLoading(true);
+      try {
+        const result = await profileService.switch(profileId);
+        if (result.success) {
+          const profile = profiles.find((p) => p.id === profileId);
+          if (profile) {
+            setActiveProfile(profile);
+            updateProfile(profileId, { lastUsedAt: new Date().toISOString(), isActive: true });
+          }
+          addNotification({
+            type: 'success',
+            title: 'Profile switched',
+            message: `Now using ${profile?.name || profileId}`,
+          });
+        } else {
+          throw new Error(result.error || 'Failed to switch profile');
         }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to switch profile');
         addNotification({
-          type: 'success',
-          title: 'Profile switched',
-          message: `Now using ${profile?.name || profileId}`,
+          type: 'error',
+          title: 'Profile switch failed',
+          message: err instanceof Error ? err.message : undefined,
         });
-      } else {
-        throw new Error(result.error || 'Failed to switch profile');
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to switch profile');
-      addNotification({
-        type: 'error',
-        title: 'Profile switch failed',
-        message: err instanceof Error ? err.message : undefined,
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [profiles, setActiveProfile, updateProfile, setLoading, setError, addNotification]);
+    },
+    [profiles, setActiveProfile, updateProfile, setLoading, setError, addNotification]
+  );
 
   // Create a new profile
-  const createProfile = useCallback(async (profile: Omit<EnvironmentProfile, 'id' | 'createdAt' | 'updatedAt'>) => {
-    setLoading(true);
-    try {
-      const now = new Date().toISOString();
-      const newProfile: EnvironmentProfile = {
-        ...profile,
-        id: crypto.randomUUID(),
-        createdAt: now,
-        updatedAt: now,
-        isActive: false,
-      };
-      const created = await profileService.create(newProfile);
-      addProfile(created);
-      addNotification({
-        type: 'success',
-        title: 'Profile created',
-        message: `${created.name} has been created`,
-      });
-      return created;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create profile');
-      addNotification({
-        type: 'error',
-        title: 'Failed to create profile',
-        message: err instanceof Error ? err.message : undefined,
-      });
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, [addProfile, setLoading, setError, addNotification]);
+  const createProfile = useCallback(
+    async (profile: Omit<EnvironmentProfile, 'id' | 'createdAt' | 'updatedAt'>) => {
+      setLoading(true);
+      try {
+        const now = new Date().toISOString();
+        const newProfile: EnvironmentProfile = {
+          ...profile,
+          id: crypto.randomUUID(),
+          createdAt: now,
+          updatedAt: now,
+          isActive: false,
+        };
+        const created = await profileService.create(newProfile);
+        addProfile(created);
+        addNotification({
+          type: 'success',
+          title: 'Profile created',
+          message: `${created.name} has been created`,
+        });
+        return created;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to create profile');
+        addNotification({
+          type: 'error',
+          title: 'Failed to create profile',
+          message: err instanceof Error ? err.message : undefined,
+        });
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [addProfile, setLoading, setError, addNotification]
+  );
 
   // Remove a profile
-  const removeProfile = useCallback(async (profileId: string) => {
-    setLoading(true);
-    try {
-      await profileService.delete(profileId);
-      deleteProfile(profileId);
-      addNotification({
-        type: 'success',
-        title: 'Profile deleted',
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete profile');
-      addNotification({
-        type: 'error',
-        title: 'Failed to delete profile',
-        message: err instanceof Error ? err.message : undefined,
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [deleteProfile, setLoading, setError, addNotification]);
+  const removeProfile = useCallback(
+    async (profileId: string) => {
+      setLoading(true);
+      try {
+        await profileService.delete(profileId);
+        deleteProfile(profileId);
+        addNotification({
+          type: 'success',
+          title: 'Profile deleted',
+        });
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to delete profile');
+        addNotification({
+          type: 'error',
+          title: 'Failed to delete profile',
+          message: err instanceof Error ? err.message : undefined,
+        });
+      } finally {
+        setLoading(false);
+      }
+    },
+    [deleteProfile, setLoading, setError, addNotification]
+  );
 
   useEffect(() => {
     loadProfiles();

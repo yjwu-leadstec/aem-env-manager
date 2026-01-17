@@ -20,13 +20,7 @@ export interface EnvironmentProfile {
   isActive: boolean;
 }
 
-export type JavaVendor =
-  | 'oracle'
-  | 'openjdk'
-  | 'adoptium'
-  | 'corretto'
-  | 'zulu'
-  | 'graalvm';
+export type JavaVendor = 'oracle' | 'openjdk' | 'adoptium' | 'corretto' | 'zulu' | 'graalvm';
 
 export interface AEMInstanceRef {
   instanceId: string;
@@ -47,13 +41,7 @@ export interface VersionManager {
   versions: InstalledVersion[];
 }
 
-export type VersionManagerType =
-  | 'sdkman'
-  | 'jenv'
-  | 'jabba'
-  | 'nvm'
-  | 'fnm'
-  | 'volta';
+export type VersionManagerType = 'sdkman' | 'jenv' | 'jabba' | 'nvm' | 'fnm' | 'volta';
 
 export interface InstalledVersion {
   version: string;
@@ -155,12 +143,7 @@ export interface DashboardStats {
 // UI State Types
 // ============================================
 
-export type ViewType =
-  | 'dashboard'
-  | 'profiles'
-  | 'versions'
-  | 'instances'
-  | 'settings';
+export type ViewType = 'dashboard' | 'profiles' | 'versions' | 'instances' | 'settings';
 
 export interface Notification {
   id: string;

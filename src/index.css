@@ -19,7 +19,7 @@
 @layer components {
   /* Sky gradient background */
   .sky-bg {
-    background: linear-gradient(180deg, #E0F2FE 0%, #DBEAFE 50%, #EFF6FF 100%);
+    background: linear-gradient(180deg, #e0f2fe 0%, #dbeafe 50%, #eff6ff 100%);
   }
 
   /* Navigation */
@@ -34,7 +34,7 @@
   .nav-item.active::before {
     content: '';
     @apply absolute left-0 top-2 bottom-2 w-[3px] rounded-r-sm;
-    background: linear-gradient(180deg, #0EA5E9, #14B8A6);
+    background: linear-gradient(180deg, #0ea5e9, #14b8a6);
   }
 
   .nav-item:hover:not(.active) {
@@ -57,22 +57,22 @@
   /* Buttons */
   .btn-azure {
     @apply px-4 py-2 rounded-xl font-semibold text-white transition-all duration-200;
-    background: linear-gradient(135deg, #0EA5E9, #0284C7);
+    background: linear-gradient(135deg, #0ea5e9, #0284c7);
   }
 
   .btn-azure:hover {
     @apply shadow-glow-azure -translate-y-0.5;
-    background: linear-gradient(135deg, #38BDF8, #0EA5E9);
+    background: linear-gradient(135deg, #38bdf8, #0ea5e9);
   }
 
   .btn-teal {
     @apply px-4 py-2 rounded-xl font-semibold text-white transition-all duration-200;
-    background: linear-gradient(135deg, #14B8A6, #0D9488);
+    background: linear-gradient(135deg, #14b8a6, #0d9488);
   }
 
   .btn-teal:hover {
     @apply shadow-glow-teal -translate-y-0.5;
-    background: linear-gradient(135deg, #2DD4BF, #14B8A6);
+    background: linear-gradient(135deg, #2dd4bf, #14b8a6);
   }
 
   .btn-soft {
@@ -106,27 +106,27 @@
 
   .badge-success {
     @apply text-success-600;
-    background: linear-gradient(135deg, #DCFCE7, #D1FAE5);
+    background: linear-gradient(135deg, #dcfce7, #d1fae5);
   }
 
   .badge-warning {
     @apply text-warning-600;
-    background: linear-gradient(135deg, #FEF3C7, #FEF9C3);
+    background: linear-gradient(135deg, #fef3c7, #fef9c3);
   }
 
   .badge-error {
     @apply text-error-600;
-    background: linear-gradient(135deg, #FEE2E2, #FECACA);
+    background: linear-gradient(135deg, #fee2e2, #fecaca);
   }
 
   .badge-azure {
     @apply text-azure-600;
-    background: linear-gradient(135deg, #E0F2FE, #DBEAFE);
+    background: linear-gradient(135deg, #e0f2fe, #dbeafe);
   }
 
   .badge-teal {
     @apply text-teal-600;
-    background: linear-gradient(135deg, #CCFBF1, #D1FAE5);
+    background: linear-gradient(135deg, #ccfbf1, #d1fae5);
   }
 
   .badge-slate {
@@ -211,7 +211,8 @@
 
 /* Animations */
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {

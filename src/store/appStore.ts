@@ -157,9 +157,7 @@ export const useAppStore = create<AppStore>()(
 
       updateAemInstance: (id, updates) =>
         set((state) => ({
-          aemInstances: state.aemInstances.map((i) =>
-            i.id === id ? { ...i, ...updates } : i
-          ),
+          aemInstances: state.aemInstances.map((i) => (i.id === id ? { ...i, ...updates } : i)),
         })),
 
       addAemInstance: (instance) =>

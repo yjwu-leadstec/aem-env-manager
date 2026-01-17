@@ -1,3 +1,4 @@
+import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   FolderCog,
@@ -7,27 +8,25 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
-import { useAppStore, useCurrentView, usePreferences } from '../../store';
-import type { ViewType } from '../../types';
+import { useAppStore, usePreferences } from '../../store';
 
 interface NavItem {
-  id: ViewType;
+  path: string;
   label: string;
   icon: React.ReactNode;
 }
 
 const navItems: NavItem[] = [
-  { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
-  { id: 'profiles', label: 'Profiles', icon: <FolderCog size={20} /> },
-  { id: 'versions', label: 'Versions', icon: <Layers size={20} /> },
-  { id: 'instances', label: 'Instances', icon: <Server size={20} /> },
-  { id: 'settings', label: 'Settings', icon: <Settings size={20} /> },
+  { path: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={20} /> },
+  { path: '/profiles', label: 'Profiles', icon: <FolderCog size={20} /> },
+  { path: '/versions', label: 'Versions', icon: <Layers size={20} /> },
+  { path: '/instances', label: 'Instances', icon: <Server size={20} /> },
+  { path: '/settings', label: 'Settings', icon: <Settings size={20} /> },
 ];
 
 export function Sidebar() {
-  const currentView = useCurrentView();
+  const location = useLocation();
   const preferences = usePreferences();
-  const setCurrentView = useAppStore((s) => s.setCurrentView);
   const updatePreferences = useAppStore((s) => s.updatePreferences);
 
   const collapsed = preferences.sidebarCollapsed;
@@ -50,36 +49,36 @@ export function Sidebar() {
             <span className="text-white font-bold text-sm">AEM</span>
           </div>
           {!collapsed && (
-            <span className="font-semibold text-slate-800 whitespace-nowrap">
-              Env Manager
-            </span>
+            <span className="font-semibold text-slate-800 whitespace-nowrap">Env Manager</span>
           )}
         </div>
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 py-4 px-2 space-y-1">
-        {navItems.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => setCurrentView(item.id)}
-            className={`
-              nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg
-              transition-all duration-200
-              ${currentView === item.id
-                ? 'bg-azure-50 text-azure-600 font-medium'
-                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-              }
-              ${collapsed ? 'justify-center' : ''}
-            `}
-            title={collapsed ? item.label : undefined}
-          >
-            <span className={currentView === item.id ? 'text-azure' : ''}>
-              {item.icon}
-            </span>
-            {!collapsed && <span>{item.label}</span>}
-          </button>
-        ))}
+        {navItems.map((item) => {
+          const isActive = location.pathname === item.path;
+          return (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              className={`
+                nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-lg
+                transition-all duration-200
+                ${
+                  isActive
+                    ? 'bg-azure-50 text-azure-600 font-medium'
+                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                }
+                ${collapsed ? 'justify-center' : ''}
+              `}
+              title={collapsed ? item.label : undefined}
+            >
+              <span className={isActive ? 'text-azure' : ''}>{item.icon}</span>
+              {!collapsed && <span>{item.label}</span>}
+            </NavLink>
+          );
+        })}
       </nav>
 
       {/* Collapse Toggle */}

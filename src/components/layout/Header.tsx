@@ -13,10 +13,7 @@ export function Header() {
       {/* Search */}
       <div className="flex items-center gap-4 flex-1">
         <div className="relative max-w-md w-full">
-          <Search
-            size={18}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-          />
+          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             placeholder="Search profiles, instances..."
@@ -31,16 +28,12 @@ export function Header() {
         {activeProfile && (
           <div className="flex items-center gap-2 px-3 py-1.5 bg-azure-50 rounded-full">
             <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
-            <span className="text-sm font-medium text-azure-700">
-              {activeProfile.name}
-            </span>
+            <span className="text-sm font-medium text-azure-700">{activeProfile.name}</span>
           </div>
         )}
 
         {/* Loading Indicator */}
-        {isLoading && (
-          <RefreshCw size={20} className="text-azure animate-spin" />
-        )}
+        {isLoading && <RefreshCw size={20} className="text-azure animate-spin" />}
 
         {/* Notifications */}
         <button className="relative p-2 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-colors">
