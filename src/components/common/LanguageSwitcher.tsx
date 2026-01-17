@@ -9,9 +9,9 @@ interface Language {
 }
 
 const languages: Language[] = [
-  { code: 'zh-CN', label: '简体中文', flag: '🇨🇳' },
-  { code: 'zh-TW', label: '繁體中文', flag: '🇹🇼' },
-  { code: 'en', label: 'English', flag: '🇺🇸' },
+  { code: 'zh-CN', label: '简体中文', flag: '简' },
+  { code: 'zh-TW', label: '繁體中文', flag: '繁' },
+  { code: 'en', label: 'English', flag: 'EN' },
 ];
 
 export function LanguageSwitcher() {
@@ -51,7 +51,9 @@ export function LanguageSwitcher() {
                   }
                 `}
               >
-                <span className="text-base">{lang.flag}</span>
+                <span className="text-xs font-bold w-6 h-6 flex items-center justify-center bg-slate-100 dark:bg-viewport-light rounded text-slate-600 dark:text-gray-300">
+                  {lang.flag}
+                </span>
                 <span className="flex-1">{lang.label}</span>
                 {lang.code === i18n.language && (
                   <Check size={16} className="text-azure dark:text-tech-orange" />
