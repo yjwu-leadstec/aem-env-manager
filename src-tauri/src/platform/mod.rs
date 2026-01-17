@@ -11,3 +11,26 @@ pub mod windows;
 pub mod common;
 
 pub use common::*;
+
+// Platform-specific re-exports
+#[cfg(target_os = "macos")]
+pub use macos::{get_platform, MacOSPlatform};
+
+#[cfg(target_os = "windows")]
+pub use windows::{get_platform, WindowsPlatform};
+
+/// Get the current platform implementation
+#[cfg(target_os = "macos")]
+pub fn current_platform() -> impl PlatformOps {
+    macos::MacOSPlatform::new()
+}
+
+#[cfg(target_os = "windows")]
+pub fn current_platform() -> impl PlatformOps {
+    windows::WindowsPlatform::new()
+}
+
+#[cfg(not(any(target_os = "macos", target_os = "windows")))]
+pub fn current_platform() -> impl PlatformOps {
+    compile_error!("Unsupported platform")
+}
