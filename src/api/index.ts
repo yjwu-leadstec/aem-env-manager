@@ -5,6 +5,7 @@ export * from './version';
 export * from './instance';
 export * from './profile';
 export * from './mappers';
+export * from './settings';
 
 // Re-export API types (snake_case - direct from Rust backend)
 export type {
@@ -36,6 +37,8 @@ export type {
   ProfileWithValidation,
   ProfileSummary,
 } from './profile';
+
+export type { ScanPaths, ExportResult, ImportResult, ResetResult } from './settings';
 
 // Re-export Frontend types (camelCase - for React components)
 export type {

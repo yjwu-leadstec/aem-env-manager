@@ -17,6 +17,8 @@ use commands::{
     add_instance, check_instance_health, delete_instance, get_credentials, get_instance,
     get_instance_urls, list_instances, open_in_browser, start_instance, stop_instance,
     store_credentials, update_instance,
+    // Settings commands
+    export_all_config, import_all_config, load_scan_paths, reset_all_config, save_scan_paths,
 };
 
 /// Initialize and run the Tauri application
@@ -24,6 +26,7 @@ use commands::{
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             // Profile commands
             list_profiles,
@@ -70,6 +73,12 @@ pub fn run() {
             get_credentials,
             open_in_browser,
             get_instance_urls,
+            // Settings commands
+            load_scan_paths,
+            save_scan_paths,
+            export_all_config,
+            import_all_config,
+            reset_all_config,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
