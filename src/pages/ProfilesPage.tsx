@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   Plus,
@@ -40,24 +40,7 @@ export function ProfilesPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<EnvironmentProfile | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Load profiles on mount
-  useEffect(() => {
-    loadProfiles();
-  }, []);
-
-  // Handle URL action params
-  useEffect(() => {
-    const action = searchParams.get('action');
-    if (action === 'new') {
-      setShowProfileForm(true);
-      setSearchParams({});
-    } else if (action === 'import') {
-      handleImportClick();
-      setSearchParams({});
-    }
-  }, [searchParams]);
-
-  const loadProfiles = async () => {
+  const loadProfiles = useCallback(async () => {
     setIsLoading(true);
     try {
       const apiProfiles = await profileApi.listProfiles();
@@ -70,7 +53,6 @@ export function ProfilesPage() {
         setActiveProfile(mapApiProfileToStore(active));
       }
     } catch (error) {
-      console.error('Failed to load profiles:', error);
       addNotification({
         type: 'error',
         title: 'Failed to load profiles',
@@ -79,7 +61,51 @@ export function ProfilesPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [setProfiles, setActiveProfile, addNotification]);
+
+  const handleImportClick = useCallback(() => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (file) {
+        try {
+          const imported = await profileApi.importProfileFromFile(file);
+          await loadProfiles();
+          addNotification({
+            type: 'success',
+            title: 'Profile imported',
+            message: `${imported.name} has been imported`,
+          });
+        } catch (error) {
+          addNotification({
+            type: 'error',
+            title: 'Import failed',
+            message: error instanceof Error ? error.message : 'Unknown error',
+          });
+        }
+      }
+    };
+    input.click();
+  }, [loadProfiles, addNotification]);
+
+  // Load profiles on mount
+  useEffect(() => {
+    loadProfiles();
+  }, [loadProfiles]);
+
+  // Handle URL action params
+  useEffect(() => {
+    const action = searchParams.get('action');
+    if (action === 'new') {
+      setShowProfileForm(true);
+      setSearchParams({});
+    } else if (action === 'import') {
+      handleImportClick();
+      setSearchParams({});
+    }
+  }, [searchParams, setSearchParams, handleImportClick]);
 
   const handleActivate = async (profile: EnvironmentProfile) => {
     if (isSwitching) return;
@@ -214,33 +240,6 @@ export function ProfilesPage() {
         message: error instanceof Error ? error.message : 'Unknown error',
       });
     }
-  };
-
-  const handleImportClick = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
-    input.onchange = async () => {
-      const file = input.files?.[0];
-      if (file) {
-        try {
-          const imported = await profileApi.importProfileFromFile(file);
-          await loadProfiles();
-          addNotification({
-            type: 'success',
-            title: 'Profile imported',
-            message: `${imported.name} has been imported`,
-          });
-        } catch (error) {
-          addNotification({
-            type: 'error',
-            title: 'Import failed',
-            message: error instanceof Error ? error.message : 'Unknown error',
-          });
-        }
-      }
-    };
-    input.click();
   };
 
   return (

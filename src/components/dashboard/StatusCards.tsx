@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Coffee, Hexagon, FileCode, Folder, RefreshCw } from 'lucide-react';
 import { Card } from '../common/Card';
 import * as versionApi from '../../api/version';
@@ -38,21 +38,21 @@ export function StatusCards({ onCardClick }: StatusCardsProps) {
   const [versionInfo, setVersionInfo] = useState<versionApi.VersionInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    loadVersionInfo();
-  }, []);
-
-  const loadVersionInfo = async () => {
+  const loadVersionInfo = useCallback(async () => {
     setIsLoading(true);
     try {
       const info = await versionApi.getAllVersionInfo();
       setVersionInfo(info);
-    } catch (error) {
-      console.error('Failed to load version info:', error);
+    } catch {
+      // Failed to load version info
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadVersionInfo();
+  }, [loadVersionInfo]);
 
   const javaValue = versionInfo?.java.current || 'Not detected';
   const nodeValue = versionInfo?.node.current || 'Not detected';

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Server,
@@ -25,22 +25,22 @@ export function AemInstanceCards() {
   const [isLoading, setIsLoading] = useState(true);
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadInstances();
-  }, []);
-
-  const loadInstances = async () => {
+  const loadInstances = useCallback(async () => {
     setIsLoading(true);
     try {
       const apiInstances = await instanceApi.listInstances();
       const mappedInstances = apiInstances.map(mapApiInstanceToStore);
       setAemInstances(mappedInstances);
-    } catch (error) {
-      console.error('Failed to load instances:', error);
+    } catch {
+      // Failed to load instances
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [setAemInstances]);
+
+  useEffect(() => {
+    loadInstances();
+  }, [loadInstances]);
 
   const handleStart = async (instanceId: string) => {
     setActionInProgress(instanceId);

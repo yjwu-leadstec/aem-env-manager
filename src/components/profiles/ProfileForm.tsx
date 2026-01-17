@@ -77,8 +77,8 @@ export function ProfileForm({
       setJavaVersions(java);
       setNodeVersions(node);
       setMavenConfigs(maven);
-    } catch (error) {
-      console.error('Failed to load version options:', error);
+    } catch {
+      // Failed to load version options
     } finally {
       setIsLoading(false);
     }

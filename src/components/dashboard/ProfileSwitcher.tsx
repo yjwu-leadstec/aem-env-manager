@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ChevronDown, Check, RefreshCw } from 'lucide-react';
 import { useProfiles, useActiveProfile, useAppStore } from '../../store';
 import * as profileApi from '../../api/profile';
@@ -20,12 +20,7 @@ export function ProfileSwitcher({ onSwitchStart, onSwitchComplete }: ProfileSwit
   const [isSwitching, setIsSwitching] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Load profiles on mount
-  useEffect(() => {
-    loadProfiles();
-  }, []);
-
-  const loadProfiles = async () => {
+  const loadProfiles = useCallback(async () => {
     setIsLoading(true);
     try {
       const apiProfiles = await profileApi.listProfiles();
@@ -37,12 +32,17 @@ export function ProfileSwitcher({ onSwitchStart, onSwitchComplete }: ProfileSwit
       if (active) {
         setActiveProfile(mapApiProfileToStore(active));
       }
-    } catch (error) {
-      console.error('Failed to load profiles:', error);
+    } catch {
+      // Failed to load profiles
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [setProfiles, setActiveProfile]);
+
+  // Load profiles on mount
+  useEffect(() => {
+    loadProfiles();
+  }, [loadProfiles]);
 
   const handleSwitch = async (profileId: string) => {
     if (profileId === activeProfile?.id || isSwitching) return;
