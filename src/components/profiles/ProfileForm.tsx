@@ -27,7 +27,7 @@ export function ProfileForm({
   isOpen,
   onClose,
   onSubmit,
-  title = 'New Profile',
+  title = '新建配置',
 }: ProfileFormProps) {
   const [formData, setFormData] = useState<ProfileFormData>({
     name: '',
@@ -88,9 +88,9 @@ export function ProfileForm({
     const newErrors: Record<string, string> = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
+      newErrors.name = '名称为必填项';
     } else if (formData.name.length < 2) {
-      newErrors.name = 'Name must be at least 2 characters';
+      newErrors.name = '名称至少需要 2 个字符';
     }
 
     setErrors(newErrors);
@@ -108,7 +108,7 @@ export function ProfileForm({
       onClose();
     } catch (error) {
       setErrors({
-        submit: error instanceof Error ? error.message : 'Failed to save profile',
+        submit: error instanceof Error ? error.message : '保存配置失败',
       });
     } finally {
       setIsSaving(false);
@@ -140,14 +140,14 @@ export function ProfileForm({
           {/* Name */}
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Profile Name *
+              配置名称 *
             </label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className={`input ${errors.name ? 'input-error' : ''}`}
-              placeholder="e.g., AEM 6.5 Development"
+              placeholder="例如: AEM 6.5 开发环境"
             />
             {errors.name && <p className="text-sm text-error-500 mt-1">{errors.name}</p>}
           </div>
@@ -155,13 +155,13 @@ export function ProfileForm({
           {/* Description */}
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Description
+              描述
             </label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               className="input min-h-[80px] resize-none"
-              placeholder="Optional description for this profile"
+              placeholder="可选的配置描述"
             />
           </div>
 
@@ -169,7 +169,7 @@ export function ProfileForm({
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
               <Coffee size={14} className="inline mr-1" />
-              Java Version
+              Java 版本
             </label>
             <select
               value={formData.javaVersion || ''}
@@ -177,10 +177,10 @@ export function ProfileForm({
               className="select"
               disabled={isLoading}
             >
-              <option value="">Select Java version...</option>
+              <option value="">选择 Java 版本...</option>
               {javaVersions.map((v) => (
                 <option key={v.version} value={v.version}>
-                  {v.version} ({v.vendor}){v.is_current && ' - Current'}
+                  {v.version} ({v.vendor}){v.is_current && ' - 当前'}
                 </option>
               ))}
             </select>
@@ -190,7 +190,7 @@ export function ProfileForm({
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
               <Hexagon size={14} className="inline mr-1" />
-              Node Version
+              Node 版本
             </label>
             <select
               value={formData.nodeVersion || ''}
@@ -198,11 +198,11 @@ export function ProfileForm({
               className="select"
               disabled={isLoading}
             >
-              <option value="">Select Node version...</option>
+              <option value="">选择 Node 版本...</option>
               {nodeVersions.map((v) => (
                 <option key={v.version} value={v.version}>
                   {v.version}
-                  {v.is_current && ' - Current'}
+                  {v.is_current && ' - 当前'}
                 </option>
               ))}
             </select>
@@ -212,7 +212,7 @@ export function ProfileForm({
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
               <FileCode size={14} className="inline mr-1" />
-              Maven Configuration
+              Maven 配置
             </label>
             <select
               value={formData.mavenConfigId || ''}
@@ -220,11 +220,11 @@ export function ProfileForm({
               className="select"
               disabled={isLoading}
             >
-              <option value="">Use default settings.xml</option>
+              <option value="">使用默认 settings.xml</option>
               {mavenConfigs.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
-                  {c.is_active && ' - Active'}
+                  {c.is_active && ' - 当前'}
                 </option>
               ))}
             </select>
@@ -240,7 +240,7 @@ export function ProfileForm({
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
             <Button variant="outline" onClick={onClose} disabled={isSaving}>
-              Cancel
+              取消
             </Button>
             <Button
               type="submit"
@@ -248,7 +248,7 @@ export function ProfileForm({
               icon={<Save size={16} />}
               disabled={isSaving || isLoading}
             >
-              {isSaving ? 'Saving...' : 'Save Profile'}
+              {isSaving ? '保存中...' : '保存配置'}
             </Button>
           </div>
         </form>

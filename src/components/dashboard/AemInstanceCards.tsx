@@ -54,23 +54,23 @@ export function AemInstanceCards() {
         updateAemInstance(instanceId, { status: 'running' as AEMInstanceStatus });
         addNotification({
           type: 'success',
-          title: 'Instance started',
-          message: `Instance is now running`,
+          title: '实例已启动',
+          message: `实例正在运行`,
         });
       } else {
         updateAemInstance(instanceId, { status: 'error' as AEMInstanceStatus });
         addNotification({
           type: 'error',
-          title: 'Start failed',
-          message: 'Failed to start instance',
+          title: '启动失败',
+          message: '无法启动实例',
         });
       }
     } catch (error) {
       updateAemInstance(instanceId, { status: 'error' as AEMInstanceStatus });
       addNotification({
         type: 'error',
-        title: 'Start failed',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        title: '启动失败',
+        message: error instanceof Error ? error.message : '未知错误',
       });
     } finally {
       setActionInProgress(null);
@@ -87,23 +87,23 @@ export function AemInstanceCards() {
         updateAemInstance(instanceId, { status: 'stopped' as AEMInstanceStatus });
         addNotification({
           type: 'success',
-          title: 'Instance stopped',
-          message: `Instance has been stopped`,
+          title: '实例已停止',
+          message: `实例已停止运行`,
         });
       } else {
         updateAemInstance(instanceId, { status: 'error' as AEMInstanceStatus });
         addNotification({
           type: 'error',
-          title: 'Stop failed',
-          message: 'Failed to stop instance',
+          title: '停止失败',
+          message: '无法停止实例',
         });
       }
     } catch (error) {
       updateAemInstance(instanceId, { status: 'error' as AEMInstanceStatus });
       addNotification({
         type: 'error',
-        title: 'Stop failed',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        title: '停止失败',
+        message: error instanceof Error ? error.message : '未知错误',
       });
     } finally {
       setActionInProgress(null);
@@ -116,8 +116,8 @@ export function AemInstanceCards() {
     } catch (error) {
       addNotification({
         type: 'error',
-        title: 'Failed to open browser',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        title: '打开浏览器失败',
+        message: error instanceof Error ? error.message : '未知错误',
       });
     }
   };
@@ -125,7 +125,7 @@ export function AemInstanceCards() {
   return (
     <Card className="lg:col-span-2">
       <CardHeader
-        title="AEM Instances"
+        title="AEM 实例"
         action={
           <div className="flex items-center gap-2">
             <Button
@@ -135,7 +135,7 @@ export function AemInstanceCards() {
               onClick={loadInstances}
               disabled={isLoading}
             >
-              Refresh
+              刷新
             </Button>
             <Button
               variant="ghost"
@@ -144,7 +144,7 @@ export function AemInstanceCards() {
               iconPosition="right"
               onClick={() => navigate('/instances')}
             >
-              View All
+              查看全部
             </Button>
           </div>
         }
@@ -170,7 +170,7 @@ export function AemInstanceCards() {
             ))}
             {instances.length > 4 && (
               <p className="text-sm text-center text-slate-500 dark:text-slate-400 pt-2">
-                And {instances.length - 4} more instances...
+                还有 {instances.length - 4} 个实例...
               </p>
             )}
           </div>
@@ -219,7 +219,7 @@ function InstanceRow({
             <Button
               variant="ghost"
               size="sm"
-              title="Open in browser"
+              title="在浏览器中打开"
               onClick={() => onOpenInBrowser()}
             >
               <ExternalLink size={14} />
@@ -227,7 +227,7 @@ function InstanceRow({
             <Button
               variant="ghost"
               size="sm"
-              title="CRXDE"
+              title="打开 CRXDE"
               onClick={() => onOpenInBrowser('/crx/de')}
             >
               CRXDE
@@ -249,7 +249,7 @@ function InstanceRow({
             onClick={onStart}
             disabled={isActionInProgress}
           >
-            Start
+            启动
           </Button>
         )}
 
@@ -267,7 +267,7 @@ function InstanceRow({
             onClick={onStop}
             disabled={isActionInProgress}
           >
-            Stop
+            停止
           </Button>
         )}
 
@@ -295,9 +295,9 @@ function EmptyState({ onAdd }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center justify-center py-8 text-center">
       <Server size={40} className="text-slate-300 dark:text-slate-600 mb-3" />
-      <p className="text-slate-500 dark:text-slate-400 mb-4">No AEM instances configured</p>
+      <p className="text-slate-500 dark:text-slate-400 mb-4">暂无配置的 AEM 实例</p>
       <Button variant="outline" size="sm" onClick={onAdd}>
-        Add Instance
+        添加实例
       </Button>
     </div>
   );

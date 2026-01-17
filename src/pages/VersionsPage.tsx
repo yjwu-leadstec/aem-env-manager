@@ -30,8 +30,8 @@ export function VersionsPage() {
     } catch (error) {
       addNotification({
         type: 'error',
-        title: 'Failed to load versions',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        title: '加载版本失败',
+        message: error instanceof Error ? error.message : '未知错误',
       });
     } finally {
       setIsScanning(false);
@@ -48,10 +48,10 @@ export function VersionsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-            Version Management
+            <span className="mr-2">🔧</span>版本管理
           </h1>
           <p className="text-slate-500 dark:text-slate-400 mt-1">
-            Manage Java, Node.js, and Maven configurations
+            管理 Java、Node.js 和 Maven 配置
           </p>
         </div>
         <Button
@@ -62,7 +62,7 @@ export function VersionsPage() {
           onClick={loadVersionInfo}
           disabled={isScanning}
         >
-          Scan Versions
+          扫描版本
         </Button>
       </div>
 
@@ -152,22 +152,22 @@ function JavaVersionsPanel({ javaInfo, onRefresh }: JavaPanelProps) {
       if (result.success) {
         addNotification({
           type: 'success',
-          title: 'Java version switched',
-          message: `Now using Java ${result.current_version}`,
+          title: 'Java 版本已切换',
+          message: `当前使用 Java ${result.current_version}`,
         });
         onRefresh();
       } else {
         addNotification({
           type: 'error',
-          title: 'Switch failed',
-          message: result.error || 'Unknown error',
+          title: '切换失败',
+          message: result.error || '未知错误',
         });
       }
     } catch (error) {
       addNotification({
         type: 'error',
-        title: 'Switch failed',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        title: '切换失败',
+        message: error instanceof Error ? error.message : '未知错误',
       });
     } finally {
       setSwitchingVersion(null);
@@ -178,14 +178,12 @@ function JavaVersionsPanel({ javaInfo, onRefresh }: JavaPanelProps) {
     <div className="space-y-6">
       {/* Version Managers */}
       <Card>
-        <CardHeader title="Version Managers" subtitle="Detected Java version management tools" />
+        <CardHeader title="版本管理器" subtitle="检测到的 Java 版本管理工具" />
         <CardContent>
           {!javaInfo?.managers || javaInfo.managers.length === 0 ? (
             <div className="text-center py-6">
               <AlertCircle size={40} className="mx-auto mb-3 text-slate-300 dark:text-slate-600" />
-              <p className="text-slate-500 dark:text-slate-400 mb-4">
-                No Java version managers detected
-              </p>
+              <p className="text-slate-500 dark:text-slate-400 mb-4">未检测到 Java 版本管理器</p>
               <div className="flex justify-center gap-2">
                 <ManagerLink name="SDKMAN" url="https://sdkman.io" />
                 <ManagerLink name="jEnv" url="https://www.jenv.be" />
@@ -215,8 +213,8 @@ function JavaVersionsPanel({ javaInfo, onRefresh }: JavaPanelProps) {
       {/* Installed Versions */}
       <Card>
         <CardHeader
-          title="Installed Versions"
-          subtitle={`${javaInfo?.versions.length || 0} Java installations detected`}
+          title="已安装版本"
+          subtitle={`检测到 ${javaInfo?.versions.length || 0} 个 Java 安装`}
         />
         <CardContent>
           {!javaInfo?.versions || javaInfo.versions.length === 0 ? (
@@ -256,22 +254,22 @@ function NodeVersionsPanel({ nodeInfo, onRefresh }: NodePanelProps) {
       if (result.success) {
         addNotification({
           type: 'success',
-          title: 'Node version switched',
-          message: `Now using Node.js ${result.current_version}`,
+          title: 'Node 版本已切换',
+          message: `当前使用 Node.js ${result.current_version}`,
         });
         onRefresh();
       } else {
         addNotification({
           type: 'error',
-          title: 'Switch failed',
-          message: result.error || 'Unknown error',
+          title: '切换失败',
+          message: result.error || '未知错误',
         });
       }
     } catch (error) {
       addNotification({
         type: 'error',
-        title: 'Switch failed',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        title: '切换失败',
+        message: error instanceof Error ? error.message : '未知错误',
       });
     } finally {
       setSwitchingVersion(null);
@@ -282,14 +280,12 @@ function NodeVersionsPanel({ nodeInfo, onRefresh }: NodePanelProps) {
     <div className="space-y-6">
       {/* Version Managers */}
       <Card>
-        <CardHeader title="Version Managers" subtitle="Detected Node.js version management tools" />
+        <CardHeader title="版本管理器" subtitle="检测到的 Node.js 版本管理工具" />
         <CardContent>
           {!nodeInfo?.managers || nodeInfo.managers.length === 0 ? (
             <div className="text-center py-6">
               <AlertCircle size={40} className="mx-auto mb-3 text-slate-300 dark:text-slate-600" />
-              <p className="text-slate-500 dark:text-slate-400 mb-4">
-                No Node.js version managers detected
-              </p>
+              <p className="text-slate-500 dark:text-slate-400 mb-4">未检测到 Node.js 版本管理器</p>
               <div className="flex justify-center gap-2">
                 <ManagerLink name="nvm" url="https://github.com/nvm-sh/nvm" />
                 <ManagerLink name="fnm" url="https://fnm.vercel.app" />
@@ -319,8 +315,8 @@ function NodeVersionsPanel({ nodeInfo, onRefresh }: NodePanelProps) {
       {/* Installed Versions */}
       <Card>
         <CardHeader
-          title="Installed Versions"
-          subtitle={`${nodeInfo?.versions.length || 0} Node.js installations detected`}
+          title="已安装版本"
+          subtitle={`检测到 ${nodeInfo?.versions.length || 0} 个 Node.js 安装`}
         />
         <CardContent>
           {!nodeInfo?.versions || nodeInfo.versions.length === 0 ? (
@@ -359,15 +355,15 @@ function MavenConfigPanel({ mavenInfo, onRefresh }: MavenPanelProps) {
       await versionApi.switchMavenConfig(configId);
       addNotification({
         type: 'success',
-        title: 'Maven config switched',
-        message: 'Successfully updated Maven settings',
+        title: 'Maven 配置已切换',
+        message: 'Maven 设置已更新',
       });
       onRefresh();
     } catch (error) {
       addNotification({
         type: 'error',
-        title: 'Switch failed',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        title: '切换失败',
+        message: error instanceof Error ? error.message : '未知错误',
       });
     } finally {
       setSwitchingConfig(null);
@@ -378,7 +374,7 @@ function MavenConfigPanel({ mavenInfo, onRefresh }: MavenPanelProps) {
     <div className="space-y-6">
       {/* Current Configuration */}
       <Card>
-        <CardHeader title="Current Configuration" subtitle="Active Maven settings.xml" />
+        <CardHeader title="当前配置" subtitle="活跃的 Maven settings.xml" />
         <CardContent>
           {mavenInfo?.current ? (
             <div className="flex items-center justify-between p-3 rounded-lg bg-azure-50 dark:bg-azure-900/30">
@@ -394,7 +390,7 @@ function MavenConfigPanel({ mavenInfo, onRefresh }: MavenPanelProps) {
             </div>
           ) : (
             <p className="text-slate-500 dark:text-slate-400 text-center py-4">
-              Using default Maven settings
+              使用默认 Maven 设置
             </p>
           )}
         </CardContent>
@@ -403,11 +399,11 @@ function MavenConfigPanel({ mavenInfo, onRefresh }: MavenPanelProps) {
       {/* Saved Configurations */}
       <Card>
         <CardHeader
-          title="Saved Configurations"
-          subtitle={`${mavenInfo?.configs.length || 0} Maven configurations`}
+          title="已保存配置"
+          subtitle={`${mavenInfo?.configs.length || 0} 个 Maven 配置`}
           action={
             <Button variant="outline" size="sm" icon={<Plus size={14} />}>
-              Import
+              导入
             </Button>
           }
         />
@@ -415,11 +411,9 @@ function MavenConfigPanel({ mavenInfo, onRefresh }: MavenPanelProps) {
           {!mavenInfo?.configs || mavenInfo.configs.length === 0 ? (
             <div className="text-center py-6">
               <FileCode size={40} className="mx-auto mb-3 text-slate-300 dark:text-slate-600" />
-              <p className="text-slate-500 dark:text-slate-400 mb-4">
-                No saved Maven configurations
-              </p>
+              <p className="text-slate-500 dark:text-slate-400 mb-4">暂无已保存的 Maven 配置</p>
               <Button variant="outline" size="sm" icon={<Plus size={14} />}>
-                Import settings.xml
+                导入 settings.xml
               </Button>
             </div>
           ) : (
@@ -440,7 +434,7 @@ function MavenConfigPanel({ mavenInfo, onRefresh }: MavenPanelProps) {
                       </p>
                       {config.is_active && (
                         <span className="px-1.5 py-0.5 bg-azure-100 dark:bg-azure-800 text-azure-700 dark:text-azure-300 text-xs rounded">
-                          Active
+                          当前
                         </span>
                       )}
                     </div>
@@ -456,7 +450,7 @@ function MavenConfigPanel({ mavenInfo, onRefresh }: MavenPanelProps) {
                       {switchingConfig === config.id ? (
                         <RefreshCw size={14} className="animate-spin" />
                       ) : (
-                        'Use'
+                        '使用'
                       )}
                     </Button>
                   )}
@@ -495,7 +489,7 @@ function JavaVersionRow({ version, isCurrent, isSwitching, onSwitch }: JavaVersi
             </span>
             {isCurrent && (
               <span className="px-1.5 py-0.5 bg-azure-100 dark:bg-azure-800 text-azure-700 dark:text-azure-300 text-xs rounded">
-                Current
+                当前
               </span>
             )}
             <span className="text-xs text-slate-500 dark:text-slate-400">{version.vendor}</span>
@@ -505,7 +499,7 @@ function JavaVersionRow({ version, isCurrent, isSwitching, onSwitch }: JavaVersi
       </div>
       {!isCurrent && (
         <Button variant="ghost" size="sm" onClick={onSwitch} disabled={isSwitching}>
-          {isSwitching ? <RefreshCw size={14} className="animate-spin" /> : 'Use'}
+          {isSwitching ? <RefreshCw size={14} className="animate-spin" /> : '使用'}
         </Button>
       )}
     </div>
@@ -537,7 +531,7 @@ function NodeVersionRow({ version, isCurrent, isSwitching, onSwitch }: NodeVersi
             </span>
             {isCurrent && (
               <span className="px-1.5 py-0.5 bg-teal-100 dark:bg-teal-800 text-teal-700 dark:text-teal-300 text-xs rounded">
-                Current
+                当前
               </span>
             )}
           </div>
@@ -546,7 +540,7 @@ function NodeVersionRow({ version, isCurrent, isSwitching, onSwitch }: NodeVersi
       </div>
       {!isCurrent && (
         <Button variant="ghost" size="sm" onClick={onSwitch} disabled={isSwitching}>
-          {isSwitching ? <RefreshCw size={14} className="animate-spin" /> : 'Use'}
+          {isSwitching ? <RefreshCw size={14} className="animate-spin" /> : '使用'}
         </Button>
       )}
     </div>
@@ -570,9 +564,9 @@ function EmptyVersionState({ type }: { type: string }) {
   return (
     <div className="text-center py-6">
       <AlertCircle size={40} className="mx-auto mb-3 text-slate-300 dark:text-slate-600" />
-      <p className="text-slate-500 dark:text-slate-400">No {type} installations detected</p>
+      <p className="text-slate-500 dark:text-slate-400">未检测到 {type} 安装</p>
       <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-        Install a version manager to manage {type} versions
+        安装版本管理器来管理 {type} 版本
       </p>
     </div>
   );

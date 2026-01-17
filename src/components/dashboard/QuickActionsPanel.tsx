@@ -13,8 +13,8 @@ export function QuickActionsPanel() {
     try {
       addNotification({
         type: 'info',
-        title: 'Refreshing...',
-        message: 'Scanning versions and checking instances',
+        title: '刷新中...',
+        message: '正在扫描版本并检查实例',
         duration: 2000,
       });
 
@@ -22,21 +22,21 @@ export function QuickActionsPanel() {
 
       addNotification({
         type: 'success',
-        title: 'Refresh complete',
-        message: 'All data has been updated',
+        title: '刷新完成',
+        message: '所有数据已更新',
       });
     } catch (error) {
       addNotification({
         type: 'error',
-        title: 'Refresh failed',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        title: '刷新失败',
+        message: error instanceof Error ? error.message : '未知错误',
       });
     }
   };
 
   return (
     <Card>
-      <CardHeader title="Quick Actions" />
+      <CardHeader title="快捷操作" />
       <CardContent className="space-y-3">
         <Button
           variant="primary"
@@ -44,7 +44,7 @@ export function QuickActionsPanel() {
           icon={<Play size={16} />}
           onClick={() => navigate('/profiles')}
         >
-          Switch Profile
+          切换配置
         </Button>
 
         <Button
@@ -53,11 +53,11 @@ export function QuickActionsPanel() {
           icon={<Server size={16} />}
           onClick={() => navigate('/instances')}
         >
-          Manage Instances
+          管理实例
         </Button>
 
         <Button variant="outline" fullWidth icon={<RefreshCw size={16} />} onClick={handleRefresh}>
-          Refresh Status
+          刷新状态
         </Button>
 
         <hr className="border-slate-200 dark:border-slate-700 my-2" />
@@ -68,7 +68,7 @@ export function QuickActionsPanel() {
           icon={<FolderPlus size={16} />}
           onClick={() => navigate('/profiles?action=new')}
         >
-          New Profile
+          新建配置
         </Button>
 
         <Button
@@ -77,7 +77,7 @@ export function QuickActionsPanel() {
           icon={<FileUp size={16} />}
           onClick={() => navigate('/profiles?action=import')}
         >
-          Import Profile
+          导入配置
         </Button>
 
         <Button
@@ -86,7 +86,7 @@ export function QuickActionsPanel() {
           icon={<Download size={16} />}
           onClick={() => navigate('/profiles?action=export')}
         >
-          Export Profile
+          导出配置
         </Button>
 
         <hr className="border-slate-200 dark:border-slate-700 my-2" />
@@ -97,7 +97,7 @@ export function QuickActionsPanel() {
           icon={<Settings size={16} />}
           onClick={() => navigate('/settings')}
         >
-          Settings
+          设置
         </Button>
       </CardContent>
     </Card>

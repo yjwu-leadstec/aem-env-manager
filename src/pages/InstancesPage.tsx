@@ -48,8 +48,8 @@ export function InstancesPage() {
     } catch {
       addNotification({
         type: 'error',
-        title: 'Load Failed',
-        message: 'Failed to load AEM instances',
+        title: '加载失败',
+        message: '无法加载 AEM 实例',
       });
     } finally {
       setIsLoading(false);
@@ -77,8 +77,8 @@ export function InstancesPage() {
       if (success) {
         addNotification({
           type: 'success',
-          title: 'Instance Starting',
-          message: `${instance.name} is starting...`,
+          title: '实例启动中',
+          message: `${instance.name} 正在启动...`,
         });
         // Refresh to get actual status
         setTimeout(loadInstances, 2000);
@@ -86,8 +86,8 @@ export function InstancesPage() {
     } catch {
       addNotification({
         type: 'error',
-        title: 'Start Failed',
-        message: `Failed to start ${instance.name}`,
+        title: '启动失败',
+        message: `无法启动 ${instance.name}`,
       });
       loadInstances();
     }
@@ -103,16 +103,16 @@ export function InstancesPage() {
       if (success) {
         addNotification({
           type: 'success',
-          title: 'Instance Stopping',
-          message: `${instance.name} is stopping...`,
+          title: '实例停止中',
+          message: `${instance.name} 正在停止...`,
         });
         setTimeout(loadInstances, 2000);
       }
     } catch {
       addNotification({
         type: 'error',
-        title: 'Stop Failed',
-        message: `Failed to stop ${instance.name}`,
+        title: '停止失败',
+        message: `无法停止 ${instance.name}`,
       });
       loadInstances();
     }
@@ -125,16 +125,16 @@ export function InstancesPage() {
 
       addNotification({
         type: result.is_healthy ? 'success' : 'warning',
-        title: 'Health Check Complete',
+        title: '健康检查完成',
         message: result.is_healthy
-          ? `${instance.name} is healthy`
-          : `${instance.name} has issues: ${result.error || 'Unknown'}`,
+          ? `${instance.name} 运行正常`
+          : `${instance.name} 存在问题: ${result.error || '未知'}`,
       });
     } catch {
       addNotification({
         type: 'error',
-        title: 'Health Check Failed',
-        message: `Could not check health of ${instance.name}`,
+        title: '健康检查失败',
+        message: `无法检查 ${instance.name} 的健康状态`,
       });
     }
   };
@@ -147,14 +147,14 @@ export function InstancesPage() {
       setShowDeleteConfirm(null);
       addNotification({
         type: 'success',
-        title: 'Instance Deleted',
-        message: `${instance?.name || 'Instance'} has been removed`,
+        title: '实例已删除',
+        message: `${instance?.name || '实例'} 已被移除`,
       });
     } catch {
       addNotification({
         type: 'error',
-        title: 'Delete Failed',
-        message: 'Failed to delete instance',
+        title: '删除失败',
+        message: '无法删除实例',
       });
     }
   };
@@ -181,8 +181,8 @@ export function InstancesPage() {
       });
       addNotification({
         type: 'success',
-        title: 'Instance Updated',
-        message: `${data.name} has been updated`,
+        title: '实例已更新',
+        message: `${data.name} 已更新`,
       });
     } else {
       await instanceApi.addInstance({
@@ -196,8 +196,8 @@ export function InstancesPage() {
       });
       addNotification({
         type: 'success',
-        title: 'Instance Added',
-        message: `${data.name} has been added`,
+        title: '实例已添加',
+        message: `${data.name} 已添加`,
       });
     }
     setShowInstanceForm(false);
@@ -221,10 +221,10 @@ export function InstancesPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">AEM Instances</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">
-            Manage your AEM author and publish instances
-          </p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+            <span className="mr-2">🖥️</span>AEM 实例
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">管理 AEM 作者和发布实例</p>
         </div>
         <div className="flex gap-2">
           <Button
@@ -233,7 +233,7 @@ export function InstancesPage() {
             onClick={handleRefreshAll}
             disabled={isRefreshing}
           >
-            Refresh
+            刷新
           </Button>
           <Button
             icon={<Plus size={16} />}
@@ -242,7 +242,7 @@ export function InstancesPage() {
               setShowInstanceForm(true);
             }}
           >
-            Add Instance
+            添加实例
           </Button>
         </div>
       </div>
@@ -252,13 +252,13 @@ export function InstancesPage() {
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-success-50 dark:bg-success-900/30">
           <CheckCircle2 size={16} className="text-success-500" />
           <span className="text-sm font-medium text-success-700 dark:text-success-400">
-            {runningCount} Running
+            {runningCount} 运行中
           </span>
         </div>
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700">
           <Square size={16} className="text-slate-500" />
           <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
-            {stoppedCount} Stopped
+            {stoppedCount} 已停止
           </span>
         </div>
       </div>
@@ -289,7 +289,7 @@ export function InstancesPage() {
 
       {/* Quick Links */}
       <Card>
-        <CardHeader title="Quick Links" subtitle="Common AEM paths for running instances" />
+        <CardHeader title="快捷链接" subtitle="运行中实例的常用 AEM 路径" />
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <QuickLink label="CRXDE Lite" path="/crx/de/index.jsp" />
@@ -309,7 +309,7 @@ export function InstancesPage() {
         }}
         onSubmit={handleFormSubmit}
         initialData={editingInstance}
-        title={editingInstance ? 'Edit Instance' : 'Add Instance'}
+        title={editingInstance ? '编辑实例' : '添加实例'}
       />
 
       {/* Delete Confirmation Dialog */}
@@ -318,9 +318,9 @@ export function InstancesPage() {
           isOpen={true}
           onClose={() => setShowDeleteConfirm(null)}
           onConfirm={() => handleDelete(showDeleteConfirm)}
-          title="Delete Instance"
-          message="Are you sure you want to delete this instance? This action cannot be undone."
-          confirmText="Delete"
+          title="删除实例"
+          message="确定要删除这个实例吗？此操作无法撤销。"
+          confirmText="删除"
           variant="danger"
         />
       )}
@@ -405,13 +405,13 @@ function InstanceCard({
       {/* Instance Info */}
       <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
         <div>
-          <span className="text-slate-500 dark:text-slate-400">Run Modes:</span>
+          <span className="text-slate-500 dark:text-slate-400">运行模式:</span>
           <span className="ml-2 font-medium text-slate-700 dark:text-slate-300">
-            {instance.run_modes.length > 0 ? instance.run_modes.join(', ') : 'None'}
+            {instance.run_modes.length > 0 ? instance.run_modes.join(', ') : '无'}
           </span>
         </div>
         <div>
-          <span className="text-slate-500 dark:text-slate-400">Path:</span>
+          <span className="text-slate-500 dark:text-slate-400">路径:</span>
           <span
             className="ml-2 font-medium text-slate-700 dark:text-slate-300 truncate"
             title={instance.path}
@@ -439,7 +439,7 @@ function InstanceCard({
             <span
               className={`text-sm font-medium ${healthResult.is_healthy ? 'text-success-700 dark:text-success-400' : 'text-error-700 dark:text-error-400'}`}
             >
-              {healthResult.is_healthy ? 'Healthy' : 'Unhealthy'}
+              {healthResult.is_healthy ? '正常' : '异常'}
             </span>
             {healthResult.response_time_ms && (
               <span className="text-xs text-slate-500 dark:text-slate-400">
@@ -449,12 +449,13 @@ function InstanceCard({
           </div>
           {healthResult.bundle_status && (
             <div className="text-xs text-slate-600 dark:text-slate-400">
-              Bundles: {healthResult.bundle_status.active}/{healthResult.bundle_status.total} active
+              Bundle 状态: {healthResult.bundle_status.active}/{healthResult.bundle_status.total}{' '}
+              活跃
             </div>
           )}
           {healthResult.memory_status && (
             <div className="text-xs text-slate-600 dark:text-slate-400">
-              Memory: {healthResult.memory_status.heap_used_mb}MB /{' '}
+              内存: {healthResult.memory_status.heap_used_mb}MB /{' '}
               {healthResult.memory_status.heap_max_mb}MB (
               {healthResult.memory_status.heap_usage_percent.toFixed(1)}%)
             </div>
@@ -472,7 +473,7 @@ function InstanceCard({
             onClick={onStop}
             loading={instance.status === 'stopping'}
           >
-            Stop
+            停止
           </Button>
         ) : (
           <Button
@@ -483,7 +484,7 @@ function InstanceCard({
             loading={instance.status === 'starting'}
             disabled={isTransitioning}
           >
-            Start
+            启动
           </Button>
         )}
 
@@ -495,7 +496,7 @@ function InstanceCard({
               icon={<ExternalLink size={14} />}
               onClick={() => onOpenBrowser()}
             >
-              Open
+              打开
             </Button>
             <Button
               variant="ghost"
@@ -503,7 +504,7 @@ function InstanceCard({
               icon={<Settings size={14} />}
               onClick={() => onOpenBrowser('/system/console')}
             >
-              Console
+              控制台
             </Button>
           </>
         )}
@@ -535,7 +536,7 @@ function InstanceMenu({ onClose, onEdit, onDelete, onHealthCheck }: InstanceMenu
           }}
           className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
         >
-          <Edit2 size={14} /> Edit
+          <Edit2 size={14} /> 编辑
         </button>
         <button
           onClick={() => {
@@ -544,13 +545,13 @@ function InstanceMenu({ onClose, onEdit, onDelete, onHealthCheck }: InstanceMenu
           }}
           className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
         >
-          <Heart size={14} /> Health Check
+          <Heart size={14} /> 健康检查
         </button>
         <button
           onClick={onClose}
           className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
         >
-          <Copy size={14} /> Duplicate
+          <Copy size={14} /> 复制
         </button>
         <hr className="my-1 border-slate-200 dark:border-slate-700" />
         <button
@@ -560,7 +561,7 @@ function InstanceMenu({ onClose, onEdit, onDelete, onHealthCheck }: InstanceMenu
           }}
           className="w-full flex items-center gap-2 px-3 py-2 text-sm text-error-600 hover:bg-error-50 dark:hover:bg-error-900/30"
         >
-          <Trash2 size={14} /> Remove
+          <Trash2 size={14} /> 删除
         </button>
       </div>
     </>
@@ -639,16 +640,16 @@ function InstanceFormDialog({
     const newErrors: Record<string, string> = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
+      newErrors.name = '名称为必填项';
     }
     if (!formData.host.trim()) {
-      newErrors.host = 'Host is required';
+      newErrors.host = '主机为必填项';
     }
     if (!formData.port || formData.port < 1 || formData.port > 65535) {
-      newErrors.port = 'Valid port required (1-65535)';
+      newErrors.port = '端口号必须在 1-65535 之间';
     }
     if (!formData.path.trim()) {
-      newErrors.path = 'Path is required';
+      newErrors.path = '路径为必填项';
     }
 
     setErrors(newErrors);
@@ -664,7 +665,7 @@ function InstanceFormDialog({
       await onSubmit(formData);
     } catch (error) {
       setErrors({
-        submit: error instanceof Error ? error.message : 'Failed to save instance',
+        submit: error instanceof Error ? error.message : '保存实例失败',
       });
     } finally {
       setIsSaving(false);
@@ -697,14 +698,14 @@ function InstanceFormDialog({
           {/* Name */}
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Instance Name *
+              实例名称 *
             </label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className={`input ${errors.name ? 'input-error' : ''}`}
-              placeholder="e.g., Local Author"
+              placeholder="例如: 本地作者实例"
             />
             {errors.name && <p className="text-sm text-error-500 mt-1">{errors.name}</p>}
           </div>
@@ -712,7 +713,7 @@ function InstanceFormDialog({
           {/* Type */}
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Instance Type
+              实例类型
             </label>
             <select
               value={formData.instanceType}
@@ -724,9 +725,9 @@ function InstanceFormDialog({
               }
               className="select"
             >
-              <option value="author">Author</option>
-              <option value="publish">Publish</option>
-              <option value="dispatcher">Dispatcher</option>
+              <option value="author">作者实例</option>
+              <option value="publish">发布实例</option>
+              <option value="dispatcher">调度器</option>
             </select>
           </div>
 
@@ -734,7 +735,7 @@ function InstanceFormDialog({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Host *
+                主机 *
               </label>
               <input
                 type="text"
@@ -747,7 +748,7 @@ function InstanceFormDialog({
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Port *
+                端口 *
               </label>
               <input
                 type="number"
@@ -763,7 +764,7 @@ function InstanceFormDialog({
           {/* Path */}
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Instance Path *
+              实例路径 *
             </label>
             <input
               type="text"
@@ -778,7 +779,7 @@ function InstanceFormDialog({
           {/* Java Options */}
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Java Options
+              Java 参数
             </label>
             <input
               type="text"
@@ -792,7 +793,7 @@ function InstanceFormDialog({
           {/* Run Modes */}
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Run Modes (comma separated)
+              运行模式 (逗号分隔)
             </label>
             <input
               type="text"
@@ -821,10 +822,10 @@ function InstanceFormDialog({
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
             <Button variant="outline" onClick={onClose} disabled={isSaving}>
-              Cancel
+              取消
             </Button>
             <Button type="submit" variant="primary" icon={<Save size={16} />} disabled={isSaving}>
-              {isSaving ? 'Saving...' : 'Save Instance'}
+              {isSaving ? '保存中...' : '保存实例'}
             </Button>
           </div>
         </form>
@@ -876,7 +877,7 @@ function ConfirmDialog({
           <p className="text-slate-600 dark:text-slate-400 mb-6">{message}</p>
           <div className="flex justify-center gap-3">
             <Button variant="outline" onClick={onClose}>
-              Cancel
+              取消
             </Button>
             <button
               onClick={onConfirm}
@@ -927,14 +928,12 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
       <div className="w-16 h-16 mx-auto rounded-full bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center mb-4">
         <Server size={24} className="text-teal-500" />
       </div>
-      <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300">
-        No instances configured
-      </h3>
+      <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300">暂无配置的实例</h3>
       <p className="text-slate-500 dark:text-slate-400 mt-2 mb-6 max-w-md mx-auto">
-        Add your first AEM instance to start managing your development environment.
+        添加您的第一个 AEM 实例来开始管理开发环境。
       </p>
       <Button variant="secondary" icon={<Plus size={16} />} onClick={onAdd}>
-        Add Instance
+        添加实例
       </Button>
     </Card>
   );

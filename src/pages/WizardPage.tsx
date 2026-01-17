@@ -37,12 +37,12 @@ interface ScanResults {
 }
 
 const steps: { id: WizardStep; label: string; icon: React.ReactNode }[] = [
-  { id: 'scan', label: 'Scan', icon: <Search size={18} /> },
+  { id: 'scan', label: '扫描', icon: <Search size={18} /> },
   { id: 'java', label: 'Java', icon: <Coffee size={18} /> },
   { id: 'node', label: 'Node', icon: <Hexagon size={18} /> },
   { id: 'maven', label: 'Maven', icon: <Settings size={18} /> },
   { id: 'aem', label: 'AEM', icon: <Server size={18} /> },
-  { id: 'complete', label: 'Done', icon: <CheckCircle size={18} /> },
+  { id: 'complete', label: '完成', icon: <CheckCircle size={18} /> },
 ];
 
 export function WizardPage() {
@@ -101,7 +101,7 @@ export function WizardPage() {
             <h1 className="text-xl font-bold text-slate-800 dark:text-slate-200">
               AEM Environment Manager
             </h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400">Setup Wizard</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">设置向导</p>
           </div>
         </div>
       </header>
@@ -200,7 +200,7 @@ export function WizardPage() {
               onClick={handlePrev}
               disabled={currentIndex === 0}
             >
-              Back
+              上一步
             </Button>
             <Button
               variant="primary"
@@ -208,7 +208,7 @@ export function WizardPage() {
               iconPosition="right"
               onClick={handleNext}
             >
-              {currentIndex === steps.length - 2 ? 'Finish' : 'Next'}
+              {currentIndex === steps.length - 2 ? '完成' : '下一步'}
             </Button>
           </div>
         </footer>
@@ -282,39 +282,37 @@ function ScanStep({ onComplete, onNext }: ScanStepProps) {
         )}
       </div>
 
-      <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-2">
-        Environment Scan
-      </h2>
+      <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-2">环境扫描</h2>
       <p className="text-slate-500 dark:text-slate-400 mb-6 max-w-md mx-auto">
         {scanning
-          ? 'Scanning your system for Java, Node.js, Maven, and AEM installations...'
+          ? '正在扫描系统中的 Java、Node.js、Maven 和 AEM 安装...'
           : error
-            ? `Scan failed: ${error}`
+            ? `扫描失败: ${error}`
             : scanComplete
-              ? 'Scan complete! We found several installations on your system.'
-              : "Let's start by scanning your system for development tools."}
+              ? '扫描完成！我们在您的系统中发现了以下安装。'
+              : '让我们开始扫描您系统中的开发工具。'}
       </p>
 
       {scanComplete && results && (
         <div className="grid grid-cols-2 gap-4 mb-6 text-left">
           <ScanResult
             icon={<Coffee size={20} />}
-            label="Java versions"
+            label="Java 版本"
             count={results.javaVersions.length}
           />
           <ScanResult
             icon={<Hexagon size={20} />}
-            label="Node versions"
+            label="Node 版本"
             count={results.nodeVersions.length}
           />
           <ScanResult
             icon={<Settings size={20} />}
-            label="Maven configs"
+            label="Maven 配置"
             count={results.mavenConfigs.length}
           />
           <ScanResult
             icon={<Server size={20} />}
-            label="AEM instances"
+            label="AEM 实例"
             count={results.aemInstances.length}
           />
         </div>
@@ -322,13 +320,13 @@ function ScanStep({ onComplete, onNext }: ScanStepProps) {
 
       {scanComplete && (
         <Button variant="primary" size="lg" icon={<ArrowRight size={18} />} onClick={onNext}>
-          Continue Setup
+          继续设置
         </Button>
       )}
 
       {error && (
         <Button variant="primary" size="lg" icon={<Search size={18} />} onClick={handleScan}>
-          Retry Scan
+          重新扫描
         </Button>
       )}
     </div>
@@ -348,7 +346,7 @@ function ScanResult({
     <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
       <div className="text-slate-500 dark:text-slate-400">{icon}</div>
       <div>
-        <p className="font-medium text-slate-700 dark:text-slate-200">{count} found</p>
+        <p className="font-medium text-slate-700 dark:text-slate-200">发现 {count} 个</p>
         <p className="text-sm text-slate-500 dark:text-slate-400">{label}</p>
       </div>
     </div>
@@ -372,18 +370,16 @@ function JavaStep({ versions, managers, selected, onSelect }: JavaStepProps) {
           <Coffee size={24} className="text-warning" />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">
-            Java Configuration
-          </h2>
+          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">Java 配置</h2>
           <p className="text-slate-500 dark:text-slate-400">
-            Select your default Java version
-            {activeManager && ` (managed by ${activeManager.name})`}
+            选择您的默认 Java 版本
+            {activeManager && `（由 ${activeManager.name} 管理）`}
           </p>
         </div>
       </div>
 
       {versions.length === 0 ? (
-        <EmptyState message="No Java installations found on your system" />
+        <EmptyState message="未在您的系统中找到 Java 安装" />
       ) : (
         <div className="space-y-3 max-h-80 overflow-y-auto">
           {versions.map((java) => (
@@ -420,18 +416,16 @@ function NodeStep({ versions, managers, selected, onSelect }: NodeStepProps) {
           <Hexagon size={24} className="text-success" />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">
-            Node.js Configuration
-          </h2>
+          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">Node.js 配置</h2>
           <p className="text-slate-500 dark:text-slate-400">
-            Select your default Node.js version
-            {activeManager && ` (managed by ${activeManager.name})`}
+            选择您的默认 Node.js 版本
+            {activeManager && `（由 ${activeManager.name} 管理）`}
           </p>
         </div>
       </div>
 
       {versions.length === 0 ? (
-        <EmptyState message="No Node.js installations found on your system" />
+        <EmptyState message="未在您的系统中找到 Node.js 安装" />
       ) : (
         <div className="space-y-3 max-h-80 overflow-y-auto">
           {versions.map((node) => (
@@ -464,21 +458,19 @@ function MavenStep({ configs, selected, onSelect }: MavenStepProps) {
           <Settings size={24} className="text-azure" />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">
-            Maven Configuration
-          </h2>
-          <p className="text-slate-500 dark:text-slate-400">Configure Maven settings.xml files</p>
+          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">Maven 配置</h2>
+          <p className="text-slate-500 dark:text-slate-400">配置 Maven settings.xml 文件</p>
         </div>
       </div>
 
       {configs.length === 0 ? (
         <div className="space-y-3">
           <div className="p-4 border border-slate-200 dark:border-slate-600 rounded-lg">
-            <p className="font-medium text-slate-700 dark:text-slate-200">Default settings.xml</p>
+            <p className="font-medium text-slate-700 dark:text-slate-200">默认 settings.xml</p>
             <p className="text-sm text-slate-500 dark:text-slate-400">~/.m2/settings.xml</p>
           </div>
           <p className="text-sm text-slate-500 dark:text-slate-400 text-center">
-            You can add more Maven configurations later in Settings
+            您可以稍后在设置中添加更多 Maven 配置
           </p>
         </div>
       ) : (
@@ -505,7 +497,7 @@ function MavenStep({ configs, selected, onSelect }: MavenStepProps) {
                 </div>
                 {config.is_active && (
                   <span className="px-2 py-1 bg-azure-50 dark:bg-azure-900/30 text-azure-700 dark:text-azure-300 text-xs font-medium rounded">
-                    Active
+                    当前
                   </span>
                 )}
               </div>
@@ -531,16 +523,14 @@ function AemStep({ instances }: AemStepProps) {
           <Server size={24} className="text-teal" />
         </div>
         <div>
-          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">AEM Instances</h2>
-          <p className="text-slate-500 dark:text-slate-400">
-            Configure your AEM instances (optional)
-          </p>
+          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">AEM 实例</h2>
+          <p className="text-slate-500 dark:text-slate-400">配置您的 AEM 实例（可选）</p>
         </div>
       </div>
 
       <div className="space-y-3">
         {instances.length === 0 ? (
-          <EmptyState message="No AEM instances detected" />
+          <EmptyState message="未检测到 AEM 实例" />
         ) : (
           instances.map((instance) => (
             <div
@@ -572,15 +562,15 @@ function AemStep({ instances }: AemStepProps) {
           onClick={() =>
             addNotification({
               type: 'info',
-              title: 'Add Instance',
-              message: 'You can add more instances from the Instances page',
+              title: '添加实例',
+              message: '您可以从实例页面添加更多实例',
             })
           }
         >
-          + Add another instance
+          + 添加另一个实例
         </Button>
         <p className="text-sm text-slate-500 dark:text-slate-400 text-center">
-          You can skip this step and add instances later
+          您可以跳过此步骤，稍后添加实例
         </p>
       </div>
     </div>
@@ -599,28 +589,25 @@ function CompleteStep({ onFinish, scanResults }: CompleteStepProps) {
         <CheckCircle size={40} className="text-success" />
       </div>
 
-      <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-2">
-        Setup Complete!
-      </h2>
+      <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-2">设置完成！</h2>
       <p className="text-slate-500 dark:text-slate-400 mb-6 max-w-md mx-auto">
-        Your AEM development environment is ready. You can now manage your profiles, switch
-        versions, and control AEM instances with ease.
+        您的 AEM 开发环境已准备就绪。您现在可以轻松管理配置、切换版本和控制 AEM 实例。
       </p>
 
       {scanResults && (
         <div className="bg-slate-50 dark:bg-slate-700 rounded-lg p-4 mb-6 text-left">
-          <h3 className="font-medium text-slate-700 dark:text-slate-200 mb-2">Quick Summary</h3>
+          <h3 className="font-medium text-slate-700 dark:text-slate-200 mb-2">快速概览</h3>
           <ul className="text-sm text-slate-600 dark:text-slate-300 space-y-1">
-            <li>✓ {scanResults.javaVersions.length} Java versions configured</li>
-            <li>✓ {scanResults.nodeVersions.length} Node.js versions configured</li>
-            <li>✓ {scanResults.mavenConfigs.length} Maven configurations added</li>
-            <li>✓ {scanResults.aemInstances.length} AEM instance(s) detected</li>
+            <li>✓ 已配置 {scanResults.javaVersions.length} 个 Java 版本</li>
+            <li>✓ 已配置 {scanResults.nodeVersions.length} 个 Node.js 版本</li>
+            <li>✓ 已添加 {scanResults.mavenConfigs.length} 个 Maven 配置</li>
+            <li>✓ 已检测到 {scanResults.aemInstances.length} 个 AEM 实例</li>
           </ul>
         </div>
       )}
 
       <Button variant="primary" size="lg" onClick={onFinish}>
-        Go to Dashboard
+        前往仪表盘
       </Button>
     </div>
   );
@@ -657,7 +644,7 @@ function VersionOption({
             {vendor && <span className="text-sm text-slate-500 dark:text-slate-400">{vendor}</span>}
             {isCurrent && (
               <span className="px-1.5 py-0.5 bg-success-50 dark:bg-success-900/30 text-success-700 dark:text-success-300 text-xs font-medium rounded">
-                Current
+                当前
               </span>
             )}
           </div>

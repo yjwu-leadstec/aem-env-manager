@@ -55,8 +55,8 @@ export function ProfilesPage() {
     } catch (error) {
       addNotification({
         type: 'error',
-        title: 'Failed to load profiles',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        title: '加载配置文件失败',
+        message: error instanceof Error ? error.message : '未知错误',
       });
     } finally {
       setIsLoading(false);
@@ -75,14 +75,14 @@ export function ProfilesPage() {
           await loadProfiles();
           addNotification({
             type: 'success',
-            title: 'Profile imported',
-            message: `${imported.name} has been imported`,
+            title: '导入成功',
+            message: `${imported.name} 已导入`,
           });
         } catch (error) {
           addNotification({
             type: 'error',
-            title: 'Import failed',
-            message: error instanceof Error ? error.message : 'Unknown error',
+            title: '导入失败',
+            message: error instanceof Error ? error.message : '未知错误',
           });
         }
       }
@@ -118,22 +118,22 @@ export function ProfilesPage() {
         await loadProfiles();
         addNotification({
           type: 'success',
-          title: 'Profile activated',
-          message: `Switched to ${profile.name}`,
+          title: '配置已激活',
+          message: `已切换到 ${profile.name}`,
         });
       } else {
-        const errors = result.errors.join(', ') || 'Unknown error';
+        const errors = result.errors.join(', ') || '未知错误';
         addNotification({
           type: 'error',
-          title: 'Switch failed',
+          title: '切换失败',
           message: errors,
         });
       }
     } catch (error) {
       addNotification({
         type: 'error',
-        title: 'Switch failed',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        title: '切换失败',
+        message: error instanceof Error ? error.message : '未知错误',
       });
     } finally {
       setIsSwitching(null);
@@ -155,8 +155,8 @@ export function ProfilesPage() {
     await loadProfiles();
     addNotification({
       type: 'success',
-      title: 'Profile created',
-      message: `${apiProfile.name} has been created`,
+      title: '配置已创建',
+      message: `${apiProfile.name} 已创建`,
     });
   };
 
@@ -178,8 +178,8 @@ export function ProfilesPage() {
     setEditingProfile(null);
     addNotification({
       type: 'success',
-      title: 'Profile updated',
-      message: `${data.name} has been updated`,
+      title: '配置已更新',
+      message: `${data.name} 已更新`,
     });
   };
 
@@ -192,14 +192,14 @@ export function ProfilesPage() {
       await loadProfiles();
       addNotification({
         type: 'success',
-        title: 'Profile deleted',
-        message: `${deleteConfirm.name} has been deleted`,
+        title: '配置已删除',
+        message: `${deleteConfirm.name} 已删除`,
       });
     } catch (error) {
       addNotification({
         type: 'error',
-        title: 'Delete failed',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        title: '删除失败',
+        message: error instanceof Error ? error.message : '未知错误',
       });
     } finally {
       setIsDeleting(false);
@@ -213,14 +213,14 @@ export function ProfilesPage() {
       await loadProfiles();
       addNotification({
         type: 'success',
-        title: 'Profile duplicated',
-        message: `Created "${duplicated.name}"`,
+        title: '配置已复制',
+        message: `已创建 "${duplicated.name}"`,
       });
     } catch (error) {
       addNotification({
         type: 'error',
-        title: 'Duplicate failed',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        title: '复制失败',
+        message: error instanceof Error ? error.message : '未知错误',
       });
     }
   };
@@ -230,14 +230,14 @@ export function ProfilesPage() {
       await profileApi.exportProfileToFile(profile.id, `${profile.name}.json`);
       addNotification({
         type: 'success',
-        title: 'Profile exported',
-        message: `${profile.name} has been exported`,
+        title: '导出成功',
+        message: `${profile.name} 已导出`,
       });
     } catch (error) {
       addNotification({
         type: 'error',
-        title: 'Export failed',
-        message: error instanceof Error ? error.message : 'Unknown error',
+        title: '导出失败',
+        message: error instanceof Error ? error.message : '未知错误',
       });
     }
   };
@@ -248,22 +248,20 @@ export function ProfilesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-            Environment Profiles
+            <span className="mr-2">📋</span>环境配置
           </h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">
-            Manage your development environment configurations
-          </p>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">管理开发环境配置文件</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" icon={<Upload size={16} />} onClick={handleImportClick}>
-            Import
+            导入
           </Button>
           <Button
             variant="primary"
             icon={<Plus size={16} />}
             onClick={() => setShowProfileForm(true)}
           >
-            New Profile
+            新建配置
           </Button>
         </div>
       </div>
@@ -300,7 +298,7 @@ export function ProfilesPage() {
         isOpen={showProfileForm}
         onClose={() => setShowProfileForm(false)}
         onSubmit={handleCreate}
-        title="New Profile"
+        title="新建配置"
       />
 
       {/* Edit Profile Dialog */}
@@ -309,7 +307,7 @@ export function ProfilesPage() {
           isOpen={!!editingProfile}
           onClose={() => setEditingProfile(null)}
           onSubmit={handleEdit}
-          title="Edit Profile"
+          title="编辑配置"
           initialData={{
             name: editingProfile.name,
             description: editingProfile.description || '',
@@ -330,9 +328,9 @@ export function ProfilesPage() {
         isOpen={!!deleteConfirm}
         onClose={() => setDeleteConfirm(null)}
         onConfirm={handleDelete}
-        title="Delete Profile?"
-        message={`Are you sure you want to delete "${deleteConfirm?.name}"? This action cannot be undone.`}
-        confirmText="Delete"
+        title="删除配置？"
+        message={`确定要删除 "${deleteConfirm?.name}" 吗？此操作无法撤销。`}
+        confirmText="删除"
         variant="danger"
         isLoading={isDeleting}
       />
@@ -377,7 +375,7 @@ function ProfileCard({
       {isActive && (
         <div className="absolute -top-2 -right-2 px-2 py-0.5 bg-azure text-white text-xs font-medium rounded-full flex items-center gap-1">
           <Check size={12} />
-          Active
+          当前
         </div>
       )}
 
@@ -427,20 +425,20 @@ function ProfileCard({
           <div>
             <span className="text-slate-500 dark:text-slate-400">Java:</span>
             <span className="ml-2 font-medium text-slate-700 dark:text-slate-300">
-              {profile.javaVersion || 'Not set'}
+              {profile.javaVersion || '未设置'}
             </span>
           </div>
           <div>
             <span className="text-slate-500 dark:text-slate-400">Node:</span>
             <span className="ml-2 font-medium text-slate-700 dark:text-slate-300">
-              {profile.nodeVersion || 'Not set'}
+              {profile.nodeVersion || '未设置'}
             </span>
           </div>
         </div>
 
         {/* Last Updated */}
         <div className="text-xs text-slate-400 dark:text-slate-500">
-          Last updated: {formatDate(profile.updatedAt)}
+          更新时间: {formatDate(profile.updatedAt)}
         </div>
 
         {/* Actions */}
@@ -458,7 +456,7 @@ function ProfileCard({
             }}
             disabled={isSwitching}
           >
-            {isSwitching ? 'Switching...' : 'Activate'}
+            {isSwitching ? '切换中...' : '激活'}
           </Button>
         )}
       </CardContent>
@@ -491,19 +489,19 @@ function ProfileMenu({
           onClick={onEdit}
           className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
         >
-          <Edit2 size={14} /> Edit
+          <Edit2 size={14} /> 编辑
         </button>
         <button
           onClick={onDuplicate}
           className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
         >
-          <Copy size={14} /> Duplicate
+          <Copy size={14} /> 复制
         </button>
         <button
           onClick={onExport}
           className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
         >
-          <Download size={14} /> Export
+          <Download size={14} /> 导出
         </button>
         <hr className="my-1 border-slate-200 dark:border-slate-700" />
         <button
@@ -517,9 +515,9 @@ function ProfileMenu({
                 : 'text-error-500 hover:bg-error-50 dark:hover:bg-error-900/30'
             }
           `}
-          title={isActive ? 'Cannot delete active profile' : undefined}
+          title={isActive ? '无法删除当前激活的配置' : undefined}
         >
-          <Trash2 size={14} /> Delete
+          <Trash2 size={14} /> 删除
         </button>
       </div>
     </>
@@ -536,12 +534,12 @@ function EmptyState({ onCreateClick }: EmptyStateProps) {
       <div className="w-16 h-16 mx-auto rounded-full bg-azure-50 dark:bg-azure-900/30 flex items-center justify-center mb-4">
         <Plus size={24} className="text-azure" />
       </div>
-      <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300">No profiles yet</h3>
+      <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300">暂无配置</h3>
       <p className="text-slate-500 dark:text-slate-400 mt-2 mb-6 max-w-md mx-auto">
-        Create your first environment profile to start managing your AEM development setup.
+        创建您的第一个环境配置来开始管理 AEM 开发环境。
       </p>
       <Button icon={<Plus size={16} />} onClick={onCreateClick}>
-        Create Profile
+        创建配置
       </Button>
     </Card>
   );

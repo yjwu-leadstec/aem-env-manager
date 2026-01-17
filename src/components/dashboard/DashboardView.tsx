@@ -8,8 +8,12 @@ export function DashboardView() {
   const navigate = useNavigate();
 
   const handleCardClick = (type: 'java' | 'node' | 'maven' | 'project') => {
-    if (type === 'java' || type === 'node' || type === 'maven') {
-      navigate('/versions');
+    if (type === 'java') {
+      navigate('/java');
+    } else if (type === 'node') {
+      navigate('/node');
+    } else if (type === 'maven') {
+      navigate('/maven');
     }
   };
 
@@ -18,10 +22,10 @@ export function DashboardView() {
       {/* Page Header with Profile Switcher */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Dashboard</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">
-            Overview of your AEM development environment
-          </p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+            <span className="mr-2">🏠</span>首页
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">AEM 开发环境概览</p>
         </div>
         <ProfileSwitcher />
       </div>

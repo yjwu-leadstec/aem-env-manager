@@ -18,19 +18,19 @@ export function ThemeToggle() {
         isActive={config.theme === 'light'}
         onClick={() => setTheme('light')}
         icon={<Sun size={14} />}
-        title="Light mode"
+        title="浅色模式"
       />
       <ThemeButton
         isActive={config.theme === 'dark'}
         onClick={() => setTheme('dark')}
         icon={<Moon size={14} />}
-        title="Dark mode"
+        title="深色模式"
       />
       <ThemeButton
         isActive={config.theme === 'system'}
         onClick={() => setTheme('system')}
         icon={<Monitor size={14} />}
-        title="System preference"
+        title="跟随系统"
       />
     </div>
   );
