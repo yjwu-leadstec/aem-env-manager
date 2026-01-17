@@ -6,13 +6,22 @@ import type {
   AEMInstance,
   ViewType,
   Notification,
-  AppConfig,
   UserPreferences,
 } from '../types';
 
 // ============================================
 // App Store Interface
 // ============================================
+
+// App Config type for store
+interface AppConfig {
+  theme: 'light' | 'dark' | 'system';
+  autoSwitchProfile: boolean;
+  healthCheckInterval: number;
+  startMinimized: boolean;
+  showNotifications: boolean;
+  logLevel: 'debug' | 'info' | 'warn' | 'error';
+}
 
 interface AppStore {
   // State

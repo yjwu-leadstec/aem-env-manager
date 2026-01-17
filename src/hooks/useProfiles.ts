@@ -1,6 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import { useAppStore, useProfiles, useActiveProfile, useIsLoading } from '../store';
-import { profileService } from '../services';
+import * as profileApi from '../api/profile';
+import { mapApiProfileToFrontend } from '../api/mappers';
 import type { EnvironmentProfile } from '../types';
 
 /**
@@ -24,12 +25,14 @@ export function useProfileManager() {
   const loadProfiles = useCallback(async () => {
     setLoading(true);
     try {
-      const [profileList, active] = await Promise.all([
-        profileService.list(),
-        profileService.getActive(),
+      const [apiProfiles, apiActive] = await Promise.all([
+        profileApi.listProfiles(),
+        profileApi.getActiveProfile(),
       ]);
-      setProfiles(profileList);
-      setActiveProfile(active);
+      const frontendProfiles = apiProfiles.map(mapApiProfileToFrontend);
+      const frontendActive = apiActive ? mapApiProfileToFrontend(apiActive) : null;
+      setProfiles(frontendProfiles);
+      setActiveProfile(frontendActive);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load profiles');
       addNotification({
@@ -47,12 +50,12 @@ export function useProfileManager() {
     async (profileId: string) => {
       setLoading(true);
       try {
-        const result = await profileService.switch(profileId);
+        const result = await profileApi.switchProfile(profileId);
         if (result.success) {
           const profile = profiles.find((p) => p.id === profileId);
           if (profile) {
             setActiveProfile(profile);
-            updateProfile(profileId, { lastUsedAt: new Date().toISOString(), isActive: true });
+            updateProfile(profileId, { isActive: true });
           }
           addNotification({
             type: 'success',
@@ -60,7 +63,7 @@ export function useProfileManager() {
             message: `Now using ${profile?.name || profileId}`,
           });
         } else {
-          throw new Error(result.error || 'Failed to switch profile');
+          throw new Error(result.errors?.join(', ') || 'Failed to switch profile');
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to switch profile');
@@ -81,22 +84,25 @@ export function useProfileManager() {
     async (profile: Omit<EnvironmentProfile, 'id' | 'createdAt' | 'updatedAt'>) => {
       setLoading(true);
       try {
-        const now = new Date().toISOString();
-        const newProfile: EnvironmentProfile = {
-          ...profile,
-          id: crypto.randomUUID(),
-          createdAt: now,
-          updatedAt: now,
-          isActive: false,
-        };
-        const created = await profileService.create(newProfile);
-        addProfile(created);
+        const apiProfile = await profileApi.createProfile({
+          name: profile.name,
+          description: profile.description,
+          java_version: profile.javaVersion,
+          java_manager_id: profile.javaManagerId,
+          node_version: profile.nodeVersion,
+          node_manager_id: profile.nodeManagerId,
+          maven_config_id: profile.mavenConfigId,
+          env_vars: profile.envVars,
+          is_active: profile.isActive,
+        });
+        const frontendProfile = mapApiProfileToFrontend(apiProfile);
+        addProfile(frontendProfile);
         addNotification({
           type: 'success',
           title: 'Profile created',
-          message: `${created.name} has been created`,
+          message: `${frontendProfile.name} has been created`,
         });
-        return created;
+        return frontendProfile;
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to create profile');
         addNotification({
@@ -117,7 +123,7 @@ export function useProfileManager() {
     async (profileId: string) => {
       setLoading(true);
       try {
-        await profileService.delete(profileId);
+        await profileApi.deleteProfile(profileId);
         deleteProfile(profileId);
         addNotification({
           type: 'success',

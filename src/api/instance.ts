@@ -9,7 +9,13 @@ import { invoke } from '@tauri-apps/api/core';
 
 export type AemInstanceType = 'author' | 'publish' | 'dispatcher';
 
-export type AemInstanceStatus = 'running' | 'stopped' | 'starting' | 'stopping' | 'unknown';
+export type AemInstanceStatus =
+  | 'running'
+  | 'stopped'
+  | 'starting'
+  | 'stopping'
+  | 'unknown'
+  | 'error';
 
 export interface AemInstance {
   id: string;

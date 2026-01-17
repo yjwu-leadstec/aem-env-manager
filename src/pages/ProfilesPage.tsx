@@ -20,7 +20,7 @@ import { useProfiles, useActiveProfile, useAppStore } from '@/store';
 import type { EnvironmentProfile } from '@/types';
 import { formatDate } from '@/utils';
 import * as profileApi from '@/api/profile';
-import type { EnvironmentProfile as ApiProfile } from '@/api/profile';
+import { mapApiProfileToFrontend } from '@/api/mappers';
 
 export function ProfilesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -44,13 +44,13 @@ export function ProfilesPage() {
     setIsLoading(true);
     try {
       const apiProfiles = await profileApi.listProfiles();
-      const mappedProfiles = apiProfiles.map(mapApiProfileToStore);
+      const mappedProfiles = apiProfiles.map(mapApiProfileToFrontend);
       setProfiles(mappedProfiles);
 
       // Set active profile
       const active = apiProfiles.find((p) => p.is_active);
       if (active) {
-        setActiveProfile(mapApiProfileToStore(active));
+        setActiveProfile(mapApiProfileToFrontend(active));
       }
     } catch (error) {
       addNotification({
@@ -383,7 +383,7 @@ function ProfileCard({
 
       <CardHeader
         title={profile.name}
-        subtitle={profile.description}
+        subtitle={profile.description ?? undefined}
         action={
           <div className="relative">
             <button
@@ -438,9 +438,9 @@ function ProfileCard({
           </div>
         </div>
 
-        {/* Last Used */}
+        {/* Last Updated */}
         <div className="text-xs text-slate-400 dark:text-slate-500">
-          Last used: {formatDate(profile.lastUsedAt || profile.updatedAt)}
+          Last updated: {formatDate(profile.updatedAt)}
         </div>
 
         {/* Actions */}
@@ -545,22 +545,4 @@ function EmptyState({ onCreateClick }: EmptyStateProps) {
       </Button>
     </Card>
   );
-}
-
-// Helper to map API profile to store format
-function mapApiProfileToStore(apiProfile: ApiProfile): EnvironmentProfile {
-  return {
-    id: apiProfile.id,
-    name: apiProfile.name,
-    description: apiProfile.description || undefined,
-    javaVersion: apiProfile.java_version || 'Not set',
-    javaVendor: 'openjdk' as const,
-    nodeVersion: apiProfile.node_version || 'Not set',
-    mavenVersion: undefined,
-    envVars: apiProfile.env_vars,
-    createdAt: apiProfile.created_at,
-    updatedAt: apiProfile.updated_at,
-    lastUsedAt: apiProfile.updated_at,
-    isActive: apiProfile.is_active,
-  };
 }

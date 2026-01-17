@@ -6,6 +6,7 @@ import { VersionsPage } from '@/pages/VersionsPage';
 import { InstancesPage } from '@/pages/InstancesPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { WizardPage } from '@/pages/WizardPage';
+import { ErrorBoundary } from '@/components/common';
 
 const router = createBrowserRouter([
   {
@@ -45,5 +46,9 @@ const router = createBrowserRouter([
 ]);
 
 export function AppRouter() {
-  return <RouterProvider router={router} />;
+  return (
+    <ErrorBoundary>
+      <RouterProvider router={router} />
+    </ErrorBoundary>
+  );
 }

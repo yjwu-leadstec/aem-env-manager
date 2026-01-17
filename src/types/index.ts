@@ -1,24 +1,45 @@
-// Core Type Definitions for AEM Environment Manager
+// Type Definitions for AEM Environment Manager
+// This file re-exports types from the API layer and provides frontend-friendly aliases
+
+import type { FrontendProfile, FrontendInstance } from '../api/mappers';
+import type { VersionManager as ApiVersionManager } from '../api';
+
+// Re-export frontend types from API mappers
+export type {
+  FrontendInstance as AEMInstance,
+  FrontendProfile as EnvironmentProfile,
+  FrontendHealthCheck as AEMHealthCheck,
+  FrontendAppConfig as AppConfig,
+} from '../api/mappers';
+
+// Re-export API types directly where they match frontend needs
+export type {
+  AemInstanceStatus as AEMInstanceStatus,
+  AemInstanceType as AEMInstanceType,
+  VersionManager,
+  VersionManagerType,
+  InstalledVersion,
+  VersionSwitchResult,
+  BundleStatus,
+  MemoryStatus,
+} from '../api';
+
+// Re-export mappers for use in components
+export {
+  mapApiInstanceToFrontend,
+  mapFrontendInstanceToApi,
+  mapApiProfileToFrontend,
+  mapFrontendProfileToApi,
+  mapApiHealthCheckToFrontend,
+  mapApiConfigToFrontend,
+  mapFrontendConfigToApi,
+} from '../api/mappers';
 
 // ============================================
-// Environment Profile Types
+// UI-Only Types (not from API)
 // ============================================
 
-export interface EnvironmentProfile {
-  id: string;
-  name: string;
-  description?: string;
-  javaVersion: string;
-  javaVendor: JavaVendor;
-  nodeVersion: string;
-  mavenVersion?: string;
-  aemInstance?: AEMInstanceRef;
-  envVars?: Record<string, string>;
-  createdAt: string;
-  updatedAt: string;
-  lastUsedAt?: string;
-  isActive: boolean;
-}
+export type AEMRunMode = 'local' | 'dev' | 'stage' | 'prod';
 
 export type JavaVendor = 'oracle' | 'openjdk' | 'adoptium' | 'corretto' | 'zulu' | 'graalvm';
 
@@ -27,94 +48,9 @@ export interface AEMInstanceRef {
   name: string;
 }
 
-// ============================================
-// Version Manager Types
-// ============================================
-
-export interface VersionManager {
-  id: string;
-  name: string;
-  type: VersionManagerType;
-  isInstalled: boolean;
-  isActive: boolean;
-  path?: string;
-  versions: InstalledVersion[];
-}
-
-export type VersionManagerType = 'sdkman' | 'jenv' | 'jabba' | 'nvm' | 'fnm' | 'volta';
-
-export interface InstalledVersion {
-  version: string;
-  path: string;
-  isDefault: boolean;
-  vendor?: string;
-}
-
-export interface VersionSwitchResult {
-  success: boolean;
-  previousVersion?: string;
-  currentVersion: string;
-  message?: string;
-  error?: string;
-}
-
-// ============================================
-// AEM Instance Types
-// ============================================
-
-export interface AEMInstance {
-  id: string;
-  name: string;
-  type: AEMInstanceType;
-  host: string;
-  port: number;
-  runMode: AEMRunMode;
-  status: AEMInstanceStatus;
-  javaVersion?: string;
-  aemVersion?: string;
-  path?: string;
-  credentials?: AEMCredentials;
-  lastHealthCheck?: string;
-  startupTime?: number;
-}
-
-export type AEMInstanceType = 'author' | 'publish' | 'dispatcher';
-
-export type AEMRunMode = 'local' | 'dev' | 'stage' | 'prod';
-
-export type AEMInstanceStatus =
-  | 'running'
-  | 'stopped'
-  | 'starting'
-  | 'stopping'
-  | 'error'
-  | 'unknown';
-
 export interface AEMCredentials {
   username: string;
-  passwordKey: string; // Reference to keyring storage
-}
-
-export interface AEMHealthCheck {
-  instanceId: string;
-  timestamp: string;
-  status: AEMInstanceStatus;
-  responseTime?: number;
-  bundles?: BundleStatus;
-  memory?: MemoryStatus;
-}
-
-export interface BundleStatus {
-  total: number;
-  active: number;
-  resolved: number;
-  installed: number;
-}
-
-export interface MemoryStatus {
-  heapUsed: number;
-  heapMax: number;
-  heapPercentage: number;
+  passwordKey: string;
 }
 
 // ============================================
@@ -122,10 +58,10 @@ export interface MemoryStatus {
 // ============================================
 
 export interface AppState {
-  activeProfile: EnvironmentProfile | null;
-  profiles: EnvironmentProfile[];
-  versionManagers: VersionManager[];
-  aemInstances: AEMInstance[];
+  activeProfile: FrontendProfile | null;
+  profiles: FrontendProfile[];
+  versionManagers: ApiVersionManager[];
+  aemInstances: FrontendInstance[];
   isLoading: boolean;
   error: string | null;
 }
@@ -180,17 +116,8 @@ export interface PaginatedResponse<T> {
 }
 
 // ============================================
-// Configuration Types
+// User Preferences Types
 // ============================================
-
-export interface AppConfig {
-  theme: 'light' | 'dark' | 'system';
-  autoSwitchProfile: boolean;
-  healthCheckInterval: number;
-  startMinimized: boolean;
-  showNotifications: boolean;
-  logLevel: 'debug' | 'info' | 'warn' | 'error';
-}
 
 export interface UserPreferences {
   recentProfiles: string[];
@@ -198,3 +125,17 @@ export interface UserPreferences {
   defaultView: ViewType;
   sidebarCollapsed: boolean;
 }
+
+// ============================================
+// Convenience Type Aliases
+// ============================================
+
+// For backward compatibility with existing code
+export type { FrontendInstance, FrontendProfile, FrontendHealthCheck } from '../api/mappers';
+
+// API types (snake_case) for direct backend communication
+export type {
+  AemInstance,
+  EnvironmentProfile as ApiEnvironmentProfile,
+  HealthCheckResult,
+} from '../api';

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useAppStore, useAemInstances, useIsLoading, useConfig } from '../store';
-import { instanceService } from '../services';
+import * as instanceApi from '../api/instance';
+import { mapApiInstanceToFrontend, mapApiHealthCheckToFrontend } from '../api/mappers';
 import type { AEMInstance, AEMInstanceStatus } from '../types';
 
 /**
@@ -25,8 +26,9 @@ export function useInstanceManager() {
   const loadInstances = useCallback(async () => {
     setLoading(true);
     try {
-      const instanceList = await instanceService.list();
-      setInstances(instanceList);
+      const apiInstances = await instanceApi.listInstances();
+      const frontendInstances = apiInstances.map(mapApiInstanceToFrontend);
+      setInstances(frontendInstances);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load instances');
       addNotification({
@@ -48,7 +50,7 @@ export function useInstanceManager() {
       updateInstance(instanceId, { status: 'starting' as AEMInstanceStatus });
 
       try {
-        const success = await instanceService.start(instanceId);
+        const success = await instanceApi.startInstance(instanceId);
         if (success) {
           updateInstance(instanceId, { status: 'running' as AEMInstanceStatus });
           addNotification({
@@ -80,7 +82,7 @@ export function useInstanceManager() {
       updateInstance(instanceId, { status: 'stopping' as AEMInstanceStatus });
 
       try {
-        const success = await instanceService.stop(instanceId);
+        const success = await instanceApi.stopInstance(instanceId);
         if (success) {
           updateInstance(instanceId, { status: 'stopped' as AEMInstanceStatus });
           addNotification({
@@ -110,10 +112,10 @@ export function useInstanceManager() {
     await Promise.all(
       runningInstances.map(async (instance) => {
         try {
-          const health = await instanceService.checkHealth(instance.id);
+          const apiHealth = await instanceApi.checkInstanceHealth(instance.id);
+          const health = mapApiHealthCheckToFrontend(apiHealth);
           updateInstance(instance.id, {
-            status: health.status as AEMInstanceStatus,
-            lastHealthCheck: health.timestamp,
+            status: health.isHealthy ? 'running' : 'error',
           });
         } catch {
           // Silently handle health check failures
@@ -124,21 +126,28 @@ export function useInstanceManager() {
 
   // Create a new instance
   const createInstance = useCallback(
-    async (instance: Omit<AEMInstance, 'id'>) => {
+    async (instance: Omit<AEMInstance, 'id' | 'createdAt' | 'updatedAt'>) => {
       setLoading(true);
       try {
-        const newInstance: AEMInstance = {
-          ...instance,
-          id: crypto.randomUUID(),
-        };
-        const created = await instanceService.add(newInstance);
-        addInstance(created);
+        const apiInstance = await instanceApi.addInstance({
+          name: instance.name,
+          instance_type: instance.instanceType,
+          host: instance.host,
+          port: instance.port,
+          path: instance.path,
+          java_opts: instance.javaOpts,
+          run_modes: instance.runModes,
+          status: instance.status,
+          profile_id: instance.profileId,
+        });
+        const frontendInstance = mapApiInstanceToFrontend(apiInstance);
+        addInstance(frontendInstance);
         addNotification({
           type: 'success',
           title: 'Instance added',
-          message: `${created.name} has been configured`,
+          message: `${frontendInstance.name} has been configured`,
         });
-        return created;
+        return frontendInstance;
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to add instance');
         addNotification({
@@ -159,7 +168,7 @@ export function useInstanceManager() {
     async (instanceId: string) => {
       setLoading(true);
       try {
-        await instanceService.delete(instanceId);
+        await instanceApi.deleteInstance(instanceId);
         removeInstance(instanceId);
         addNotification({
           type: 'success',
@@ -183,7 +192,7 @@ export function useInstanceManager() {
   const openInBrowser = useCallback(
     async (instanceId: string, path?: string) => {
       try {
-        await instanceService.openInBrowser(instanceId, path);
+        await instanceApi.openInBrowser(instanceId, path);
       } catch (err) {
         addNotification({
           type: 'error',

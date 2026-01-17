@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { ChevronDown, Check, RefreshCw } from 'lucide-react';
 import { useProfiles, useActiveProfile, useAppStore } from '../../store';
 import * as profileApi from '../../api/profile';
-import type { EnvironmentProfile as ApiProfile } from '../../api/profile';
+import { mapApiProfileToFrontend } from '../../api/mappers';
 
 interface ProfileSwitcherProps {
   onSwitchStart?: () => void;
@@ -24,13 +24,13 @@ export function ProfileSwitcher({ onSwitchStart, onSwitchComplete }: ProfileSwit
     setIsLoading(true);
     try {
       const apiProfiles = await profileApi.listProfiles();
-      const mappedProfiles = apiProfiles.map(mapApiProfileToStore);
+      const mappedProfiles = apiProfiles.map(mapApiProfileToFrontend);
       setProfiles(mappedProfiles);
 
       // Set active profile
       const active = apiProfiles.find((p) => p.is_active);
       if (active) {
-        setActiveProfile(mapApiProfileToStore(active));
+        setActiveProfile(mapApiProfileToFrontend(active));
       }
     } catch {
       // Failed to load profiles
@@ -149,22 +149,4 @@ export function ProfileSwitcher({ onSwitchStart, onSwitchComplete }: ProfileSwit
       )}
     </div>
   );
-}
-
-// Helper to map API profile to store format
-function mapApiProfileToStore(apiProfile: ApiProfile) {
-  return {
-    id: apiProfile.id,
-    name: apiProfile.name,
-    description: apiProfile.description || undefined,
-    javaVersion: apiProfile.java_version || 'Not set',
-    javaVendor: 'openjdk' as const,
-    nodeVersion: apiProfile.node_version || 'Not set',
-    mavenVersion: undefined,
-    envVars: apiProfile.env_vars,
-    createdAt: apiProfile.created_at,
-    updatedAt: apiProfile.updated_at,
-    lastUsedAt: apiProfile.updated_at,
-    isActive: apiProfile.is_active,
-  };
 }

@@ -14,6 +14,8 @@ import { Button } from '../common/Button';
 import { StatusBadge } from '../common/StatusBadge';
 import { useAppStore, useAemInstances } from '../../store';
 import * as instanceApi from '../../api/instance';
+import { mapApiInstanceToFrontend } from '../../api/mappers';
+import type { AEMInstance, AEMInstanceStatus } from '../../types';
 
 export function AemInstanceCards() {
   const navigate = useNavigate();
@@ -29,7 +31,7 @@ export function AemInstanceCards() {
     setIsLoading(true);
     try {
       const apiInstances = await instanceApi.listInstances();
-      const mappedInstances = apiInstances.map(mapApiInstanceToStore);
+      const mappedInstances = apiInstances.map(mapApiInstanceToFrontend);
       setAemInstances(mappedInstances);
     } catch {
       // Failed to load instances
@@ -44,19 +46,19 @@ export function AemInstanceCards() {
 
   const handleStart = async (instanceId: string) => {
     setActionInProgress(instanceId);
-    updateAemInstance(instanceId, { status: 'starting' });
+    updateAemInstance(instanceId, { status: 'starting' as AEMInstanceStatus });
 
     try {
       const success = await instanceApi.startInstance(instanceId);
       if (success) {
-        updateAemInstance(instanceId, { status: 'running' });
+        updateAemInstance(instanceId, { status: 'running' as AEMInstanceStatus });
         addNotification({
           type: 'success',
           title: 'Instance started',
           message: `Instance is now running`,
         });
       } else {
-        updateAemInstance(instanceId, { status: 'error' });
+        updateAemInstance(instanceId, { status: 'error' as AEMInstanceStatus });
         addNotification({
           type: 'error',
           title: 'Start failed',
@@ -64,7 +66,7 @@ export function AemInstanceCards() {
         });
       }
     } catch (error) {
-      updateAemInstance(instanceId, { status: 'error' });
+      updateAemInstance(instanceId, { status: 'error' as AEMInstanceStatus });
       addNotification({
         type: 'error',
         title: 'Start failed',
@@ -77,19 +79,19 @@ export function AemInstanceCards() {
 
   const handleStop = async (instanceId: string) => {
     setActionInProgress(instanceId);
-    updateAemInstance(instanceId, { status: 'stopping' });
+    updateAemInstance(instanceId, { status: 'stopping' as AEMInstanceStatus });
 
     try {
       const success = await instanceApi.stopInstance(instanceId);
       if (success) {
-        updateAemInstance(instanceId, { status: 'stopped' });
+        updateAemInstance(instanceId, { status: 'stopped' as AEMInstanceStatus });
         addNotification({
           type: 'success',
           title: 'Instance stopped',
           message: `Instance has been stopped`,
         });
       } else {
-        updateAemInstance(instanceId, { status: 'error' });
+        updateAemInstance(instanceId, { status: 'error' as AEMInstanceStatus });
         addNotification({
           type: 'error',
           title: 'Stop failed',
@@ -97,7 +99,7 @@ export function AemInstanceCards() {
         });
       }
     } catch (error) {
-      updateAemInstance(instanceId, { status: 'error' });
+      updateAemInstance(instanceId, { status: 'error' as AEMInstanceStatus });
       addNotification({
         type: 'error',
         title: 'Stop failed',
@@ -179,14 +181,7 @@ export function AemInstanceCards() {
 }
 
 interface InstanceRowProps {
-  instance: {
-    id: string;
-    name: string;
-    type: string;
-    status: 'running' | 'stopped' | 'starting' | 'stopping' | 'error' | 'unknown';
-    host: string;
-    port: number;
-  };
+  instance: AEMInstance;
   isActionInProgress: boolean;
   onStart: () => void;
   onStop: () => void;
@@ -213,7 +208,7 @@ function InstanceRow({
         <div>
           <p className="font-medium text-slate-900 dark:text-slate-100">{instance.name}</p>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            {instance.host}:{instance.port} · {instance.type}
+            {instance.host}:{instance.port} · {instance.instanceType}
           </p>
         </div>
       </div>
@@ -306,27 +301,4 @@ function EmptyState({ onAdd }: EmptyStateProps) {
       </Button>
     </div>
   );
-}
-
-// Helper to map API instance to store format
-function mapApiInstanceToStore(apiInstance: instanceApi.AemInstance) {
-  // Get run mode from run_modes array
-  const runMode = apiInstance.run_modes?.[0] || 'local';
-
-  return {
-    id: apiInstance.id,
-    name: apiInstance.name,
-    type: apiInstance.instance_type as 'author' | 'publish' | 'dispatcher',
-    host: apiInstance.host,
-    port: apiInstance.port,
-    runMode: runMode as 'local' | 'dev' | 'stage' | 'prod',
-    status: apiInstance.status as
-      | 'running'
-      | 'stopped'
-      | 'starting'
-      | 'stopping'
-      | 'error'
-      | 'unknown',
-    path: apiInstance.path || undefined,
-  };
 }
