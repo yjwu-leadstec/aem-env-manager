@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ChevronDown, Check, RefreshCw } from 'lucide-react';
 import { useProfiles, useActiveProfile, useAppStore } from '../../store';
 import * as profileApi from '../../api/profile';
@@ -10,6 +11,7 @@ interface ProfileSwitcherProps {
 }
 
 export function ProfileSwitcher({ onSwitchStart, onSwitchComplete }: ProfileSwitcherProps) {
+  const { t } = useTranslation();
   const profiles = useProfiles();
   const activeProfile = useActiveProfile();
   const setActiveProfile = useAppStore((s) => s.setActiveProfile);
@@ -68,15 +70,17 @@ export function ProfileSwitcher({ onSwitchStart, onSwitchComplete }: ProfileSwit
         await loadProfiles();
         addNotification({
           type: 'success',
-          title: '配置已切换',
-          message: `已成功切换到 ${profiles.find((p) => p.id === selectedProfileId)?.name}`,
+          title: t('profile.notifications.switched'),
+          message: t('profile.notifications.switchedTo', {
+            name: profiles.find((p) => p.id === selectedProfileId)?.name,
+          }),
         });
         onSwitchComplete?.(true);
       } else {
-        const errorMsg = result.errors.join(', ') || '未知错误';
+        const errorMsg = result.errors.join(', ') || t('common.unknown');
         addNotification({
           type: 'error',
-          title: '切换失败',
+          title: t('profile.notifications.switchFailed'),
           message: errorMsg,
         });
         onSwitchComplete?.(false);
@@ -84,8 +88,8 @@ export function ProfileSwitcher({ onSwitchStart, onSwitchComplete }: ProfileSwit
     } catch (error) {
       addNotification({
         type: 'error',
-        title: '切换失败',
-        message: error instanceof Error ? error.message : '未知错误',
+        title: t('profile.notifications.switchFailed'),
+        message: error instanceof Error ? error.message : t('common.unknown'),
       });
       onSwitchComplete?.(false);
     } finally {
@@ -109,33 +113,35 @@ export function ProfileSwitcher({ onSwitchStart, onSwitchComplete }: ProfileSwit
           onClick={() => setIsOpen(!isOpen)}
           disabled={isSwitching || isLoading}
           className={`
-            flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600
-            bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100
-            hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors shadow-soft
+            flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-steel
+            bg-white dark:bg-charcoal text-slate-900 dark:text-gray-100
+            hover:bg-slate-50 dark:hover:bg-viewport-light transition-colors shadow-soft dark:shadow-none
             ${isSwitching || isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
             min-w-[200px]
           `}
         >
           {isSwitching || isLoading ? (
-            <RefreshCw size={16} className="animate-spin text-azure" />
+            <RefreshCw size={16} className="animate-spin text-azure dark:text-tech-orange" />
           ) : null}
           <span className="flex-1 text-left font-medium truncate">
-            {selectedProfile?.name || activeProfile?.name || '选择配置'}
+            {selectedProfile?.name ||
+              activeProfile?.name ||
+              t('dashboard.profileSwitcher.selectProfile')}
           </span>
           <ChevronDown
             size={16}
-            className={`text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+            className={`text-slate-400 dark:text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`}
           />
         </button>
 
         {isOpen && (
           <>
             <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
-            <div className="absolute top-full left-0 right-0 mt-2 z-20 bg-white dark:bg-slate-800 rounded-xl shadow-panel border border-slate-200 dark:border-slate-600 overflow-hidden">
+            <div className="absolute top-full left-0 right-0 mt-2 z-20 bg-white dark:bg-charcoal rounded-xl shadow-panel dark:shadow-none border border-slate-200 dark:border-steel overflow-hidden">
               <div className="py-1 max-h-60 overflow-auto">
                 {profiles.length === 0 ? (
-                  <div className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400 text-center">
-                    暂无配置
+                  <div className="px-4 py-3 text-sm text-slate-500 dark:text-gray-400 text-center">
+                    {t('dashboard.profileSwitcher.noProfiles')}
                   </div>
                 ) : (
                   profiles.map((profile) => (
@@ -144,25 +150,25 @@ export function ProfileSwitcher({ onSwitchStart, onSwitchComplete }: ProfileSwit
                       onClick={() => handleSelect(profile.id)}
                       className={`
                         w-full flex items-center gap-3 px-4 py-2.5 text-left
-                        hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors
-                        ${profile.id === selectedProfileId ? 'bg-azure-50 dark:bg-azure-900/30' : ''}
+                        hover:bg-slate-50 dark:hover:bg-viewport-light transition-colors
+                        ${profile.id === selectedProfileId ? 'bg-azure-50 dark:bg-tech-orange-500/20' : ''}
                       `}
                     >
                       <div className="flex-1">
-                        <div className="font-medium text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                        <div className="font-medium text-slate-900 dark:text-gray-100 flex items-center gap-2">
                           {profile.name}
                           {profile.id === activeProfile?.id && (
                             <span className="badge-azure text-xs px-2 py-0.5 rounded-full">
-                              当前
+                              {t('dashboard.profileSwitcher.current')}
                             </span>
                           )}
                         </div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400">
+                        <div className="text-xs text-slate-500 dark:text-gray-400">
                           Java {profile.javaVersion || '-'} · Node {profile.nodeVersion || '-'}
                         </div>
                       </div>
                       {profile.id === selectedProfileId && (
-                        <Check size={16} className="text-azure" />
+                        <Check size={16} className="text-azure dark:text-tech-orange" />
                       )}
                     </button>
                   ))
@@ -182,7 +188,11 @@ export function ProfileSwitcher({ onSwitchStart, onSwitchComplete }: ProfileSwit
           ${isCurrentProfile || isSwitching || isLoading ? 'opacity-50 cursor-not-allowed' : ''}
         `}
       >
-        {isSwitching ? <RefreshCw size={16} className="animate-spin" /> : '切换环境'}
+        {isSwitching ? (
+          <RefreshCw size={16} className="animate-spin" />
+        ) : (
+          t('dashboard.profileSwitcher.switchEnv')
+        )}
       </button>
     </div>
   );

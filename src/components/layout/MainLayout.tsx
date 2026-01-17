@@ -17,13 +17,13 @@ export function MainLayout() {
   }, [config.theme]);
 
   return (
-    <div className="flex h-screen bg-sky-gradient dark:bg-slate-900">
+    <div className="flex h-screen bg-sky-gradient dark:bg-viewport">
       <Sidebar />
 
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
 
-        <main className="flex-1 overflow-auto p-6 dark:bg-slate-900">
+        <main className="flex-1 overflow-auto p-6 dark:bg-viewport">
           <Outlet />
         </main>
 

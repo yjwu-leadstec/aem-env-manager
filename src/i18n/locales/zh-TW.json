@@ -56,7 +56,10 @@
       "profiles": "配置檔案",
       "instances": "實例",
       "javaVersions": "Java 版本",
-      "nodeVersions": "Node 版本"
+      "nodeVersions": "Node 版本",
+      "notDetected": "未偵測到",
+      "project": "專案",
+      "open": "開啟 →"
     },
     "scanning": "掃描中...",
     "scanningVersions": "正在掃描版本並檢查實例",
@@ -242,5 +245,9 @@
     "zhCN": "简体中文",
     "zhTW": "繁體中文",
     "en": "English"
+  },
+  "statusBar": {
+    "instances": "個實例",
+    "notSet": "未設定"
   }
 }
