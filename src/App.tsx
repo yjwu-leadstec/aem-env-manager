@@ -1,50 +1,52 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import { invoke } from "@tauri-apps/api/core";
-import "./App.css";
+import { MainLayout } from './components/layout';
+import { DashboardView } from './components/dashboard';
+import { useCurrentView } from './store';
 
 function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
+  const currentView = useCurrentView();
 
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { name }));
-  }
+  const renderView = () => {
+    switch (currentView) {
+      case 'dashboard':
+        return <DashboardView />;
+      case 'profiles':
+        return <PlaceholderView title="Environment Profiles" description="Manage your environment configurations" />;
+      case 'versions':
+        return <PlaceholderView title="Version Management" description="Switch Java and Node.js versions" />;
+      case 'instances':
+        return <PlaceholderView title="AEM Instances" description="Manage your AEM author and publish instances" />;
+      case 'settings':
+        return <PlaceholderView title="Settings" description="Configure application preferences" />;
+      default:
+        return <DashboardView />;
+    }
+  };
 
   return (
-    <main className="container">
-      <h1>Welcome to Tauri + React</h1>
+    <MainLayout>
+      {renderView()}
+    </MainLayout>
+  );
+}
 
-      <div className="row">
-        <a href="https://vite.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+// Temporary placeholder for views not yet implemented
+function PlaceholderView({ title, description }: { title: string; description: string }) {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900">{title}</h1>
+        <p className="text-slate-500 mt-1">{description}</p>
       </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
-
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
-        />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
-    </main>
+      <div className="card p-12 flex flex-col items-center justify-center text-center">
+        <div className="w-16 h-16 rounded-full bg-azure-50 flex items-center justify-center mb-4">
+          <span className="text-2xl">🚧</span>
+        </div>
+        <h3 className="text-lg font-semibold text-slate-700">Coming Soon</h3>
+        <p className="text-slate-500 mt-2 max-w-md">
+          This view is under development. Check back soon for updates.
+        </p>
+      </div>
+    </div>
   );
 }
 
