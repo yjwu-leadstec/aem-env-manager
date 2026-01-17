@@ -1,41 +1,281 @@
-import { useState } from 'react';
-import { Plus, MoreVertical, Play, Copy, Trash2, Edit2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import {
+  Plus,
+  MoreVertical,
+  Play,
+  Copy,
+  Trash2,
+  Edit2,
+  Download,
+  Upload,
+  RefreshCw,
+  Check,
+} from 'lucide-react';
 import { Card, CardHeader, CardContent } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
+import { ProfileForm, ConfirmDialog } from '@/components/profiles';
+import type { ProfileFormData } from '@/components/profiles';
 import { useProfiles, useActiveProfile, useAppStore } from '@/store';
 import type { EnvironmentProfile } from '@/types';
 import { formatDate } from '@/utils';
+import * as profileApi from '@/api/profile';
+import type { EnvironmentProfile as ApiProfile } from '@/api/profile';
 
 export function ProfilesPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const profiles = useProfiles();
   const activeProfile = useActiveProfile();
   const setActiveProfile = useAppStore((s) => s.setActiveProfile);
+  const setProfiles = useAppStore((s) => s.setProfiles);
   const addNotification = useAppStore((s) => s.addNotification);
-  const [selectedProfile, setSelectedProfile] = useState<string | null>(null);
 
-  const handleActivate = (profile: EnvironmentProfile) => {
-    setActiveProfile(profile);
+  const [selectedProfile, setSelectedProfile] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSwitching, setIsSwitching] = useState<string | null>(null);
+
+  // Dialog states
+  const [showProfileForm, setShowProfileForm] = useState(false);
+  const [editingProfile, setEditingProfile] = useState<EnvironmentProfile | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<EnvironmentProfile | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Load profiles on mount
+  useEffect(() => {
+    loadProfiles();
+  }, []);
+
+  // Handle URL action params
+  useEffect(() => {
+    const action = searchParams.get('action');
+    if (action === 'new') {
+      setShowProfileForm(true);
+      setSearchParams({});
+    } else if (action === 'import') {
+      handleImportClick();
+      setSearchParams({});
+    }
+  }, [searchParams]);
+
+  const loadProfiles = async () => {
+    setIsLoading(true);
+    try {
+      const apiProfiles = await profileApi.listProfiles();
+      const mappedProfiles = apiProfiles.map(mapApiProfileToStore);
+      setProfiles(mappedProfiles);
+
+      // Set active profile
+      const active = apiProfiles.find((p) => p.is_active);
+      if (active) {
+        setActiveProfile(mapApiProfileToStore(active));
+      }
+    } catch (error) {
+      console.error('Failed to load profiles:', error);
+      addNotification({
+        type: 'error',
+        title: 'Failed to load profiles',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleActivate = async (profile: EnvironmentProfile) => {
+    if (isSwitching) return;
+
+    setIsSwitching(profile.id);
+    try {
+      const result = await profileApi.switchProfile(profile.id);
+
+      if (result.success) {
+        await loadProfiles();
+        addNotification({
+          type: 'success',
+          title: 'Profile activated',
+          message: `Switched to ${profile.name}`,
+        });
+      } else {
+        const errors = result.errors.join(', ') || 'Unknown error';
+        addNotification({
+          type: 'error',
+          title: 'Switch failed',
+          message: errors,
+        });
+      }
+    } catch (error) {
+      addNotification({
+        type: 'error',
+        title: 'Switch failed',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    } finally {
+      setIsSwitching(null);
+    }
+  };
+
+  const handleCreate = async (data: ProfileFormData) => {
+    const apiProfile = await profileApi.createProfile({
+      name: data.name,
+      description: data.description || null,
+      java_version: data.javaVersion,
+      java_manager_id: data.javaManagerId,
+      node_version: data.nodeVersion,
+      node_manager_id: data.nodeManagerId,
+      maven_config_id: data.mavenConfigId,
+      env_vars: data.envVars,
+    });
+
+    await loadProfiles();
     addNotification({
       type: 'success',
-      title: 'Profile activated',
-      message: `Switched to ${profile.name}`,
+      title: 'Profile created',
+      message: `${apiProfile.name} has been created`,
     });
+  };
+
+  const handleEdit = async (data: ProfileFormData) => {
+    if (!editingProfile) return;
+
+    await profileApi.updateProfile(editingProfile.id, {
+      name: data.name,
+      description: data.description || null,
+      java_version: data.javaVersion,
+      java_manager_id: data.javaManagerId,
+      node_version: data.nodeVersion,
+      node_manager_id: data.nodeManagerId,
+      maven_config_id: data.mavenConfigId,
+      env_vars: data.envVars,
+    });
+
+    await loadProfiles();
+    setEditingProfile(null);
+    addNotification({
+      type: 'success',
+      title: 'Profile updated',
+      message: `${data.name} has been updated`,
+    });
+  };
+
+  const handleDelete = async () => {
+    if (!deleteConfirm) return;
+
+    setIsDeleting(true);
+    try {
+      await profileApi.deleteProfile(deleteConfirm.id);
+      await loadProfiles();
+      addNotification({
+        type: 'success',
+        title: 'Profile deleted',
+        message: `${deleteConfirm.name} has been deleted`,
+      });
+    } catch (error) {
+      addNotification({
+        type: 'error',
+        title: 'Delete failed',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    } finally {
+      setIsDeleting(false);
+      setDeleteConfirm(null);
+    }
+  };
+
+  const handleDuplicate = async (profile: EnvironmentProfile) => {
+    try {
+      const duplicated = await profileApi.duplicateProfile(profile.id);
+      await loadProfiles();
+      addNotification({
+        type: 'success',
+        title: 'Profile duplicated',
+        message: `Created "${duplicated.name}"`,
+      });
+    } catch (error) {
+      addNotification({
+        type: 'error',
+        title: 'Duplicate failed',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  };
+
+  const handleExport = async (profile: EnvironmentProfile) => {
+    try {
+      await profileApi.exportProfileToFile(profile.id, `${profile.name}.json`);
+      addNotification({
+        type: 'success',
+        title: 'Profile exported',
+        message: `${profile.name} has been exported`,
+      });
+    } catch (error) {
+      addNotification({
+        type: 'error',
+        title: 'Export failed',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  };
+
+  const handleImportClick = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (file) {
+        try {
+          const imported = await profileApi.importProfileFromFile(file);
+          await loadProfiles();
+          addNotification({
+            type: 'success',
+            title: 'Profile imported',
+            message: `${imported.name} has been imported`,
+          });
+        } catch (error) {
+          addNotification({
+            type: 'error',
+            title: 'Import failed',
+            message: error instanceof Error ? error.message : 'Unknown error',
+          });
+        }
+      }
+    };
+    input.click();
   };
 
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Environment Profiles</h1>
-          <p className="text-slate-500 mt-1">Manage your development environment configurations</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+            Environment Profiles
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">
+            Manage your development environment configurations
+          </p>
         </div>
-        <Button icon={<Plus size={16} />}>New Profile</Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" icon={<Upload size={16} />} onClick={handleImportClick}>
+            Import
+          </Button>
+          <Button
+            variant="primary"
+            icon={<Plus size={16} />}
+            onClick={() => setShowProfileForm(true)}
+          >
+            New Profile
+          </Button>
+        </div>
       </div>
 
       {/* Profile List */}
-      {profiles.length === 0 ? (
-        <EmptyState />
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <RefreshCw size={32} className="animate-spin text-azure" />
+        </div>
+      ) : profiles.length === 0 ? (
+        <EmptyState onCreateClick={() => setShowProfileForm(true)} />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {profiles.map((profile) => (
@@ -44,12 +284,59 @@ export function ProfilesPage() {
               profile={profile}
               isActive={activeProfile?.id === profile.id}
               isSelected={selectedProfile === profile.id}
+              isSwitching={isSwitching === profile.id}
               onSelect={() => setSelectedProfile(profile.id)}
               onActivate={() => handleActivate(profile)}
+              onEdit={() => setEditingProfile(profile)}
+              onDuplicate={() => handleDuplicate(profile)}
+              onDelete={() => setDeleteConfirm(profile)}
+              onExport={() => handleExport(profile)}
             />
           ))}
         </div>
       )}
+
+      {/* Create Profile Dialog */}
+      <ProfileForm
+        isOpen={showProfileForm}
+        onClose={() => setShowProfileForm(false)}
+        onSubmit={handleCreate}
+        title="New Profile"
+      />
+
+      {/* Edit Profile Dialog */}
+      {editingProfile && (
+        <ProfileForm
+          isOpen={!!editingProfile}
+          onClose={() => setEditingProfile(null)}
+          onSubmit={handleEdit}
+          title="Edit Profile"
+          initialData={{
+            name: editingProfile.name,
+            description: editingProfile.description || '',
+            javaVersion:
+              editingProfile.javaVersion === 'Not set' ? null : editingProfile.javaVersion,
+            nodeVersion:
+              editingProfile.nodeVersion === 'Not set' ? null : editingProfile.nodeVersion,
+            javaManagerId: null,
+            nodeManagerId: null,
+            mavenConfigId: null,
+            envVars: editingProfile.envVars || {},
+          }}
+        />
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={!!deleteConfirm}
+        onClose={() => setDeleteConfirm(null)}
+        onConfirm={handleDelete}
+        title="Delete Profile?"
+        message={`Are you sure you want to delete "${deleteConfirm?.name}"? This action cannot be undone.`}
+        confirmText="Delete"
+        variant="danger"
+        isLoading={isDeleting}
+      />
     </div>
   );
 }
@@ -58,22 +345,39 @@ interface ProfileCardProps {
   profile: EnvironmentProfile;
   isActive: boolean;
   isSelected: boolean;
+  isSwitching: boolean;
   onSelect: () => void;
   onActivate: () => void;
+  onEdit: () => void;
+  onDuplicate: () => void;
+  onDelete: () => void;
+  onExport: () => void;
 }
 
-function ProfileCard({ profile, isActive, isSelected, onSelect, onActivate }: ProfileCardProps) {
+function ProfileCard({
+  profile,
+  isActive,
+  isSelected,
+  isSwitching,
+  onSelect,
+  onActivate,
+  onEdit,
+  onDuplicate,
+  onDelete,
+  onExport,
+}: ProfileCardProps) {
   const [showMenu, setShowMenu] = useState(false);
 
   return (
     <Card
-      className={`relative ${isActive ? 'ring-2 ring-azure' : ''} ${isSelected ? 'ring-2 ring-teal' : ''}`}
+      className={`relative ${isActive ? 'ring-2 ring-azure dark:ring-azure-400' : ''} ${isSelected ? 'ring-2 ring-teal dark:ring-teal-400' : ''}`}
       hover
       onClick={onSelect}
     >
       {/* Active Badge */}
       {isActive && (
-        <div className="absolute -top-2 -right-2 px-2 py-0.5 bg-azure text-white text-xs font-medium rounded-full">
+        <div className="absolute -top-2 -right-2 px-2 py-0.5 bg-azure text-white text-xs font-medium rounded-full flex items-center gap-1">
+          <Check size={12} />
           Active
         </div>
       )}
@@ -88,16 +392,30 @@ function ProfileCard({ profile, isActive, isSelected, onSelect, onActivate }: Pr
                 e.stopPropagation();
                 setShowMenu(!showMenu);
               }}
-              className="p-1 rounded hover:bg-slate-100"
+              className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700"
             >
               <MoreVertical size={16} className="text-slate-400" />
             </button>
             {showMenu && (
               <ProfileMenu
                 onClose={() => setShowMenu(false)}
-                onEdit={() => {}}
-                onDuplicate={() => {}}
-                onDelete={() => {}}
+                onEdit={() => {
+                  setShowMenu(false);
+                  onEdit();
+                }}
+                onDuplicate={() => {
+                  setShowMenu(false);
+                  onDuplicate();
+                }}
+                onExport={() => {
+                  setShowMenu(false);
+                  onExport();
+                }}
+                onDelete={() => {
+                  setShowMenu(false);
+                  onDelete();
+                }}
+                isActive={isActive}
               />
             )}
           </div>
@@ -108,17 +426,23 @@ function ProfileCard({ profile, isActive, isSelected, onSelect, onActivate }: Pr
         {/* Version Info */}
         <div className="grid grid-cols-2 gap-2 text-sm">
           <div>
-            <span className="text-slate-500">Java:</span>
-            <span className="ml-2 font-medium text-slate-700">{profile.javaVersion}</span>
+            <span className="text-slate-500 dark:text-slate-400">Java:</span>
+            <span className="ml-2 font-medium text-slate-700 dark:text-slate-300">
+              {profile.javaVersion || 'Not set'}
+            </span>
           </div>
           <div>
-            <span className="text-slate-500">Node:</span>
-            <span className="ml-2 font-medium text-slate-700">{profile.nodeVersion}</span>
+            <span className="text-slate-500 dark:text-slate-400">Node:</span>
+            <span className="ml-2 font-medium text-slate-700 dark:text-slate-300">
+              {profile.nodeVersion || 'Not set'}
+            </span>
           </div>
         </div>
 
         {/* Last Used */}
-        <div className="text-xs text-slate-400">Last used: {formatDate(profile.lastUsedAt)}</div>
+        <div className="text-xs text-slate-400 dark:text-slate-500">
+          Last used: {formatDate(profile.lastUsedAt || profile.updatedAt)}
+        </div>
 
         {/* Actions */}
         {!isActive && (
@@ -126,13 +450,16 @@ function ProfileCard({ profile, isActive, isSelected, onSelect, onActivate }: Pr
             variant="primary"
             size="sm"
             fullWidth
-            icon={<Play size={14} />}
+            icon={
+              isSwitching ? <RefreshCw size={14} className="animate-spin" /> : <Play size={14} />
+            }
             onClick={(e) => {
               e.stopPropagation();
               onActivate();
             }}
+            disabled={isSwitching}
           >
-            Activate
+            {isSwitching ? 'Switching...' : 'Activate'}
           </Button>
         )}
       </CardContent>
@@ -144,30 +471,54 @@ interface ProfileMenuProps {
   onClose: () => void;
   onEdit: () => void;
   onDuplicate: () => void;
+  onExport: () => void;
   onDelete: () => void;
+  isActive: boolean;
 }
 
-function ProfileMenu({ onClose, onEdit, onDuplicate, onDelete }: ProfileMenuProps) {
+function ProfileMenu({
+  onClose,
+  onEdit,
+  onDuplicate,
+  onExport,
+  onDelete,
+  isActive,
+}: ProfileMenuProps) {
   return (
     <>
       <div className="fixed inset-0 z-10" onClick={onClose} />
-      <div className="absolute right-0 top-8 z-20 w-40 bg-white rounded-lg shadow-lg border border-slate-200 py-1">
+      <div className="absolute right-0 top-8 z-20 w-44 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1">
         <button
           onClick={onEdit}
-          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
         >
           <Edit2 size={14} /> Edit
         </button>
         <button
           onClick={onDuplicate}
-          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
         >
           <Copy size={14} /> Duplicate
         </button>
-        <hr className="my-1 border-slate-200" />
+        <button
+          onClick={onExport}
+          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+        >
+          <Download size={14} /> Export
+        </button>
+        <hr className="my-1 border-slate-200 dark:border-slate-700" />
         <button
           onClick={onDelete}
-          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-error hover:bg-error-50"
+          disabled={isActive}
+          className={`
+            w-full flex items-center gap-2 px-3 py-2 text-sm
+            ${
+              isActive
+                ? 'text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                : 'text-error-500 hover:bg-error-50 dark:hover:bg-error-900/30'
+            }
+          `}
+          title={isActive ? 'Cannot delete active profile' : undefined}
         >
           <Trash2 size={14} /> Delete
         </button>
@@ -176,17 +527,41 @@ function ProfileMenu({ onClose, onEdit, onDuplicate, onDelete }: ProfileMenuProp
   );
 }
 
-function EmptyState() {
+interface EmptyStateProps {
+  onCreateClick: () => void;
+}
+
+function EmptyState({ onCreateClick }: EmptyStateProps) {
   return (
     <Card className="p-12 text-center">
-      <div className="w-16 h-16 mx-auto rounded-full bg-azure-50 flex items-center justify-center mb-4">
+      <div className="w-16 h-16 mx-auto rounded-full bg-azure-50 dark:bg-azure-900/30 flex items-center justify-center mb-4">
         <Plus size={24} className="text-azure" />
       </div>
-      <h3 className="text-lg font-semibold text-slate-700">No profiles yet</h3>
-      <p className="text-slate-500 mt-2 mb-6 max-w-md mx-auto">
+      <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300">No profiles yet</h3>
+      <p className="text-slate-500 dark:text-slate-400 mt-2 mb-6 max-w-md mx-auto">
         Create your first environment profile to start managing your AEM development setup.
       </p>
-      <Button icon={<Plus size={16} />}>Create Profile</Button>
+      <Button icon={<Plus size={16} />} onClick={onCreateClick}>
+        Create Profile
+      </Button>
     </Card>
   );
+}
+
+// Helper to map API profile to store format
+function mapApiProfileToStore(apiProfile: ApiProfile): EnvironmentProfile {
+  return {
+    id: apiProfile.id,
+    name: apiProfile.name,
+    description: apiProfile.description || undefined,
+    javaVersion: apiProfile.java_version || 'Not set',
+    javaVendor: 'openjdk' as const,
+    nodeVersion: apiProfile.node_version || 'Not set',
+    mavenVersion: undefined,
+    envVars: apiProfile.env_vars,
+    createdAt: apiProfile.created_at,
+    updatedAt: apiProfile.updated_at,
+    lastUsedAt: apiProfile.updated_at,
+    isActive: apiProfile.is_active,
+  };
 }
