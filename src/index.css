@@ -13,6 +13,11 @@
   body {
     @apply bg-slate-50 text-slate-900 antialiased;
   }
+
+  /* Dark mode base */
+  .dark body {
+    @apply bg-slate-900 text-slate-100;
+  }
 }
 
 /* Component styles */

@@ -38,18 +38,20 @@ export function Sidebar() {
   return (
     <aside
       className={`
-        flex flex-col bg-white border-r border-slate-200 transition-all duration-300
+        flex flex-col bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 transition-all duration-300
         ${collapsed ? 'w-16' : 'w-56'}
       `}
     >
       {/* Logo */}
-      <div className="flex items-center h-16 px-4 border-b border-slate-200">
+      <div className="flex items-center h-16 px-4 border-b border-slate-200 dark:border-slate-700">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-azure to-teal flex items-center justify-center">
             <span className="text-white font-bold text-sm">AEM</span>
           </div>
           {!collapsed && (
-            <span className="font-semibold text-slate-800 whitespace-nowrap">Env Manager</span>
+            <span className="font-semibold text-slate-800 dark:text-slate-200 whitespace-nowrap">
+              Env Manager
+            </span>
           )}
         </div>
       </div>
@@ -67,14 +69,14 @@ export function Sidebar() {
                 transition-all duration-200
                 ${
                   isActive
-                    ? 'bg-azure-50 text-azure-600 font-medium'
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                    ? 'bg-azure-50 dark:bg-azure-900/30 text-azure-600 dark:text-azure-400 font-medium'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-200'
                 }
                 ${collapsed ? 'justify-center' : ''}
               `}
               title={collapsed ? item.label : undefined}
             >
-              <span className={isActive ? 'text-azure' : ''}>{item.icon}</span>
+              <span className={isActive ? 'text-azure dark:text-azure-400' : ''}>{item.icon}</span>
               {!collapsed && <span>{item.label}</span>}
             </NavLink>
           );
@@ -82,10 +84,10 @@ export function Sidebar() {
       </nav>
 
       {/* Collapse Toggle */}
-      <div className="p-2 border-t border-slate-200">
+      <div className="p-2 border-t border-slate-200 dark:border-slate-700">
         <button
           onClick={toggleCollapsed}
-          className="w-full flex items-center justify-center p-2 rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-colors"
+          className="w-full flex items-center justify-center p-2 rounded-lg text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
