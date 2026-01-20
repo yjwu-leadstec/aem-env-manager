@@ -9,9 +9,10 @@ use commands::{
     get_profile, import_profile, list_profiles, load_app_config, save_app_config, switch_profile,
     update_profile, validate_profile,
     // Version commands
-    delete_maven_config, detect_version_managers, get_current_java_version, get_current_maven_config,
-    get_current_node_version, get_managed_versions, import_maven_config, install_java_version,
-    install_node_version, list_maven_configs, read_maven_config, scan_java_in_path, scan_java_versions,
+    create_maven_config, delete_maven_config, detect_version_managers, get_current_java_version,
+    get_current_maven_config, get_current_node_version, get_managed_versions, get_maven_config_path,
+    import_maven_config, install_java_version, install_node_version, list_maven_configs,
+    open_maven_config_file, read_maven_config, scan_java_in_path, scan_java_versions,
     scan_maven_settings, scan_maven_settings_in_path, scan_node_in_path, scan_node_versions,
     switch_java_version, switch_maven_config, switch_node_version, validate_java_path, validate_node_path,
     // Instance commands
@@ -78,6 +79,9 @@ pub fn run() {
             import_maven_config,
             delete_maven_config,
             read_maven_config,
+            create_maven_config,
+            open_maven_config_file,
+            get_maven_config_path,
             // Instance commands
             list_instances,
             get_instance,

@@ -25,6 +25,7 @@ import {
   FolderOpen,
   Server,
   Search,
+  Copy,
 } from 'lucide-react';
 import { Card, CardHeader, CardContent } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
@@ -763,6 +764,15 @@ function MavenConfigPanel({ mavenInfo, onRefresh }: MavenPanelProps) {
   const [loadingContent, setLoadingContent] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Create new config state
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [createName, setCreateName] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
+  const [createNameError, setCreateNameError] = useState<string | null>(null);
+
+  // Edit config state
+  const [editingConfig, setEditingConfig] = useState<string | null>(null);
+
   // Search functionality state
   const [searchPath, setSearchPath] = useState('');
   const [searchResults, setSearchResults] = useState<versionApi.MavenSettingsFile[]>([]);
@@ -1130,6 +1140,100 @@ function MavenConfigPanel({ mavenInfo, onRefresh }: MavenPanelProps) {
     setBatchImportProgress({ current: 0, total: 0 });
   };
 
+  // Validate create name
+  const validateCreateName = (name: string): string | null => {
+    if (!name) return null;
+    if (!/^[a-z][a-z0-9-]{0,49}$/.test(name)) {
+      return t('maven.create.nameInvalid');
+    }
+    if (name === 'repository' || name === 'settings') {
+      return t('maven.create.nameReserved');
+    }
+    // Check if name already exists
+    if (mavenInfo?.configs.some((c) => c.id === name || c.name === name)) {
+      return t('maven.create.nameExists');
+    }
+    return null;
+  };
+
+  // Handle create name change with validation
+  const handleCreateNameChange = (value: string) => {
+    const normalized = value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+    setCreateName(normalized);
+    setCreateNameError(validateCreateName(normalized));
+  };
+
+  // Create new Maven configuration
+  const handleCreate = async () => {
+    const error = validateCreateName(createName);
+    if (error) {
+      setCreateNameError(error);
+      return;
+    }
+
+    setIsCreating(true);
+    try {
+      await versionApi.createMavenConfig(createName);
+      addNotification({
+        type: 'success',
+        title: t('maven.create.success'),
+        message: t('maven.create.successMessage', { name: createName }),
+      });
+      setShowCreateDialog(false);
+      setCreateName('');
+      setCreateNameError(null);
+      onRefresh();
+    } catch (error) {
+      addNotification({
+        type: 'error',
+        title: t('maven.create.failed'),
+        message: error instanceof Error ? error.message : t('common.unknown'),
+      });
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  // Open config file in editor
+  const handleEditConfig = async (configId: string) => {
+    setEditingConfig(configId);
+    try {
+      await versionApi.openMavenConfigFile(configId);
+      addNotification({
+        type: 'info',
+        title: t('maven.edit.opened'),
+        message: t('maven.edit.openedMessage'),
+      });
+    } catch (error) {
+      addNotification({
+        type: 'error',
+        title: t('maven.edit.failed'),
+        message: error instanceof Error ? error.message : t('common.unknown'),
+      });
+    } finally {
+      setEditingConfig(null);
+    }
+  };
+
+  // Copy config path to clipboard
+  const handleCopyPath = async (configId: string) => {
+    try {
+      const path = await versionApi.getMavenConfigPath(configId);
+      await window.navigator.clipboard.writeText(path);
+      addNotification({
+        type: 'success',
+        title: t('maven.path.copied'),
+        message: path,
+      });
+    } catch (error) {
+      addNotification({
+        type: 'error',
+        title: t('maven.path.copyFailed'),
+        message: error instanceof Error ? error.message : t('common.unknown'),
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Hidden file input for import */}
@@ -1179,14 +1283,24 @@ function MavenConfigPanel({ mavenInfo, onRefresh }: MavenPanelProps) {
           title={t('maven.configs.title')}
           subtitle={t('maven.configs.subtitle', { count: mavenInfo?.configs.length || 0 })}
           action={
-            <Button
-              variant="outline"
-              size="sm"
-              icon={<Plus size={14} />}
-              onClick={() => setShowImportDialog(true)}
-            >
-              {t('common.import')}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="primary"
+                size="sm"
+                icon={<Plus size={14} />}
+                onClick={() => setShowCreateDialog(true)}
+              >
+                {t('maven.create.button')}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                icon={<Upload size={14} />}
+                onClick={() => setShowImportDialog(true)}
+              >
+                {t('common.import')}
+              </Button>
+            </div>
           }
         />
         <CardContent>
@@ -1243,6 +1357,27 @@ function MavenConfigPanel({ mavenInfo, onRefresh }: MavenPanelProps) {
                       title={t('maven.viewDetail')}
                     >
                       <Eye size={16} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEditConfig(config.id)}
+                      disabled={editingConfig === config.id}
+                      title={t('maven.edit.button')}
+                    >
+                      {editingConfig === config.id ? (
+                        <RefreshCw size={14} className="animate-spin" />
+                      ) : (
+                        <Edit size={16} />
+                      )}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleCopyPath(config.id)}
+                      title={t('maven.path.copy')}
+                    >
+                      <Copy size={16} />
                     </Button>
                     {!config.is_active && (
                       <>
@@ -1504,6 +1639,88 @@ function MavenConfigPanel({ mavenInfo, onRefresh }: MavenPanelProps) {
             <div className="flex justify-end p-4 border-t border-slate-200 dark:border-slate-700">
               <Button variant="outline" onClick={() => setShowDetailDialog(null)}>
                 {t('common.close')}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Dialog */}
+      {showCreateDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl w-full max-w-md mx-4">
+            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
+              <h3 className="text-lg font-semibold">{t('maven.create.title')}</h3>
+              <button
+                onClick={() => {
+                  setShowCreateDialog(false);
+                  setCreateName('');
+                  setCreateNameError(null);
+                }}
+                className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  {t('maven.create.name')} <span className="text-error-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={createName}
+                  onChange={(e) => handleCreateNameChange(e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-slate-700 ${
+                    createNameError ? 'border-error-500' : 'border-slate-300 dark:border-slate-600'
+                  }`}
+                  placeholder={t('maven.create.namePlaceholder')}
+                  autoFocus
+                />
+                {createNameError && (
+                  <p className="text-xs text-error-500 mt-1">{createNameError}</p>
+                )}
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  {t('maven.create.nameHint')}
+                </p>
+              </div>
+              {createName && !createNameError && (
+                <div className="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+                  <p className="text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">
+                    {t('maven.create.preview')}
+                  </p>
+                  <p className="text-sm font-mono text-slate-900 dark:text-slate-100">
+                    ~/.m2.{createName}/
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                    {t('maven.create.willCreate')}:
+                  </p>
+                  <ul className="text-xs text-slate-500 dark:text-slate-400 mt-1 space-y-0.5">
+                    <li>• settings.xml</li>
+                    <li>• repository/</li>
+                  </ul>
+                </div>
+              )}
+            </div>
+            <div className="flex justify-end gap-2 p-4 border-t border-slate-200 dark:border-slate-700">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowCreateDialog(false);
+                  setCreateName('');
+                  setCreateNameError(null);
+                }}
+              >
+                {t('common.cancel')}
+              </Button>
+              <Button
+                onClick={handleCreate}
+                disabled={!createName || !!createNameError || isCreating}
+                icon={
+                  isCreating ? <RefreshCw size={16} className="animate-spin" /> : <Plus size={16} />
+                }
+              >
+                {isCreating ? t('common.loading') : t('maven.create.button')}
               </Button>
             </div>
           </div>

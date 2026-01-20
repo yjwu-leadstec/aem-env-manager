@@ -472,6 +472,32 @@
       "1": "Maven settings.xml is usually located at ~/.m2/settings.xml",
       "2": "You can save multiple configurations for different projects or environments",
       "3": "Switching configuration updates the symlink at ~/.m2/settings.xml"
+    },
+    "create": {
+      "title": "Create Maven Configuration",
+      "name": "Configuration Name",
+      "namePlaceholder": "e.g. my-project",
+      "nameHint": "Use lowercase letters, numbers, and hyphens. Must start with a letter.",
+      "nameInvalid": "Invalid name. Use lowercase letters, numbers, hyphens only, must start with letter.",
+      "nameReserved": "This name is reserved and cannot be used.",
+      "nameExists": "A configuration with this name already exists.",
+      "preview": "Preview",
+      "willCreate": "Will create",
+      "button": "Create",
+      "success": "Configuration Created",
+      "successMessage": "Maven configuration \"{{name}}\" has been created",
+      "failed": "Create Failed"
+    },
+    "edit": {
+      "button": "Edit in Editor",
+      "opened": "Configuration Opened",
+      "openedMessage": "The configuration file has been opened in your default editor",
+      "failed": "Failed to Open"
+    },
+    "path": {
+      "copy": "Copy Path",
+      "copied": "Path Copied",
+      "copyFailed": "Failed to Copy Path"
     }
   },
   "licenses": {

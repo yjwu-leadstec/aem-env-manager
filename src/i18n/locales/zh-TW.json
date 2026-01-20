@@ -472,6 +472,32 @@
       "1": "Maven settings.xml 檔案通常位於 ~/.m2/settings.xml",
       "2": "你可以為不同的專案或環境儲存多個配置文件",
       "3": "切換配置會更新 ~/.m2/settings.xml 的符號連結"
+    },
+    "create": {
+      "title": "建立 Maven 配置",
+      "name": "配置名稱",
+      "namePlaceholder": "例如: my-project",
+      "nameHint": "使用小寫字母、數字和連字符，必須以字母開頭",
+      "nameInvalid": "名稱無效。只能使用小寫字母、數字和連字符，且必須以字母開頭",
+      "nameReserved": "此名稱是保留名稱，不能使用",
+      "nameExists": "已存在相同名稱的配置",
+      "preview": "預覽",
+      "willCreate": "將建立",
+      "button": "建立",
+      "success": "配置已建立",
+      "successMessage": "Maven 配置 \"{{name}}\" 已建立",
+      "failed": "建立失敗"
+    },
+    "edit": {
+      "button": "在編輯器中開啟",
+      "opened": "配置已開啟",
+      "openedMessage": "配置文件已在預設編輯器中開啟",
+      "failed": "開啟失敗"
+    },
+    "path": {
+      "copy": "複製路徑",
+      "copied": "路徑已複製",
+      "copyFailed": "複製路徑失敗"
     }
   },
   "licenses": {

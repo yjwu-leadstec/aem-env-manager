@@ -1212,6 +1212,175 @@ pub async fn read_maven_config(config_id: String) -> Result<String, String> {
         .map_err(|e| format!("Failed to read Maven config: {}", e))
 }
 
+/// Create a new Maven configuration with a dedicated directory
+/// Creates ~/.m2.<name>/ directory with settings.xml and repository/ subdirectory
+#[command]
+pub async fn create_maven_config(name: String) -> Result<MavenConfig, String> {
+    // Validate name: lowercase letters, numbers, hyphens only, must start with letter
+    let name_regex = regex::Regex::new(r"^[a-z][a-z0-9-]{0,49}$")
+        .map_err(|e| format!("Regex error: {}", e))?;
+
+    if !name_regex.is_match(&name) {
+        return Err("Invalid config name. Use lowercase letters, numbers, and hyphens. Must start with a letter and be 1-50 characters.".to_string());
+    }
+
+    // Reserved names
+    if name == "repository" || name == "settings" {
+        return Err("Reserved name. Please choose a different name.".to_string());
+    }
+
+    let home_dir = dirs::home_dir()
+        .ok_or("Could not determine home directory")?;
+
+    // Create ~/.m2.<name>/ directory
+    let config_base_dir = home_dir.join(format!(".m2.{}", name));
+
+    if config_base_dir.exists() {
+        return Err(format!("Configuration directory already exists: {}", config_base_dir.display()));
+    }
+
+    std::fs::create_dir_all(&config_base_dir)
+        .map_err(|e| format!("Failed to create config directory: {}", e))?;
+
+    // Create repository/ subdirectory
+    let repo_dir = config_base_dir.join("repository");
+    std::fs::create_dir_all(&repo_dir)
+        .map_err(|e| format!("Failed to create repository directory: {}", e))?;
+
+    // Generate settings.xml with localRepository pointing to the new repository directory
+    // Use forward slashes for all platforms (Maven recommendation)
+    let local_repo_path = repo_dir.to_string_lossy().replace("\\", "/");
+    let settings_content = generate_maven_settings_template(&local_repo_path);
+
+    let settings_path = config_base_dir.join("settings.xml");
+    std::fs::write(&settings_path, &settings_content)
+        .map_err(|e| format!("Failed to write settings.xml: {}", e))?;
+
+    // Also import into the app's maven-configs directory for management
+    let platform = crate::platform::current_platform();
+    let app_config_dir = platform.get_data_dir().join("maven-configs");
+    std::fs::create_dir_all(&app_config_dir)
+        .map_err(|e| format!("Failed to create config directory: {}", e))?;
+
+    let app_config_path = app_config_dir.join(format!("{}.xml", name));
+    std::fs::write(&app_config_path, &settings_content)
+        .map_err(|e| format!("Failed to write app config: {}", e))?;
+
+    Ok(MavenConfig {
+        id: name.clone(),
+        name: name.clone(),
+        path: settings_path.to_string_lossy().to_string(),
+        is_active: false,
+        description: Some(format!("Created configuration: ~/.m2.{}/", name)),
+        local_repository: Some(local_repo_path),
+    })
+}
+
+/// Generate a Maven settings.xml template with helpful comments
+fn generate_maven_settings_template(local_repo_path: &str) -> String {
+    format!(r#"<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+                              https://maven.apache.org/xsd/settings-1.0.0.xsd">
+
+  <!-- Local repository path - configured for this dedicated configuration -->
+  <localRepository>{}</localRepository>
+
+  <!--
+    Common configuration examples (uncomment and modify as needed):
+
+    <mirrors>
+      <mirror>
+        <id>nexus</id>
+        <mirrorOf>*</mirrorOf>
+        <url>https://your-nexus-server/repository/maven-public/</url>
+      </mirror>
+    </mirrors>
+
+    <servers>
+      <server>
+        <id>nexus</id>
+        <username>your-username</username>
+        <password>your-password</password>
+      </server>
+    </servers>
+
+    <profiles>
+      <profile>
+        <id>default</id>
+        <repositories>
+          <repository>
+            <id>central</id>
+            <url>https://repo.maven.apache.org/maven2</url>
+          </repository>
+        </repositories>
+      </profile>
+    </profiles>
+
+    <activeProfiles>
+      <activeProfile>default</activeProfile>
+    </activeProfiles>
+  -->
+
+</settings>
+"#, local_repo_path)
+}
+
+/// Open Maven configuration file in system default editor
+#[command]
+pub async fn open_maven_config_file(config_id: String) -> Result<(), String> {
+    let platform = crate::platform::current_platform();
+    let config_dir = platform.get_data_dir().join("maven-configs");
+    let config_path = config_dir.join(format!("{}.xml", config_id));
+
+    if !config_path.exists() {
+        return Err(format!("Maven config '{}' not found", config_id));
+    }
+
+    let path_str = config_path.to_string_lossy().to_string();
+
+    #[cfg(target_os = "macos")]
+    {
+        Command::new("open")
+            .arg(&path_str)
+            .spawn()
+            .map_err(|e| format!("Failed to open file: {}", e))?;
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        Command::new("cmd")
+            .args(["/C", "start", "", &path_str])
+            .spawn()
+            .map_err(|e| format!("Failed to open file: {}", e))?;
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        Command::new("xdg-open")
+            .arg(&path_str)
+            .spawn()
+            .map_err(|e| format!("Failed to open file: {}", e))?;
+    }
+
+    Ok(())
+}
+
+/// Get the full path of a Maven configuration file
+#[command]
+pub async fn get_maven_config_path(config_id: String) -> Result<String, String> {
+    let platform = crate::platform::current_platform();
+    let config_dir = platform.get_data_dir().join("maven-configs");
+    let config_path = config_dir.join(format!("{}.xml", config_id));
+
+    if !config_path.exists() {
+        return Err(format!("Maven config '{}' not found", config_id));
+    }
+
+    Ok(config_path.to_string_lossy().to_string())
+}
+
 // ============================================
 // Installation Commands (Placeholder)
 // ============================================

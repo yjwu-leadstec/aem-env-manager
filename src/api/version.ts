@@ -292,6 +292,31 @@ export async function readMavenConfig(configId: string): Promise<string> {
   return invoke<string>('read_maven_config', { configId });
 }
 
+/**
+ * Create a new Maven configuration with a dedicated directory
+ * Creates ~/.m2.<name>/ directory with settings.xml and repository/ subdirectory
+ * @param name - Configuration name (lowercase letters, numbers, hyphens, must start with letter)
+ */
+export async function createMavenConfig(name: string): Promise<MavenConfig> {
+  return invoke<MavenConfig>('create_maven_config', { name });
+}
+
+/**
+ * Open Maven configuration file in system default editor
+ * @param configId - Configuration ID to open
+ */
+export async function openMavenConfigFile(configId: string): Promise<void> {
+  return invoke<void>('open_maven_config_file', { configId });
+}
+
+/**
+ * Get the full path of a Maven configuration file
+ * @param configId - Configuration ID
+ */
+export async function getMavenConfigPath(configId: string): Promise<string> {
+  return invoke<string>('get_maven_config_path', { configId });
+}
+
 // ============================================
 // Convenience Functions
 // ============================================
