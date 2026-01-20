@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { Card, CardHeader, CardContent } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { useAppStore } from '@/store';
 import * as versionApi from '@/api/version';
 import * as licenseApi from '@/api/license';
@@ -737,6 +738,10 @@ function MavenConfigPanel({ mavenInfo, onRefresh }: MavenPanelProps) {
   const addNotification = useAppStore((s) => s.addNotification);
   const [switchingConfig, setSwitchingConfig] = useState<string | null>(null);
   const [deletingConfig, setDeletingConfig] = useState<string | null>(null);
+  const [deleteConfirmConfig, setDeleteConfirmConfig] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [importName, setImportName] = useState('');
   const [importPath, setImportPath] = useState('');
@@ -771,19 +776,22 @@ function MavenConfigPanel({ mavenInfo, onRefresh }: MavenPanelProps) {
     }
   };
 
-  const handleDelete = async (configId: string, configName: string) => {
-    if (!window.confirm(t('maven.confirmDelete', { name: configName }))) {
-      return;
-    }
+  const handleDelete = (configId: string, configName: string) => {
+    setDeleteConfirmConfig({ id: configId, name: configName });
+  };
 
-    setDeletingConfig(configId);
+  const confirmDelete = async () => {
+    if (!deleteConfirmConfig) return;
+
+    setDeletingConfig(deleteConfirmConfig.id);
     try {
-      await versionApi.deleteMavenConfig(configId);
+      await versionApi.deleteMavenConfig(deleteConfirmConfig.id);
       addNotification({
         type: 'success',
         title: t('maven.notifications.deleteSuccess'),
-        message: t('maven.notifications.deleted', { name: configName }),
+        message: t('maven.notifications.deleted', { name: deleteConfirmConfig.name }),
       });
+      setDeleteConfirmConfig(null);
       onRefresh();
     } catch (error) {
       addNotification({
@@ -1248,6 +1256,18 @@ function MavenConfigPanel({ mavenInfo, onRefresh }: MavenPanelProps) {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={!!deleteConfirmConfig}
+        onClose={() => setDeleteConfirmConfig(null)}
+        onConfirm={confirmDelete}
+        title={t('maven.dialog.deleteTitle')}
+        message={t('maven.confirmDelete', { name: deleteConfirmConfig?.name })}
+        confirmText={t('common.delete')}
+        variant="danger"
+        isLoading={!!deletingConfig}
+      />
     </div>
   );
 }
@@ -1711,6 +1731,8 @@ function LicensesPanel() {
   const [isLoading, setIsLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingLicense, setEditingLicense] = useState<AemLicense | null>(null);
+  const [deleteConfirmLicense, setDeleteConfirmLicense] = useState<AemLicense | null>(null);
+  const [isDeletingLicense, setIsDeletingLicense] = useState(false);
   const [filter, setFilter] = useState<'all' | LicenseStatus>('all');
   const addNotification = useAppStore((s) => s.addNotification);
 
@@ -1770,18 +1792,22 @@ function LicensesPanel() {
     }
   };
 
-  const handleDelete = async (license: AemLicense) => {
-    if (!window.confirm(t('licenses.confirmDelete', { name: license.name }))) {
-      return;
-    }
+  const handleDelete = (license: AemLicense) => {
+    setDeleteConfirmLicense(license);
+  };
 
+  const confirmDeleteLicense = async () => {
+    if (!deleteConfirmLicense) return;
+
+    setIsDeletingLicense(true);
     try {
-      await licenseApi.deleteAemLicense(license.id);
+      await licenseApi.deleteAemLicense(deleteConfirmLicense.id);
       addNotification({
         type: 'success',
         title: t('licenses.notifications.deleteSuccess'),
-        message: t('licenses.notifications.deleted', { name: license.name }),
+        message: t('licenses.notifications.deleted', { name: deleteConfirmLicense.name }),
       });
+      setDeleteConfirmLicense(null);
       loadLicenses();
     } catch (error) {
       addNotification({
@@ -1789,6 +1815,8 @@ function LicensesPanel() {
         title: t('licenses.notifications.deleteFailed'),
         message: error instanceof Error ? error.message : t('common.unknown'),
       });
+    } finally {
+      setIsDeletingLicense(false);
     }
   };
 
@@ -1966,6 +1994,18 @@ function LicensesPanel() {
           }}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={!!deleteConfirmLicense}
+        onClose={() => setDeleteConfirmLicense(null)}
+        onConfirm={confirmDeleteLicense}
+        title={t('licenses.dialog.deleteTitle')}
+        message={t('licenses.confirmDelete', { name: deleteConfirmLicense?.name })}
+        confirmText={t('common.delete')}
+        variant="danger"
+        isLoading={isDeletingLicense}
+      />
     </div>
   );
 }

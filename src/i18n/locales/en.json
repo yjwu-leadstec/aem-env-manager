@@ -419,6 +419,9 @@
       "deleteFailed": "Delete Failed"
     },
     "confirmDelete": "Are you sure you want to delete \"{{name}}\" configuration? This action cannot be undone.",
+    "dialog": {
+      "deleteTitle": "Delete Maven Configuration"
+    },
     "viewDetail": "View Details",
     "localRepo": "Local Repository",
     "search": {
@@ -464,6 +467,9 @@
     "noMatchingLicenses": "No licenses match the current filter",
     "linkedToInstance": "Linked to instance",
     "confirmDelete": "Are you sure you want to delete \"{name}\"? This action cannot be undone.",
+    "dialog": {
+      "deleteTitle": "Delete License"
+    },
     "form": {
       "addTitle": "Add License",
       "editTitle": "Edit License",

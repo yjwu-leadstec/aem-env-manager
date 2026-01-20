@@ -419,6 +419,9 @@
       "deleteFailed": "刪除失敗"
     },
     "confirmDelete": "確定要刪除 \"{{name}}\" 配置嗎？此操作無法撤銷。",
+    "dialog": {
+      "deleteTitle": "刪除 Maven 配置"
+    },
     "viewDetail": "檢視詳情",
     "localRepo": "本地倉庫",
     "search": {
@@ -464,6 +467,9 @@
     "noMatchingLicenses": "沒有符合目前篩選條件的授權",
     "linkedToInstance": "已關聯實例",
     "confirmDelete": "確定要刪除 \"{name}\" 嗎？此操作無法撤銷。",
+    "dialog": {
+      "deleteTitle": "刪除授權"
+    },
     "form": {
       "addTitle": "新增授權",
       "editTitle": "編輯授權",

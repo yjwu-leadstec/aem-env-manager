@@ -424,6 +424,9 @@
       "deleteFailed": "删除失败"
     },
     "confirmDelete": "确定要删除 \"{{name}}\" 配置吗？此操作无法撤销。",
+    "dialog": {
+      "deleteTitle": "删除 Maven 配置"
+    },
     "viewDetail": "查看详情",
     "localRepo": "本地仓库",
     "search": {
@@ -469,6 +472,9 @@
     "noMatchingLicenses": "没有符合当前筛选条件的许可证",
     "linkedToInstance": "已关联实例",
     "confirmDelete": "确定要删除 \"{name}\" 吗？此操作无法撤销。",
+    "dialog": {
+      "deleteTitle": "删除许可证"
+    },
     "form": {
       "addTitle": "添加许可证",
       "editTitle": "编辑许可证",
