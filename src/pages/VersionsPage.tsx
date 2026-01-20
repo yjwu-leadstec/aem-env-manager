@@ -1976,6 +1976,15 @@ function LicensesPanel() {
   const [filter, setFilter] = useState<'all' | LicenseStatus>('all');
   const addNotification = useAppStore((s) => s.addNotification);
 
+  // Scan state
+  const [showScanDialog, setShowScanDialog] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
+  const [scanResults, setScanResults] = useState<licenseApi.ScannedLicenseFile[]>([]);
+  const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
+  const [isImporting, setIsImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState({ current: 0, total: 0 });
+  const [instances, setInstances] = useState<AemInstance[]>([]);
+
   const loadLicenses = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -1999,6 +2008,150 @@ function LicensesPanel() {
   useEffect(() => {
     loadLicenses();
   }, [loadLicenses]);
+
+  // Load instances for scanning
+  const loadInstances = useCallback(async () => {
+    try {
+      const instanceList = await instanceApi.listInstances();
+      setInstances(instanceList);
+    } catch (error) {
+      console.error('Failed to load instances:', error);
+    }
+  }, []);
+
+  // Scan instance directories for license files
+  const handleScanInstanceDirs = async () => {
+    if (instances.length === 0) {
+      addNotification({
+        type: 'warning',
+        title: t('licenses.scan.noInstances'),
+        message: t('licenses.scan.noInstancesMessage'),
+      });
+      return;
+    }
+
+    setIsScanning(true);
+    setScanResults([]);
+    setSelectedFiles(new Set());
+
+    try {
+      const allResults: licenseApi.ScannedLicenseFile[] = [];
+      const existingPaths = new Set(
+        licenses.filter((l) => l.license_file_path).map((l) => l.license_file_path)
+      );
+
+      for (const instance of instances) {
+        if (instance.path) {
+          try {
+            const results = await licenseApi.scanLicenseFiles(instance.path);
+            // Filter out already imported licenses
+            const newResults = results.filter((r) => !existingPaths.has(r.path));
+            allResults.push(...newResults);
+          } catch (error) {
+            console.error(`Failed to scan ${instance.path}:`, error);
+          }
+        }
+      }
+
+      // Deduplicate by path
+      const uniqueResults = allResults.filter(
+        (result, index, self) => self.findIndex((r) => r.path === result.path) === index
+      );
+
+      setScanResults(uniqueResults);
+
+      if (uniqueResults.length === 0) {
+        addNotification({
+          type: 'info',
+          title: t('licenses.scan.noNewLicenses'),
+          message: t('licenses.scan.noNewLicensesMessage'),
+        });
+      }
+    } catch (error) {
+      addNotification({
+        type: 'error',
+        title: t('licenses.scan.scanFailed'),
+        message: error instanceof Error ? error.message : t('common.unknown'),
+      });
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
+  // Open scan dialog
+  const openScanDialog = async () => {
+    setShowScanDialog(true);
+    setScanResults([]);
+    setSelectedFiles(new Set());
+    await loadInstances();
+  };
+
+  // Toggle file selection
+  const toggleFileSelection = (path: string) => {
+    const newSelected = new Set(selectedFiles);
+    if (newSelected.has(path)) {
+      newSelected.delete(path);
+    } else {
+      newSelected.add(path);
+    }
+    setSelectedFiles(newSelected);
+  };
+
+  // Select all files
+  const selectAllFiles = () => {
+    if (selectedFiles.size === scanResults.length) {
+      setSelectedFiles(new Set());
+    } else {
+      setSelectedFiles(new Set(scanResults.map((r) => r.path)));
+    }
+  };
+
+  // Batch import selected files
+  const handleBatchImport = async () => {
+    if (selectedFiles.size === 0) return;
+
+    setIsImporting(true);
+    setImportProgress({ current: 0, total: selectedFiles.size });
+
+    const selectedResults = scanResults.filter((r) => selectedFiles.has(r.path));
+    let successCount = 0;
+
+    for (let i = 0; i < selectedResults.length; i++) {
+      const file = selectedResults[i];
+      setImportProgress({ current: i + 1, total: selectedFiles.size });
+
+      try {
+        // Parse the license file to get details
+        const parsed = await licenseApi.parseLicenseFile(file.path);
+
+        // Create license entry
+        await licenseApi.addAemLicense({
+          name: file.name || `License from ${file.parent_directory}`,
+          license_file_path: file.path,
+          product_name: parsed.product_name || 'Adobe Experience Manager',
+          product_version: parsed.product_version || undefined,
+          customer_name: parsed.customer_name || file.customer_name || undefined,
+          license_key: parsed.license_key || undefined,
+          expiry_date: parsed.expiry_date || undefined,
+        });
+
+        successCount++;
+      } catch (error) {
+        console.error(`Failed to import ${file.path}:`, error);
+      }
+    }
+
+    setIsImporting(false);
+    setShowScanDialog(false);
+
+    addNotification({
+      type: successCount > 0 ? 'success' : 'error',
+      title: successCount > 0 ? t('licenses.scan.importSuccess') : t('licenses.scan.importFailed'),
+      message: t('licenses.scan.importedCount', { count: successCount, total: selectedFiles.size }),
+    });
+
+    loadLicenses();
+  };
 
   const handleSave = async (data: licenseApi.CreateLicenseInput) => {
     try {
@@ -2076,6 +2229,10 @@ function LicensesPanel() {
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={loadLicenses} disabled={isLoading}>
             <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
+          </Button>
+          <Button variant="outline" size="sm" onClick={openScanDialog}>
+            <Search size={14} />
+            {t('licenses.scanLicenses')}
           </Button>
           <Button size="sm" onClick={() => setShowForm(true)}>
             <Plus size={14} />
@@ -2246,6 +2403,154 @@ function LicensesPanel() {
         variant="danger"
         isLoading={isDeletingLicense}
       />
+
+      {/* Scan Dialog */}
+      {showScanDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl w-full max-w-2xl max-h-[80vh] overflow-hidden">
+            {/* Dialog Header */}
+            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                  {t('licenses.scan.title')}
+                </h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {t('licenses.scan.subtitle')}
+                </p>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setShowScanDialog(false)}>
+                <X size={18} />
+              </Button>
+            </div>
+
+            {/* Dialog Content */}
+            <div className="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
+              {/* Instance Info */}
+              <div className="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+                <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                  <Server size={16} />
+                  <span>{t('licenses.scan.instanceCount', { count: instances.length })}</span>
+                </div>
+                {instances.length > 0 && (
+                  <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                    {instances.map((inst) => inst.name).join(', ')}
+                  </div>
+                )}
+              </div>
+
+              {/* Scan Button */}
+              <Button
+                onClick={handleScanInstanceDirs}
+                disabled={isScanning || instances.length === 0}
+                className="w-full"
+              >
+                {isScanning ? (
+                  <>
+                    <RefreshCw size={16} className="animate-spin" />
+                    {t('licenses.scan.scanning')}
+                  </>
+                ) : (
+                  <>
+                    <Search size={16} />
+                    {t('licenses.scan.scanInstanceDirs')}
+                  </>
+                )}
+              </Button>
+
+              {/* Results */}
+              {scanResults.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                      {t('licenses.scan.foundCount', { count: scanResults.length })}
+                    </span>
+                    <Button variant="ghost" size="sm" onClick={selectAllFiles}>
+                      {selectedFiles.size === scanResults.length
+                        ? t('licenses.scan.deselectAll')
+                        : t('licenses.scan.selectAll')}
+                    </Button>
+                  </div>
+
+                  <div className="space-y-2">
+                    {scanResults.map((file) => (
+                      <label
+                        key={file.path}
+                        className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                          selectedFiles.has(file.path)
+                            ? 'border-primary bg-primary/5'
+                            : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedFiles.has(file.path)}
+                          onChange={() => toggleFileSelection(file.path)}
+                          className="mt-1"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-slate-900 dark:text-slate-100 truncate">
+                            {file.name}
+                          </div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                            <div className="flex items-center gap-1">
+                              <FolderOpen size={12} />
+                              <span className="truncate">{file.parent_directory}</span>
+                            </div>
+                            {file.product_name && <div className="mt-0.5">{file.product_name}</div>}
+                            {file.customer_name && (
+                              <div className="flex items-center gap-1 mt-0.5">
+                                <Building2 size={12} />
+                                {file.customer_name}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Import Progress */}
+              {isImporting && (
+                <div className="p-3 bg-primary/10 rounded-lg">
+                  <div className="flex items-center gap-2 text-sm text-primary">
+                    <RefreshCw size={16} className="animate-spin" />
+                    <span>
+                      {t('licenses.scan.importing', {
+                        current: importProgress.current,
+                        total: importProgress.total,
+                      })}
+                    </span>
+                  </div>
+                  <div className="mt-2 bg-slate-200 dark:bg-slate-600 rounded-full h-2">
+                    <div
+                      className="bg-primary rounded-full h-2 transition-all"
+                      style={{
+                        width: `${(importProgress.current / importProgress.total) * 100}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Dialog Footer */}
+            <div className="flex items-center justify-end gap-2 p-4 border-t border-slate-200 dark:border-slate-700">
+              <Button variant="outline" onClick={() => setShowScanDialog(false)}>
+                {t('common.cancel')}
+              </Button>
+              <Button
+                onClick={handleBatchImport}
+                disabled={selectedFiles.size === 0 || isImporting}
+              >
+                <Upload size={16} />
+                {t('licenses.scan.import', { count: selectedFiles.size })}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
