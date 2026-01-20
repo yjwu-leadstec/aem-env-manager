@@ -548,6 +548,32 @@
       "deleteFailed": "删除许可证失败",
       "parseSuccess": "许可证文件解析成功",
       "parsed": "已从文件中提取许可证信息"
+    },
+    "scanLicenses": "扫描许可证",
+    "scan": {
+      "title": "扫描许可证文件",
+      "searchPath": "搜索路径",
+      "searchPlaceholder": "输入包含 AEM 实例的目录路径",
+      "orScan": "或者",
+      "defaultLocations": "扫描默认位置",
+      "results": "找到 {count} 个许可证文件",
+      "noResults": "未找到许可证",
+      "noResultsMessage": "在指定目录中未找到 license.properties 文件",
+      "noDefaultsFound": "在默认位置未找到许可证文件",
+      "allAlreadyImported": "找到的所有许可证文件都已导入",
+      "found": "发现许可证",
+      "foundMessage": "找到 {count} 个可导入的许可证文件",
+      "failed": "扫描失败",
+      "searching": "正在扫描...",
+      "instructions": "输入目录路径搜索许可证文件，或扫描默认的 AEM 安装位置",
+      "warning": "请输入搜索路径",
+      "enterPath": "请输入要搜索的目录路径",
+      "importSelected": "导入选中 ({count})",
+      "importing": "导入中... ({current}/{total})",
+      "importSuccess": "导入成功",
+      "importedCount": "已成功导入 {count} 个许可证",
+      "importPartial": "部分导入失败",
+      "failedCount": "{count} 个许可证导入失败"
     }
   },
   "wizard": {

@@ -543,6 +543,32 @@
       "deleteFailed": "刪除授權失敗",
       "parseSuccess": "授權檔案解析成功",
       "parsed": "已從檔案中提取授權資訊"
+    },
+    "scanLicenses": "掃描授權",
+    "scan": {
+      "title": "掃描授權檔案",
+      "searchPath": "搜尋路徑",
+      "searchPlaceholder": "輸入包含 AEM 實例的目錄路徑",
+      "orScan": "或者",
+      "defaultLocations": "掃描預設位置",
+      "results": "找到 {count} 個授權檔案",
+      "noResults": "未找到授權",
+      "noResultsMessage": "在指定目錄中未找到 license.properties 檔案",
+      "noDefaultsFound": "在預設位置未找到授權檔案",
+      "allAlreadyImported": "找到的所有授權檔案都已匯入",
+      "found": "發現授權",
+      "foundMessage": "找到 {count} 個可匯入的授權檔案",
+      "failed": "掃描失敗",
+      "searching": "正在掃描...",
+      "instructions": "輸入目錄路徑搜尋授權檔案，或掃描預設的 AEM 安裝位置",
+      "warning": "請輸入搜尋路徑",
+      "enterPath": "請輸入要搜尋的目錄路徑",
+      "importSelected": "匯入選中 ({count})",
+      "importing": "匯入中... ({current}/{total})",
+      "importSuccess": "匯入成功",
+      "importedCount": "已成功匯入 {count} 個授權",
+      "importPartial": "部分匯入失敗",
+      "failedCount": "{count} 個授權匯入失敗"
     }
   },
   "wizard": {

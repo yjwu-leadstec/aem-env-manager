@@ -543,6 +543,32 @@
       "deleteFailed": "Failed to delete license",
       "parseSuccess": "License file parsed successfully",
       "parsed": "License information extracted from file"
+    },
+    "scanLicenses": "Scan Licenses",
+    "scan": {
+      "title": "Scan for License Files",
+      "searchPath": "Search Path",
+      "searchPlaceholder": "Enter directory path containing AEM instances",
+      "orScan": "or",
+      "defaultLocations": "Scan Default Locations",
+      "results": "Found {count} license files",
+      "noResults": "No Licenses Found",
+      "noResultsMessage": "No license.properties files found in the specified directory",
+      "noDefaultsFound": "No license files found in default locations",
+      "allAlreadyImported": "All found license files have already been imported",
+      "found": "Licenses Found",
+      "foundMessage": "Found {count} importable license files",
+      "failed": "Scan Failed",
+      "searching": "Scanning...",
+      "instructions": "Enter a directory path to search for license files, or scan default AEM installation locations",
+      "warning": "Please Enter Path",
+      "enterPath": "Please enter a directory path to search",
+      "importSelected": "Import Selected ({count})",
+      "importing": "Importing... ({current}/{total})",
+      "importSuccess": "Import Successful",
+      "importedCount": "Successfully imported {count} licenses",
+      "importPartial": "Partial Import Failed",
+      "failedCount": "{count} licenses failed to import"
     }
   },
   "wizard": {

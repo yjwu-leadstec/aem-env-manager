@@ -344,6 +344,191 @@ pub async fn parse_license_file(path: String) -> Result<ParsedLicenseProperties,
 }
 
 // ============================================
+// License File Scanning
+// ============================================
+
+/// Scanned license file information
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ScannedLicenseFile {
+    pub path: String,
+    pub name: String,
+    pub product_name: Option<String>,
+    pub customer_name: Option<String>,
+    pub download_id: Option<String>,
+    pub parent_directory: String,
+}
+
+/// Scan a directory for license.properties files
+/// Searches recursively up to max_depth levels
+#[command]
+pub async fn scan_license_files(search_path: String) -> Result<Vec<ScannedLicenseFile>, String> {
+    let base_path = PathBuf::from(&search_path);
+
+    if !base_path.exists() {
+        return Err(format!("Path does not exist: {}", search_path));
+    }
+
+    let mut found_files = Vec::new();
+    let mut checked_paths = std::collections::HashSet::new();
+
+    // Helper function to check if a file is a license file
+    fn is_license_file(filename: &str) -> bool {
+        let lower = filename.to_lowercase();
+        lower == "license.properties" ||
+        lower.starts_with("license") && lower.ends_with(".properties")
+    }
+
+    // Helper function to scan a directory recursively
+    fn scan_directory(
+        dir: &PathBuf,
+        found_files: &mut Vec<ScannedLicenseFile>,
+        checked_paths: &mut std::collections::HashSet<String>,
+        depth: usize,
+        max_depth: usize,
+    ) {
+        if depth > max_depth {
+            return;
+        }
+
+        if let Ok(entries) = std::fs::read_dir(dir) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                let filename = path.file_name()
+                    .map(|n| n.to_string_lossy().to_string())
+                    .unwrap_or_default();
+
+                if path.is_file() && is_license_file(&filename) {
+                    let path_str = path.to_string_lossy().to_string();
+                    if checked_paths.insert(path_str.clone()) {
+                        // Try to parse the license file to get more info
+                        let (product_name, customer_name, download_id) =
+                            if let Ok(content) = std::fs::read_to_string(&path) {
+                                parse_license_content(&content)
+                            } else {
+                                (None, None, None)
+                            };
+
+                        let parent_directory = path.parent()
+                            .map(|p| p.file_name()
+                                .map(|n| n.to_string_lossy().to_string())
+                                .unwrap_or_else(|| p.to_string_lossy().to_string()))
+                            .unwrap_or_default();
+
+                        found_files.push(ScannedLicenseFile {
+                            path: path_str,
+                            name: filename,
+                            product_name,
+                            customer_name,
+                            download_id,
+                            parent_directory,
+                        });
+                    }
+                } else if path.is_dir() {
+                    let dir_name = filename.to_lowercase();
+                    // Skip common non-relevant directories
+                    if !dir_name.starts_with('.') &&
+                       dir_name != "node_modules" &&
+                       dir_name != "target" &&
+                       dir_name != "build" {
+                        scan_directory(&path, found_files, checked_paths, depth + 1, max_depth);
+                    }
+                }
+            }
+        }
+    }
+
+    // Parse license content to extract key fields
+    fn parse_license_content(content: &str) -> (Option<String>, Option<String>, Option<String>) {
+        let mut product_name = None;
+        let mut customer_name = None;
+        let mut download_id = None;
+
+        for line in content.lines() {
+            let line = line.trim();
+            if line.is_empty() || line.starts_with('#') || line.starts_with('!') {
+                continue;
+            }
+
+            if let Some(eq_pos) = line.find('=').or_else(|| line.find(':')) {
+                let key = line[..eq_pos].trim();
+                let value = line[eq_pos + 1..].trim();
+
+                match key {
+                    "license.product.name" | "product.name" => {
+                        product_name = Some(value.to_string());
+                    }
+                    "license.customer.name" | "customer.name" => {
+                        customer_name = Some(value.to_string());
+                    }
+                    "license.downloadID" | "downloadID" => {
+                        download_id = Some(value.to_string());
+                    }
+                    _ => {}
+                }
+            }
+        }
+
+        (product_name, customer_name, download_id)
+    }
+
+    // Start scanning from base path with max depth of 5
+    scan_directory(&base_path, &mut found_files, &mut checked_paths, 0, 5);
+
+    Ok(found_files)
+}
+
+/// Scan default AEM installation directories for license files
+#[command]
+pub async fn scan_default_license_locations() -> Result<Vec<ScannedLicenseFile>, String> {
+    let mut all_files = Vec::new();
+
+    // Common AEM installation paths
+    let mut search_paths = Vec::new();
+
+    if let Some(home) = dirs::home_dir() {
+        // Common macOS/Linux locations
+        search_paths.push(home.join("aem"));
+        search_paths.push(home.join("AEM"));
+        search_paths.push(home.join("Adobe"));
+        search_paths.push(home.join("cq"));
+        search_paths.push(home.join("crx"));
+        search_paths.push(home.join("Development/AEM"));
+        search_paths.push(home.join("dev/aem"));
+    }
+
+    // Check /opt on Unix systems
+    #[cfg(target_os = "macos")]
+    {
+        search_paths.push(PathBuf::from("/opt/aem"));
+        search_paths.push(PathBuf::from("/opt/Adobe"));
+        search_paths.push(PathBuf::from("/Applications/Adobe"));
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        search_paths.push(PathBuf::from("/opt/aem"));
+        search_paths.push(PathBuf::from("/opt/Adobe"));
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        search_paths.push(PathBuf::from("C:\\Adobe"));
+        search_paths.push(PathBuf::from("C:\\AEM"));
+        search_paths.push(PathBuf::from("C:\\Program Files\\Adobe"));
+    }
+
+    for path in search_paths {
+        if path.exists() {
+            if let Ok(files) = scan_license_files(path.to_string_lossy().to_string()).await {
+                all_files.extend(files);
+            }
+        }
+    }
+
+    Ok(all_files)
+}
+
+// ============================================
 // License Association
 // ============================================
 

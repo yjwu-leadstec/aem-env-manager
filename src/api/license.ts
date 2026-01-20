@@ -156,6 +156,39 @@ export async function parseLicenseFile(path: string): Promise<ParsedLicensePrope
 }
 
 // ============================================
+// License File Scanning
+// ============================================
+
+/**
+ * Scanned license file information
+ */
+export interface ScannedLicenseFile {
+  path: string;
+  name: string;
+  product_name: string | null;
+  customer_name: string | null;
+  download_id: string | null;
+  parent_directory: string;
+}
+
+/**
+ * Scan a directory for license.properties files
+ * Searches recursively up to 5 levels deep
+ * @param searchPath - Directory path to search in
+ */
+export async function scanLicenseFiles(searchPath: string): Promise<ScannedLicenseFile[]> {
+  return invoke<ScannedLicenseFile[]>('scan_license_files', { searchPath });
+}
+
+/**
+ * Scan default AEM installation directories for license files
+ * Searches common locations like ~/aem, ~/Adobe, /opt/aem, etc.
+ */
+export async function scanDefaultLicenseLocations(): Promise<ScannedLicenseFile[]> {
+  return invoke<ScannedLicenseFile[]>('scan_default_license_locations');
+}
+
+// ============================================
 // License Association
 // ============================================
 
