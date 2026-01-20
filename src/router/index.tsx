@@ -3,13 +3,10 @@ import { MainLayout } from '@/components/layout';
 import { DashboardView } from '@/components/dashboard';
 import { ProfilesPage } from '@/pages/ProfilesPage';
 import { InstancesPage } from '@/pages/InstancesPage';
-import { JavaPage } from '@/pages/JavaPage';
-import { NodePage } from '@/pages/NodePage';
-import { MavenPage } from '@/pages/MavenPage';
-import { LicensesPage } from '@/pages/LicensesPage';
+import { VersionsPage } from '@/pages/VersionsPage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { WizardPage } from '@/pages/WizardPage';
-import { ErrorBoundary } from '@/components/common';
+import { ErrorBoundary, RequireSetup } from '@/components/common';
 
 const router = createBrowserRouter([
   {
@@ -18,7 +15,11 @@ const router = createBrowserRouter([
   },
   {
     path: '/',
-    element: <MainLayout />,
+    element: (
+      <RequireSetup>
+        <MainLayout />
+      </RequireSetup>
+    ),
     children: [
       {
         index: true,
@@ -37,20 +38,26 @@ const router = createBrowserRouter([
         element: <InstancesPage />,
       },
       {
+        path: 'versions',
+        element: <VersionsPage />,
+      },
+      // Legacy routes - redirect to unified versions page
+      {
         path: 'java',
-        element: <JavaPage />,
+        element: <Navigate to="/versions?tab=java" replace />,
       },
       {
         path: 'node',
-        element: <NodePage />,
+        element: <Navigate to="/versions?tab=node" replace />,
       },
       {
         path: 'maven',
-        element: <MavenPage />,
+        element: <Navigate to="/versions?tab=maven" replace />,
       },
+      // Legacy route - redirect to versions licenses tab
       {
         path: 'licenses',
-        element: <LicensesPage />,
+        element: <Navigate to="/versions?tab=licenses" replace />,
       },
       {
         path: 'settings',

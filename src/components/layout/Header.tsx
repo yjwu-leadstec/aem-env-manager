@@ -11,7 +11,7 @@ export function Header() {
   const unreadCount = notifications.length;
 
   return (
-    <header className="relative z-50 h-16 bg-white/70 dark:bg-viewport/70 backdrop-blur-xl border-b border-white/50 dark:border-steel/50 flex items-center justify-between px-6">
+    <header className="relative z-50 h-16 bg-white/70 dark:bg-viewport backdrop-blur-xl dark:backdrop-blur-none border-b border-white/50 dark:border-border flex items-center justify-between px-6">
       {/* Left spacer */}
       <div className="flex-1" />
 

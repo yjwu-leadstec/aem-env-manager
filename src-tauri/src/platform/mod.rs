@@ -12,8 +12,9 @@ pub mod common;
 
 pub use common::*;
 
-// Platform-specific re-exports
+// Platform-specific re-exports (for external API use)
 #[cfg(target_os = "macos")]
+#[allow(unused_imports)]
 pub use macos::{get_platform, MacOSPlatform};
 
 #[cfg(target_os = "windows")]

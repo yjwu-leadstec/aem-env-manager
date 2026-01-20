@@ -5,6 +5,7 @@ use std::process::Command;
 use std::time::{Duration, Instant};
 use tauri::command;
 
+use crate::commands::profile::get_active_profile;
 use crate::platform::PlatformOps;
 
 // ============================================
@@ -13,22 +14,34 @@ use crate::platform::PlatformOps;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AemInstance {
+    #[serde(default)]
     pub id: String,
     pub name: String,
     pub instance_type: AemInstanceType,
     pub host: String,
     pub port: u16,
-    pub run_mode: AemRunMode,
+    #[serde(default)]
+    pub path: String,
+    #[serde(default)]
+    pub java_opts: Option<String>,
+    #[serde(default)]
+    pub run_modes: Vec<String>,
+    #[serde(default = "default_status")]
     pub status: AemInstanceStatus,
-    pub java_version: Option<String>,
-    pub aem_version: Option<String>,
-    pub path: Option<String>,
-    pub username: Option<String>,
-    pub password_key: Option<String>,
-    pub last_health_check: Option<String>,
-    pub startup_time: Option<u64>,
-    pub jvm_args: Option<Vec<String>>,
-    pub jar_path: Option<String>,
+    #[serde(default)]
+    pub profile_id: Option<String>,
+    #[serde(default = "default_timestamp")]
+    pub created_at: String,
+    #[serde(default = "default_timestamp")]
+    pub updated_at: String,
+}
+
+fn default_status() -> AemInstanceStatus {
+    AemInstanceStatus::Unknown
+}
+
+fn default_timestamp() -> String {
+    chrono::Utc::now().to_rfc3339()
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -37,15 +50,6 @@ pub enum AemInstanceType {
     Author,
     Publish,
     Dispatcher,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum AemRunMode {
-    Local,
-    Dev,
-    Stage,
-    Prod,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -218,59 +222,81 @@ pub async fn delete_instance(id: String) -> Result<bool, String> {
 /// Start an AEM instance
 #[command]
 pub async fn start_instance(id: String) -> Result<bool, String> {
-    let mut instances = load_instances()?;
+    println!("[AEM] start_instance called with id: {}", id);
+
+    let mut instances = load_instances().map_err(|e| {
+        println!("[AEM] Failed to load instances: {}", e);
+        e
+    })?;
 
     let instance = instances
         .iter_mut()
         .find(|i| i.id == id)
-        .ok_or_else(|| format!("Instance {} not found", id))?;
+        .ok_or_else(|| {
+            let err = format!("Instance {} not found", id);
+            println!("[AEM] Error: {}", err);
+            err
+        })?;
 
-    // Check if already running
-    if instance.status == AemInstanceStatus::Running {
-        return Err("Instance is already running".to_string());
+    println!("[AEM] Found instance: {} (path: {})", instance.name, instance.path);
+
+    // Note: We don't check if already running because we can't reliably track status
+    // when using Terminal-based control. User manages the process in Terminal.
+
+    // Get jar path from instance.path
+    if instance.path.is_empty() {
+        println!("[AEM] Instance path not configured");
+        return Err("Instance path not configured".to_string());
     }
 
-    // Get jar path
-    let jar_path = instance
-        .jar_path
-        .as_ref()
-        .or(instance.path.as_ref())
-        .ok_or("Instance path not configured")?;
-
-    let jar_file = PathBuf::from(jar_path);
+    let jar_file = PathBuf::from(&instance.path);
+    println!("[AEM] Checking jar_file: {} (is_dir: {})", jar_file.display(), jar_file.is_dir());
 
     // Try to find quickstart jar
     let quickstart_jar = if jar_file.is_dir() {
-        find_quickstart_jar(&jar_file)?
+        find_quickstart_jar(&jar_file).map_err(|e| {
+            println!("[AEM] Failed to find quickstart JAR in dir: {}", e);
+            e
+        })?
     } else {
         jar_file.clone()
     };
 
+    println!("[AEM] quickstart_jar: {}", quickstart_jar.display());
+
     if !quickstart_jar.exists() {
-        return Err(format!("Quickstart JAR not found: {}", quickstart_jar.display()));
+        let err = format!("Quickstart JAR not found: {}", quickstart_jar.display());
+        println!("[AEM] Error: {}", err);
+        return Err(err);
     }
 
-    // Build JVM arguments
-    let mut jvm_args: Vec<String> = instance
-        .jvm_args
-        .clone()
-        .unwrap_or_else(|| vec!["-Xmx1024m".to_string()]);
+    println!("[AEM] JAR file exists, proceeding with startup");
 
-    // Add run mode
-    let run_mode = match instance.run_mode {
-        AemRunMode::Local => "local",
-        AemRunMode::Dev => "dev",
-        AemRunMode::Stage => "stage",
-        AemRunMode::Prod => "prod",
+    // Build JVM arguments from java_opts
+    // Filter out "java" if user accidentally included it in the options
+    let mut jvm_args: Vec<String> = if let Some(ref opts) = instance.java_opts {
+        opts.split_whitespace()
+            .filter(|s| *s != "java" && !s.ends_with("/java"))
+            .map(|s| s.to_string())
+            .collect()
+    } else {
+        vec!["-Xmx1024m".to_string()]
     };
 
+    // Build run modes string from run_modes array
     let instance_type = match instance.instance_type {
         AemInstanceType::Author => "author",
         AemInstanceType::Publish => "publish",
         AemInstanceType::Dispatcher => "dispatcher",
     };
 
-    jvm_args.push(format!("-Dsling.run.modes={},{}", instance_type, run_mode));
+    let run_modes_str = if instance.run_modes.is_empty() {
+        format!("{},local", instance_type)
+    } else {
+        instance.run_modes.join(",")
+    };
+
+    jvm_args.push(format!("-Dsling.run.modes={}", run_modes_str));
     jvm_args.push(format!("-Dhttp.port={}", instance.port));
 
     // Start the process
@@ -279,27 +305,164 @@ pub async fn start_instance(id: String) -> Result<bool, String> {
         .map(|p| p.to_path_buf())
         .unwrap_or_else(|| PathBuf::from("."));
 
-    let mut cmd = Command::new("java");
+    // Get environment from active profile
+    let active_profile = get_active_profile().await.ok().flatten();
+
+    // Determine JAVA_HOME: 1) active profile, 2) instance java_version, 3) system default
+    let java_home: Option<String> = if let Some(ref profile) = active_profile {
+        // Use profile's java_path if available
+        profile.java_path.clone().filter(|p| !p.is_empty())
+    } else {
+        None
+    }.or_else(|| {
+        // Fallback: try to use instance's java_version to find path
+        // This is a sync fallback, we'll try to resolve it
+        None
+    });
+
+    // Determine Java executable path
+    let java_executable = if let Some(ref jh) = java_home {
+        let java_bin = PathBuf::from(jh).join("bin").join("java");
+        if java_bin.exists() {
+            java_bin.to_string_lossy().to_string()
+        } else {
+            "java".to_string()
+        }
+    } else {
+        "java".to_string()
+    };
+
+    let mut cmd = Command::new(&java_executable);
     cmd.args(&jvm_args)
         .arg("-jar")
         .arg(&quickstart_jar)
         .current_dir(&working_dir);
 
-    // Set JAVA_HOME if specified
-    if let Some(ref java_version) = instance.java_version {
-        // Try to find the Java installation
-        let versions = crate::commands::version::scan_java_versions().await?;
-        if let Some(java) = versions.iter().find(|v| v.version == *java_version) {
-            cmd.env("JAVA_HOME", &java.path);
+    // Set JAVA_HOME environment variable
+    if let Some(ref jh) = java_home {
+        cmd.env("JAVA_HOME", jh);
+
+        // Update PATH to include Java bin directory
+        let java_bin_dir = PathBuf::from(jh).join("bin");
+        if let Ok(current_path) = std::env::var("PATH") {
+            let new_path = format!("{}:{}", java_bin_dir.display(), current_path);
+            cmd.env("PATH", new_path);
         }
     }
 
-    // Spawn the process
-    cmd.spawn()
-        .map_err(|e| format!("Failed to start AEM instance: {}", e))?;
+    // Also inject custom environment variables from profile
+    if let Some(ref profile) = active_profile {
+        if let Some(ref env_vars) = profile.env_vars {
+            for (key, value) in env_vars {
+                cmd.env(key, value);
+            }
+        }
+    }
 
-    // Update status
-    instance.status = AemInstanceStatus::Starting;
+    // Build the full Java command string for terminal
+    let jar_path_str = quickstart_jar.to_string_lossy();
+    let working_dir_str = working_dir.to_string_lossy();
+
+    // Build environment exports for the terminal script
+    let mut env_exports = String::new();
+    if let Some(ref jh) = java_home {
+        env_exports.push_str(&format!("export JAVA_HOME='{}'\n", jh));
+        let java_bin_dir = PathBuf::from(jh).join("bin");
+        env_exports.push_str(&format!("export PATH=\"{}:$PATH\"\n", java_bin_dir.display()));
+    }
+
+    // Add custom environment variables from profile
+    if let Some(ref profile) = active_profile {
+        if let Some(ref env_vars) = profile.env_vars {
+            for (key, value) in env_vars {
+                env_exports.push_str(&format!("export {}='{}'\n", key, value));
+            }
+        }
+    }
+
+    // Build JVM args string - quote each argument to handle special chars like *
+    let jvm_args_str = jvm_args
+        .iter()
+        .map(|arg| format!("'{}'", arg.replace("'", "'\\''")))
+        .collect::<Vec<_>>()
+        .join(" ");
+
+    // Create the full command to run in terminal
+    let terminal_command = format!(
+        "{}cd '{}' && echo 'Starting AEM Instance: {}' && echo 'Port: {}' && echo '---' && '{}' {} -jar '{}'",
+        env_exports,
+        working_dir_str,
+        instance.name,
+        instance.port,
+        java_executable,
+        jvm_args_str,
+        jar_path_str
+    );
+
+    // Open Terminal.app with the command (macOS specific)
+    #[cfg(target_os = "macos")]
+    {
+        // Use osascript to open a new Terminal window with the command
+        let apple_script = format!(
+            r#"tell application "Terminal"
+                activate
+                do script "{}"
+            end tell"#,
+            terminal_command.replace("\"", "\\\"").replace("\n", "; ")
+        );
+
+        println!("[AEM] Opening Terminal with command for instance: {}", instance.name);
+        println!("[AEM] Working dir: {}", working_dir_str);
+        println!("[AEM] JAR path: {}", jar_path_str);
+
+        let result = Command::new("osascript")
+            .arg("-e")
+            .arg(&apple_script)
+            .output();
+
+        match result {
+            Ok(output) => {
+                if !output.status.success() {
+                    let stderr = String::from_utf8_lossy(&output.stderr);
+                    println!("[AEM] osascript failed: {}", stderr);
+                    return Err(format!("Failed to open Terminal: {}", stderr));
+                }
+                println!("[AEM] Terminal opened successfully");
+            }
+            Err(e) => {
+                println!("[AEM] Failed to run osascript: {}", e);
+                return Err(format!("Failed to open Terminal: {}", e));
+            }
+        }
+    }
+
+    // For Windows, open cmd.exe (future support)
+    #[cfg(target_os = "windows")]
+    {
+        Command::new("cmd")
+            .args(["/c", "start", "cmd", "/k", &terminal_command])
+            .spawn()
+            .map_err(|e| format!("Failed to open terminal: {}", e))?;
+    }
+
+    // For Linux, try common terminal emulators
+    #[cfg(target_os = "linux")]
+    {
+        // Try gnome-terminal, then xterm
+        let result = Command::new("gnome-terminal")
+            .args(["--", "bash", "-c", &format!("{}; exec bash", terminal_command)])
+            .spawn();
+
+        if result.is_err() {
+            Command::new("xterm")
+                .args(["-e", &format!("bash -c '{}; exec bash'", terminal_command)])
+                .spawn()
+                .map_err(|e| format!("Failed to open terminal: {}", e))?;
+        }
+    }
+
+    // Update status to unknown since user controls the process now
+    instance.status = AemInstanceStatus::Unknown;
     save_instances(&instances)?;
 
     Ok(true)
@@ -327,6 +490,495 @@ fn find_quickstart_jar(dir: &PathBuf) -> Result<PathBuf, String> {
     Err("Quickstart JAR not found in directory".to_string())
 }
 
+// ============================================
+// Instance Discovery/Scanning
+// ============================================
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ScannedAemInstance {
+    pub name: String,
+    pub path: String,
+    pub instance_type: AemInstanceType,
+    pub port: u16,
+    pub jar_path: Option<String>,
+    /// Path to license.properties file if found in the same directory
+    pub license_file_path: Option<String>,
+}
+
+/// Find license.properties file in a directory
+/// Checks for common license file names
+fn find_license_file(dir: &PathBuf) -> Option<String> {
+    let license_names = [
+        "license.properties",
+        "License.properties",
+        "LICENSE.properties",
+        "license-key.txt",
+        "aem-license.properties",
+    ];
+
+    for name in &license_names {
+        let license_path = dir.join(name);
+        if license_path.exists() && license_path.is_file() {
+            return Some(license_path.to_string_lossy().to_string());
+        }
+    }
+
+    None
+}
+
+/// Scan filesystem for AEM instances by looking for AEM JAR files
+/// JAR file patterns supported:
+/// - aem-author-p{port}.jar (e.g., aem-author-p4502.jar)
+/// - aem-publish-p{port}.jar (e.g., aem-publish-p4503.jar)
+/// - aem-sdk-quickstart-*.jar (e.g., aem-sdk-quickstart-2024.8.17740.jar)
+/// - cq-quickstart-*.jar, cq-author-*.jar, cq-publish-*.jar
+///
+/// If custom_paths are provided, they will be scanned in addition to default locations
+#[command]
+pub async fn scan_aem_instances(custom_paths: Option<Vec<String>>) -> Result<Vec<ScannedAemInstance>, String> {
+    use regex::Regex;
+
+    let mut instances = Vec::new();
+    let mut scanned_jars = std::collections::HashSet::new();
+
+    // Get scan paths from settings
+    let scan_paths = crate::commands::settings::load_scan_paths().await.unwrap_or_default();
+
+    // Collect directories to scan
+    let mut dirs_to_scan: Vec<PathBuf> = Vec::new();
+
+    // Add custom paths first (highest priority)
+    if let Some(paths) = custom_paths {
+        for path_str in paths {
+            let path = PathBuf::from(&path_str);
+            if path.exists() && path.is_dir() {
+                dirs_to_scan.push(path);
+            }
+        }
+    }
+
+    // Add aem_base_dir from settings
+    if !scan_paths.aem_base_dir.is_empty() {
+        let base_dir = PathBuf::from(&scan_paths.aem_base_dir);
+        if base_dir.exists() && base_dir.is_dir() {
+            dirs_to_scan.push(base_dir);
+        }
+    }
+
+    // Add common AEM installation directories
+    if let Some(home) = dirs::home_dir() {
+        let common_dirs = vec![
+            // AEM specific
+            home.join("aem"),
+            home.join("AEM"),
+            home.join("Adobe"),
+            home.join("Adobe").join("AEM"),
+            home.join("Adobe").join("aem"),
+            home.join("opt").join("aem"),
+            home.join("opt").join("AEM"),
+            // Development directories
+            home.join("Development"),
+            home.join("Development").join("aem"),
+            home.join("Development").join("AEM"),
+            home.join("dev"),
+            home.join("Dev"),
+            home.join("projects"),
+            home.join("Projects"),
+            home.join("workspace"),
+            home.join("Workspace"),
+            home.join("work"),
+            home.join("Work"),
+            // Code directories
+            home.join("code"),
+            home.join("Code"),
+            home.join("src"),
+            home.join("my-code"),
+            // Local installations
+            home.join("local"),
+            home.join("Local"),
+            home.join("apps"),
+            home.join("Apps"),
+            home.join("Applications"),
+        ];
+
+        for dir in common_dirs {
+            if dir.exists() && dir.is_dir() {
+                dirs_to_scan.push(dir);
+            }
+        }
+    }
+
+    // Add /opt/aem
+    let opt_aem = PathBuf::from("/opt/aem");
+    if opt_aem.exists() && opt_aem.is_dir() {
+        dirs_to_scan.push(opt_aem);
+    }
+
+    // Regex patterns for AEM JAR files
+    // Pattern: aem-author-p{port}.jar or aem-publish-p{port}.jar
+    let jar_type_port_pattern = Regex::new(r"^(?:aem|cq)-?(author|publish)-?p(\d+)\.jar$")
+        .map_err(|e| format!("Regex error: {}", e))?;
+
+    // Pattern: aem-sdk-quickstart-*.jar
+    let jar_sdk_pattern = Regex::new(r"^aem-sdk-quickstart.*\.jar$")
+        .map_err(|e| format!("Regex error: {}", e))?;
+
+    // Pattern: cq-quickstart-*.jar (older CQ versions)
+    let jar_cq_pattern = Regex::new(r"^cq-?quickstart.*\.jar$")
+        .map_err(|e| format!("Regex error: {}", e))?;
+
+    // Helper function to scan a directory for AEM JARs
+    fn scan_dir_for_jars(
+        dir: &PathBuf,
+        jar_type_port_pattern: &Regex,
+        jar_sdk_pattern: &Regex,
+        jar_cq_pattern: &Regex,
+        scanned_jars: &mut std::collections::HashSet<PathBuf>,
+        instances: &mut Vec<ScannedAemInstance>,
+    ) {
+        if let Ok(entries) = std::fs::read_dir(dir) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+
+                if path.is_file() {
+                    let file_name = path.file_name()
+                        .unwrap_or_default()
+                        .to_string_lossy()
+                        .to_lowercase();
+
+                    if !file_name.ends_with(".jar") {
+                        continue;
+                    }
+
+                    // Skip if already processed
+                    let canonical = path.canonicalize().unwrap_or_else(|_| path.clone());
+                    if scanned_jars.contains(&canonical) {
+                        continue;
+                    }
+
+                    let mut instance_type: Option<AemInstanceType> = None;
+                    let mut port: Option<u16> = None;
+
+                    // Try type+port pattern (aem-author-p4502.jar, aem-publish-p4503.jar)
+                    if let Some(caps) = jar_type_port_pattern.captures(&file_name) {
+                        let type_str = caps.get(1).map(|m| m.as_str()).unwrap_or("author");
+                        instance_type = Some(match type_str {
+                            "publish" => AemInstanceType::Publish,
+                            _ => AemInstanceType::Author,
+                        });
+                        if let Some(port_match) = caps.get(2) {
+                            port = port_match.as_str().parse().ok();
+                        }
+                    }
+                    // Try SDK pattern (aem-sdk-quickstart-*.jar)
+                    else if jar_sdk_pattern.is_match(&file_name) {
+                        instance_type = Some(AemInstanceType::Author);
+                        port = Some(4502);
+                    }
+                    // Try CQ pattern (cq-quickstart-*.jar)
+                    else if jar_cq_pattern.is_match(&file_name) {
+                        instance_type = Some(AemInstanceType::Author);
+                        port = Some(4502);
+                    }
+
+                    if let Some(inst_type) = instance_type {
+                        let actual_port = port.unwrap_or(match inst_type {
+                            AemInstanceType::Author => 4502,
+                            AemInstanceType::Publish => 4503,
+                            AemInstanceType::Dispatcher => 80,
+                        });
+
+                        // Use parent directory as instance path
+                        let instance_path = path.parent()
+                            .map(|p| p.to_path_buf())
+                            .unwrap_or_else(|| dir.clone());
+
+                        // Generate name from JAR file (without .jar extension)
+                        let name = file_name.trim_end_matches(".jar").to_string();
+
+                        // Check for license.properties in the same directory
+                        let license_file_path = find_license_file(&instance_path);
+
+                        instances.push(ScannedAemInstance {
+                            name,
+                            path: instance_path.to_string_lossy().to_string(),
+                            instance_type: inst_type,
+                            port: actual_port,
+                            jar_path: Some(path.to_string_lossy().to_string()),
+                            license_file_path,
+                        });
+
+                        scanned_jars.insert(canonical);
+                    }
+                }
+            }
+        }
+    }
+
+    // Scan each base directory and its immediate subdirectories
+    for base_dir in &dirs_to_scan {
+        // Scan the base directory itself
+        scan_dir_for_jars(
+            base_dir,
+            &jar_type_port_pattern,
+            &jar_sdk_pattern,
+            &jar_cq_pattern,
+            &mut scanned_jars,
+            &mut instances,
+        );
+
+        // Scan immediate subdirectories (one level deep)
+        if let Ok(entries) = std::fs::read_dir(base_dir) {
+            for entry in entries.flatten() {
+                let subdir = entry.path();
+                if subdir.is_dir() {
+                    scan_dir_for_jars(
+                        &subdir,
+                        &jar_type_port_pattern,
+                        &jar_sdk_pattern,
+                        &jar_cq_pattern,
+                        &mut scanned_jars,
+                        &mut instances,
+                    );
+                }
+            }
+        }
+    }
+
+    // Sort by type (author first) then by port
+    instances.sort_by(|a, b| {
+        match (&a.instance_type, &b.instance_type) {
+            (AemInstanceType::Author, AemInstanceType::Publish) => std::cmp::Ordering::Less,
+            (AemInstanceType::Publish, AemInstanceType::Author) => std::cmp::Ordering::Greater,
+            _ => a.port.cmp(&b.port),
+        }
+    });
+
+    Ok(instances)
+}
+
+/// Scan a specific directory for AEM JAR files
+/// Used when user selects a folder in the instance form dialog
+/// Returns found JAR files with parsed instance info
+#[command]
+pub async fn scan_directory_for_jars(directory: String) -> Result<Vec<ScannedAemInstance>, String> {
+    use regex::Regex;
+
+    let dir_path = PathBuf::from(&directory);
+    if !dir_path.exists() {
+        return Err(format!("Directory does not exist: {}", directory));
+    }
+    if !dir_path.is_dir() {
+        return Err(format!("Path is not a directory: {}", directory));
+    }
+
+    let mut instances = Vec::new();
+    let mut scanned_jars = std::collections::HashSet::new();
+
+    // Regex patterns for AEM JAR files
+    let jar_type_port_pattern = Regex::new(r"^(?:aem|cq)-?(author|publish)-?p(\d+)\.jar$")
+        .map_err(|e| format!("Regex error: {}", e))?;
+    let jar_sdk_pattern = Regex::new(r"^aem-sdk-quickstart.*\.jar$")
+        .map_err(|e| format!("Regex error: {}", e))?;
+    let jar_cq_pattern = Regex::new(r"^cq-?quickstart.*\.jar$")
+        .map_err(|e| format!("Regex error: {}", e))?;
+
+    // Helper to scan a directory for JARs
+    fn scan_dir(
+        dir: &PathBuf,
+        jar_type_port_pattern: &Regex,
+        jar_sdk_pattern: &Regex,
+        jar_cq_pattern: &Regex,
+        scanned_jars: &mut std::collections::HashSet<PathBuf>,
+        instances: &mut Vec<ScannedAemInstance>,
+    ) {
+        if let Ok(entries) = std::fs::read_dir(dir) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.is_file() {
+                    let file_name = path.file_name()
+                        .unwrap_or_default()
+                        .to_string_lossy()
+                        .to_lowercase();
+
+                    if !file_name.ends_with(".jar") {
+                        continue;
+                    }
+
+                    let canonical = path.canonicalize().unwrap_or_else(|_| path.clone());
+                    if scanned_jars.contains(&canonical) {
+                        continue;
+                    }
+
+                    let mut instance_type: Option<AemInstanceType> = None;
+                    let mut port: Option<u16> = None;
+
+                    if let Some(caps) = jar_type_port_pattern.captures(&file_name) {
+                        let type_str = caps.get(1).map(|m| m.as_str()).unwrap_or("author");
+                        instance_type = Some(match type_str {
+                            "publish" => AemInstanceType::Publish,
+                            _ => AemInstanceType::Author,
+                        });
+                        if let Some(port_match) = caps.get(2) {
+                            port = port_match.as_str().parse().ok();
+                        }
+                    } else if jar_sdk_pattern.is_match(&file_name) {
+                        instance_type = Some(AemInstanceType::Author);
+                        port = Some(4502);
+                    } else if jar_cq_pattern.is_match(&file_name) {
+                        instance_type = Some(AemInstanceType::Author);
+                        port = Some(4502);
+                    }
+
+                    if let Some(inst_type) = instance_type {
+                        let actual_port = port.unwrap_or(match inst_type {
+                            AemInstanceType::Author => 4502,
+                            AemInstanceType::Publish => 4503,
+                            AemInstanceType::Dispatcher => 80,
+                        });
+
+                        let instance_path = path.parent()
+                            .map(|p| p.to_path_buf())
+                            .unwrap_or_else(|| dir.clone());
+
+                        let name = file_name.trim_end_matches(".jar").to_string();
+
+                        // Check for license.properties in the same directory
+                        let license_file_path = find_license_file(&instance_path);
+
+                        instances.push(ScannedAemInstance {
+                            name,
+                            path: instance_path.to_string_lossy().to_string(),
+                            instance_type: inst_type,
+                            port: actual_port,
+                            jar_path: Some(path.to_string_lossy().to_string()),
+                            license_file_path,
+                        });
+
+                        scanned_jars.insert(canonical);
+                    }
+                }
+            }
+        }
+    }
+
+    // Scan the directory itself
+    scan_dir(
+        &dir_path,
+        &jar_type_port_pattern,
+        &jar_sdk_pattern,
+        &jar_cq_pattern,
+        &mut scanned_jars,
+        &mut instances,
+    );
+
+    // Scan immediate subdirectories (e.g., author/, publish/)
+    if let Ok(entries) = std::fs::read_dir(&dir_path) {
+        for entry in entries.flatten() {
+            let subdir = entry.path();
+            if subdir.is_dir() {
+                scan_dir(
+                    &subdir,
+                    &jar_type_port_pattern,
+                    &jar_sdk_pattern,
+                    &jar_cq_pattern,
+                    &mut scanned_jars,
+                    &mut instances,
+                );
+            }
+        }
+    }
+
+    // Sort by type then port
+    instances.sort_by(|a, b| {
+        match (&a.instance_type, &b.instance_type) {
+            (AemInstanceType::Author, AemInstanceType::Publish) => std::cmp::Ordering::Less,
+            (AemInstanceType::Publish, AemInstanceType::Author) => std::cmp::Ordering::Greater,
+            _ => a.port.cmp(&b.port),
+        }
+    });
+
+    Ok(instances)
+}
+
+/// Parse a JAR file path and extract instance info
+#[command]
+pub async fn parse_jar_file(jar_path: String) -> Result<Option<ScannedAemInstance>, String> {
+    use regex::Regex;
+
+    let path = PathBuf::from(&jar_path);
+    if !path.exists() {
+        return Err(format!("File does not exist: {}", jar_path));
+    }
+    if !path.is_file() {
+        return Err(format!("Path is not a file: {}", jar_path));
+    }
+
+    let file_name = path.file_name()
+        .unwrap_or_default()
+        .to_string_lossy()
+        .to_lowercase();
+
+    if !file_name.ends_with(".jar") {
+        return Err("File is not a JAR file".to_string());
+    }
+
+    let jar_type_port_pattern = Regex::new(r"^(?:aem|cq)-?(author|publish)-?p(\d+)\.jar$")
+        .map_err(|e| format!("Regex error: {}", e))?;
+    let jar_sdk_pattern = Regex::new(r"^aem-sdk-quickstart.*\.jar$")
+        .map_err(|e| format!("Regex error: {}", e))?;
+    let jar_cq_pattern = Regex::new(r"^cq-?quickstart.*\.jar$")
+        .map_err(|e| format!("Regex error: {}", e))?;
+
+    let mut instance_type: Option<AemInstanceType> = None;
+    let mut port: Option<u16> = None;
+
+    if let Some(caps) = jar_type_port_pattern.captures(&file_name) {
+        let type_str = caps.get(1).map(|m| m.as_str()).unwrap_or("author");
+        instance_type = Some(match type_str {
+            "publish" => AemInstanceType::Publish,
+            _ => AemInstanceType::Author,
+        });
+        if let Some(port_match) = caps.get(2) {
+            port = port_match.as_str().parse().ok();
+        }
+    } else if jar_sdk_pattern.is_match(&file_name) {
+        instance_type = Some(AemInstanceType::Author);
+        port = Some(4502);
+    } else if jar_cq_pattern.is_match(&file_name) {
+        instance_type = Some(AemInstanceType::Author);
+        port = Some(4502);
+    }
+
+    if let Some(inst_type) = instance_type {
+        let actual_port = port.unwrap_or(match inst_type {
+            AemInstanceType::Author => 4502,
+            AemInstanceType::Publish => 4503,
+            AemInstanceType::Dispatcher => 80,
+        });
+
+        let instance_path = path.parent()
+            .map(|p| p.to_path_buf())
+            .unwrap_or_else(|| PathBuf::from("."));
+
+        let name = file_name.trim_end_matches(".jar").to_string();
+
+        // Check for license.properties in the same directory
+        let license_file_path = find_license_file(&instance_path);
+
+        Ok(Some(ScannedAemInstance {
+            name,
+            path: instance_path.to_string_lossy().to_string(),
+            instance_type: inst_type,
+            port: actual_port,
+            jar_path: Some(path.to_string_lossy().to_string()),
+            license_file_path,
+        }))
+    } else {
+        Ok(None)
+    }
+}
+
 /// Stop an AEM instance
 #[command]
 pub async fn stop_instance(id: String) -> Result<bool, String> {
@@ -340,8 +992,8 @@ pub async fn stop_instance(id: String) -> Result<bool, String> {
     // Try graceful shutdown via HTTP
     let stop_url = format!("http://{}:{}/system/console/vmstat?shutdown_type=Stop", instance.host, instance.port);
 
-    // Get credentials
-    let (username, password) = get_instance_credentials(&instance.id, &instance.username)?;
+    // Get credentials (use default admin username)
+    let (username, password) = get_instance_credentials(&instance.id, &None)?;
 
     // Try HTTP shutdown first
     let client = reqwest::Client::builder()
@@ -389,8 +1041,8 @@ pub async fn check_instance_health(id: String) -> Result<HealthCheckResult, Stri
 
     let start_time = Instant::now();
 
-    // Get credentials
-    let (username, password) = get_instance_credentials(&instance.id, &instance.username)?;
+    // Get credentials (use default admin username)
+    let (username, password) = get_instance_credentials(&instance.id, &None)?;
 
     // Check if instance is reachable
     let base_url = format!("http://{}:{}", instance.host, instance.port);
@@ -431,10 +1083,7 @@ pub async fn check_instance_health(id: String) -> Result<HealthCheckResult, Stri
 
     // Update instance status
     instance.status = status.clone();
-    instance.last_health_check = Some(chrono::Utc::now().to_rfc3339());
-    if let Some(ref info) = version_info {
-        instance.aem_version = Some(info.product_version.clone());
-    }
+    instance.updated_at = chrono::Utc::now().to_rfc3339();
     save_instances(&instances)?;
 
     Ok(HealthCheckResult {

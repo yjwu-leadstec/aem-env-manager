@@ -1,11 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Hexagon, RefreshCw, Check, ExternalLink, AlertCircle } from 'lucide-react';
 import { Card, CardHeader, CardContent } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
 import { useAppStore } from '@/store';
 import * as versionApi from '@/api/version';
+import { updateProfile, getActiveProfile } from '@/api/profile';
+import { setNodeSymlink } from '@/api/environment';
 
 export function NodePage() {
+  const { t } = useTranslation();
   const [isScanning, setIsScanning] = useState(false);
   const [nodeInfo, setNodeInfo] = useState<versionApi.VersionInfo['node'] | null>(null);
   const [switchingVersion, setSwitchingVersion] = useState<string | null>(null);
@@ -19,41 +23,64 @@ export function NodePage() {
     } catch (error) {
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: error instanceof Error ? error.message : '未知错误',
+        title: t('node.notifications.loadFailed'),
+        message: error instanceof Error ? error.message : t('common.unknown'),
       });
     } finally {
       setIsScanning(false);
     }
-  }, [addNotification]);
+  }, [addNotification, t]);
 
   useEffect(() => {
     loadNodeInfo();
   }, [loadNodeInfo]);
 
-  const handleSwitch = async (version: string) => {
+  // Handle "Use" button click - updates current profile and sets symlink
+  const handleSwitch = async (version: string, nodePath: string) => {
     setSwitchingVersion(version);
     try {
-      const result = await versionApi.switchNodeVersion(version);
-      if (result.success) {
+      // Get current active profile
+      const activeProfile = await getActiveProfile();
+
+      if (!activeProfile) {
+        addNotification({
+          type: 'warning',
+          title: t('node.notifications.noProfile'),
+          message: t('node.notifications.noProfileMessage'),
+        });
+        setSwitchingVersion(null);
+        return;
+      }
+
+      // Update profile with new node version and path
+      await updateProfile(activeProfile.id, {
+        node_version: version,
+        node_path: nodePath,
+      });
+
+      // Set symlink to immediately apply the change
+      const symlinkResult = await setNodeSymlink(nodePath);
+
+      if (symlinkResult.success) {
         addNotification({
           type: 'success',
-          title: 'Node 版本已切换',
-          message: `当前使用 Node.js ${result.current_version}`,
+          title: t('node.notifications.switched'),
+          message: t('node.notifications.switchedMessage', { version }),
         });
         loadNodeInfo();
       } else {
         addNotification({
-          type: 'error',
-          title: '切换失败',
-          message: result.error || '未知错误',
+          type: 'warning',
+          title: t('node.notifications.switched'),
+          message: symlinkResult.message || t('node.notifications.switchedMessage', { version }),
         });
+        loadNodeInfo();
       }
     } catch (error) {
       addNotification({
         type: 'error',
-        title: '切换失败',
-        message: error instanceof Error ? error.message : '未知错误',
+        title: t('node.notifications.switchFailed'),
+        message: error instanceof Error ? error.message : t('common.unknown'),
       });
     } finally {
       setSwitchingVersion(null);
@@ -66,9 +93,10 @@ export function NodePage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-            <span className="mr-2">📦</span>Node.js 版本管理
+            <span className="mr-2">📦</span>
+            {t('node.title')}
           </h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">管理和切换 Node.js 运行环境版本</p>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">{t('node.subtitle')}</p>
         </div>
         <Button
           variant="outline"
@@ -78,7 +106,7 @@ export function NodePage() {
           onClick={loadNodeInfo}
           disabled={isScanning}
         >
-          扫描版本
+          {t('node.scan')}
         </Button>
       </div>
 
@@ -90,7 +118,7 @@ export function NodePage() {
         <div className="space-y-6">
           {/* Version Managers */}
           <Card>
-            <CardHeader title="版本管理器" subtitle="检测到的 Node.js 版本管理工具" />
+            <CardHeader title={t('node.managers.title')} subtitle={t('node.managers.subtitle')} />
             <CardContent>
               {!nodeInfo?.managers || nodeInfo.managers.length === 0 ? (
                 <div className="text-center py-6">
@@ -99,7 +127,7 @@ export function NodePage() {
                     className="mx-auto mb-3 text-slate-300 dark:text-slate-600"
                   />
                   <p className="text-slate-500 dark:text-slate-400 mb-4">
-                    未检测到 Node.js 版本管理器
+                    {t('node.managers.empty')}
                   </p>
                   <div className="flex justify-center gap-2">
                     <ManagerLink name="nvm" url="https://github.com/nvm-sh/nvm" />
@@ -130,8 +158,8 @@ export function NodePage() {
           {/* Installed Versions */}
           <Card>
             <CardHeader
-              title="已安装版本"
-              subtitle={`检测到 ${nodeInfo?.versions.length || 0} 个 Node.js 安装`}
+              title={t('node.versions.title')}
+              subtitle={t('node.versions.subtitle', { count: nodeInfo?.versions.length || 0 })}
             />
             <CardContent>
               {!nodeInfo?.versions || nodeInfo.versions.length === 0 ? (
@@ -140,9 +168,9 @@ export function NodePage() {
                     size={40}
                     className="mx-auto mb-3 text-slate-300 dark:text-slate-600"
                   />
-                  <p className="text-slate-500 dark:text-slate-400">未检测到 Node.js 安装</p>
+                  <p className="text-slate-500 dark:text-slate-400">{t('node.versions.empty')}</p>
                   <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-                    安装版本管理器来管理 Node.js 版本
+                    {t('node.versions.emptyHint')}
                   </p>
                 </div>
               ) : (
@@ -165,7 +193,7 @@ export function NodePage() {
                             </span>
                             {v.is_current && (
                               <span className="px-1.5 py-0.5 bg-teal-100 dark:bg-teal-800 text-teal-700 dark:text-teal-300 text-xs rounded">
-                                当前
+                                {t('common.current')}
                               </span>
                             )}
                           </div>
@@ -178,13 +206,13 @@ export function NodePage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleSwitch(v.version)}
+                          onClick={() => handleSwitch(v.version, v.path)}
                           disabled={switchingVersion === v.version}
                         >
                           {switchingVersion === v.version ? (
                             <RefreshCw size={14} className="animate-spin" />
                           ) : (
-                            '使用'
+                            t('common.use')
                           )}
                         </Button>
                       )}

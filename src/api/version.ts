@@ -63,6 +63,13 @@ export interface MavenConfig {
   path: string;
   is_active: boolean;
   description: string | null;
+  local_repository: string | null;
+}
+
+export interface MavenSettingsFile {
+  name: string;
+  path: string;
+  local_repository: string | null;
 }
 
 // ============================================
@@ -155,6 +162,46 @@ export async function installNodeVersion(version: string, managerId: string): Pr
 }
 
 // ============================================
+// Manual Path Validation API
+// ============================================
+
+/**
+ * Validate a Java installation at the given path
+ * Returns version info if valid, throws error if invalid
+ * @param path - Path to Java installation directory (e.g., /Library/Java/JavaVirtualMachines/jdk-17)
+ */
+export async function validateJavaPath(path: string): Promise<JavaVersion> {
+  return invoke<JavaVersion>('validate_java_path', { path });
+}
+
+/**
+ * Validate a Node installation at the given path
+ * Returns version info if valid, throws error if invalid
+ * @param path - Path to Node installation directory
+ */
+export async function validateNodePath(path: string): Promise<NodeVersion> {
+  return invoke<NodeVersion>('validate_node_path', { path });
+}
+
+/**
+ * Scan a custom directory for Java installations
+ * Searches the directory and subdirectories (max depth 2) for valid Java installations
+ * @param path - Directory path to search
+ */
+export async function scanJavaInPath(path: string): Promise<JavaVersion[]> {
+  return invoke<JavaVersion[]>('scan_java_in_path', { path });
+}
+
+/**
+ * Scan a custom directory for Node installations
+ * Searches the directory and subdirectories (max depth 2) for valid Node installations
+ * @param path - Directory path to search
+ */
+export async function scanNodeInPath(path: string): Promise<NodeVersion[]> {
+  return invoke<NodeVersion[]>('scan_node_in_path', { path });
+}
+
+// ============================================
 // Version Manager API
 // ============================================
 
@@ -189,6 +236,23 @@ export async function listMavenConfigs(): Promise<MavenConfig[]> {
 }
 
 /**
+ * Scan system for Maven settings files
+ * Searches ~/.m2/, MAVEN_HOME, M2_HOME, and common installation paths
+ */
+export async function scanMavenSettings(): Promise<MavenSettingsFile[]> {
+  return invoke<MavenSettingsFile[]>('scan_maven_settings');
+}
+
+/**
+ * Scan a specific directory for Maven settings files
+ * Searches for settings.xml, settings-*.xml, and .m2.*.xml files
+ * @param searchPath - Directory path to search in
+ */
+export async function scanMavenSettingsInPath(searchPath: string): Promise<MavenSettingsFile[]> {
+  return invoke<MavenSettingsFile[]>('scan_maven_settings_in_path', { searchPath });
+}
+
+/**
  * Get current Maven settings.xml configuration
  */
 export async function getCurrentMavenConfig(): Promise<MavenConfig | null> {
@@ -210,6 +274,22 @@ export async function switchMavenConfig(configId: string): Promise<void> {
  */
 export async function importMavenConfig(name: string, sourcePath: string): Promise<MavenConfig> {
   return invoke<MavenConfig>('import_maven_config', { name, sourcePath });
+}
+
+/**
+ * Delete a Maven configuration
+ * @param configId - Configuration ID to delete
+ */
+export async function deleteMavenConfig(configId: string): Promise<boolean> {
+  return invoke<boolean>('delete_maven_config', { configId });
+}
+
+/**
+ * Read Maven settings.xml content
+ * @param configId - Configuration ID to read
+ */
+export async function readMavenConfig(configId: string): Promise<string> {
+  return invoke<string>('read_maven_config', { configId });
 }
 
 // ============================================

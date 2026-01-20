@@ -6,6 +6,7 @@ export * from './instance';
 export * from './profile';
 export * from './mappers';
 export * from './settings';
+export * from './environment';
 
 // Re-export API types (snake_case - direct from Rust backend)
 export type {
@@ -16,6 +17,7 @@ export type {
   InstalledVersion,
   VersionSwitchResult,
   MavenConfig,
+  MavenSettingsFile,
   VersionInfo,
 } from './version';
 
@@ -27,6 +29,7 @@ export type {
   BundleStatus,
   MemoryStatus,
   HealthSummary,
+  ScannedAemInstance,
 } from './instance';
 
 export type {
@@ -39,6 +42,8 @@ export type {
 } from './profile';
 
 export type { ScanPaths, ExportResult, ImportResult, ResetResult } from './settings';
+
+export type { EnvironmentStatus, InitResult, SymlinkResult } from './environment';
 
 // Re-export Frontend types (camelCase - for React components)
 export type {

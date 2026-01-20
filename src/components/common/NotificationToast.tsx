@@ -10,10 +10,10 @@ const icons = {
 };
 
 const bgColors = {
-  success: 'bg-success-50 border-success-200',
-  error: 'bg-error-50 border-error-200',
-  warning: 'bg-warning-50 border-warning-200',
-  info: 'bg-azure-50 border-azure-200',
+  success: 'bg-success-50 dark:bg-success-500/20 border-success-200 dark:border-success-500/30',
+  error: 'bg-error-50 dark:bg-error-500/20 border-error-200 dark:border-error-500/30',
+  warning: 'bg-warning-50 dark:bg-warning-500/20 border-warning-200 dark:border-warning-500/30',
+  info: 'bg-azure-50 dark:bg-tech-orange-500/20 border-azure-200 dark:border-tech-orange-500/30',
 };
 
 interface NotificationItemProps {
@@ -32,15 +32,15 @@ function NotificationItem({ notification, onClose }: NotificationItemProps) {
       {icons[notification.type]}
 
       <div className="flex-1 min-w-0">
-        <p className="font-medium text-slate-900">{notification.title}</p>
+        <p className="font-medium text-slate-900 dark:text-gray-100">{notification.title}</p>
         {notification.message && (
-          <p className="mt-1 text-sm text-slate-600">{notification.message}</p>
+          <p className="mt-1 text-sm text-slate-600 dark:text-gray-300">{notification.message}</p>
         )}
       </div>
 
       <button
         onClick={onClose}
-        className="p-1 rounded hover:bg-white/50 text-slate-400 hover:text-slate-600 transition-colors"
+        className="p-1 rounded hover:bg-white/50 dark:hover:bg-white/10 text-slate-400 dark:text-gray-400 hover:text-slate-600 dark:hover:text-gray-200 transition-colors"
       >
         <X size={16} />
       </button>

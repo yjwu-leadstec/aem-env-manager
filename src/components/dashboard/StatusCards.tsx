@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { RefreshCw, ExternalLink } from 'lucide-react';
 import * as versionApi from '../../api/version';
+import { useActiveProfile } from '../../store';
 
 interface StatusCardProps {
   icon: string;
@@ -15,6 +16,7 @@ interface StatusCardProps {
   onClick?: () => void;
   actionLabel?: string;
   onAction?: () => void;
+  t: ReturnType<typeof useTranslation>['t'];
 }
 
 function StatusCard({
@@ -28,6 +30,7 @@ function StatusCard({
   onClick,
   actionLabel,
   onAction,
+  t,
 }: StatusCardProps) {
   return (
     <div
@@ -43,7 +46,9 @@ function StatusCard({
         {isLoading ? (
           <RefreshCw size={14} className="animate-spin text-slate-400 dark:text-gray-500" />
         ) : isActive ? (
-          <span className="badge-success text-xs px-2.5 py-1 rounded-full">Active</span>
+          <span className="badge-success text-xs px-2.5 py-1 rounded-full">
+            {t('common.active')}
+          </span>
         ) : actionLabel && onAction ? (
           <button
             className="text-azure dark:text-tech-orange text-xs font-semibold hover:text-azure-600 dark:hover:text-tech-orange-400 transition-colors flex items-center gap-1"
@@ -70,6 +75,7 @@ function StatusCard({
 export function StatusCards() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const activeProfile = useActiveProfile();
   const [versionInfo, setVersionInfo] = useState<versionApi.VersionInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -103,14 +109,16 @@ export function StatusCards() {
     ? `${versionInfo.node.current} LTS`
     : t('dashboard.stats.notDetected');
 
-  // Maven config
-  const mavenDisplay = versionInfo?.maven.current?.name || 'default';
-  const mavenSubtext = versionInfo?.maven.current?.path
-    ? versionInfo.maven.current.path.split('/').pop() || 'settings.xml'
-    : 'settings.xml';
+  // Maven config - prefer profile's maven_config_id over current config name
+  const mavenConfigId = activeProfile?.mavenConfigId;
+  const mavenName = versionInfo?.maven.current?.name || 'default';
+  // Simplify "Current settings.xml" to just "default" for display
+  const mavenDisplay = mavenConfigId || (mavenName.startsWith('Current ') ? 'default' : mavenName);
+  const mavenPath = versionInfo?.maven.current?.path || '~/.m2/settings.xml';
+  const mavenSubtext = mavenPath.split('/').slice(-2).join('/');
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
       <StatusCard
         icon="☕"
         iconBgClass="bg-gradient-to-br from-amber-100 to-orange-100 dark:from-tech-orange-900/30 dark:to-orange-900/30"
@@ -120,6 +128,7 @@ export function StatusCards() {
         isActive={!!versionInfo?.java.current}
         isLoading={isLoading}
         onClick={() => navigate('/java')}
+        t={t}
       />
 
       <StatusCard
@@ -131,6 +140,7 @@ export function StatusCards() {
         isActive={!!versionInfo?.node.current}
         isLoading={isLoading}
         onClick={() => navigate('/node')}
+        t={t}
       />
 
       <StatusCard
@@ -142,19 +152,7 @@ export function StatusCards() {
         isActive={!!versionInfo?.maven.current}
         isLoading={isLoading}
         onClick={() => navigate('/maven')}
-      />
-
-      <StatusCard
-        icon="📁"
-        iconBgClass="bg-gradient-to-br from-yellow-100 to-amber-100 dark:from-yellow-900/30 dark:to-amber-900/30"
-        label={t('dashboard.stats.project')}
-        value="project-a"
-        subtext="~/projects/aem-cloud"
-        isActive={false}
-        actionLabel={t('dashboard.stats.open')}
-        onAction={() => {
-          /* Open project folder */
-        }}
+        t={t}
       />
     </div>
   );

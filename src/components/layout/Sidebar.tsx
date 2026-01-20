@@ -11,12 +11,9 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { path: '/dashboard', labelKey: 'nav.dashboard', icon: '🏠' },
-  { path: '/profiles', labelKey: 'nav.profiles', icon: '📋' },
   { path: '/instances', labelKey: 'nav.instances', icon: '🖥️' },
-  { path: '/java', labelKey: 'nav.java', icon: '☕' },
-  { path: '/node', labelKey: 'nav.node', icon: '📦' },
-  { path: '/maven', labelKey: 'nav.maven', icon: '🔧' },
-  { path: '/licenses', labelKey: 'nav.licenses', icon: '📜' },
+  { path: '/profiles', labelKey: 'nav.profiles', icon: '📋' },
+  { path: '/versions', labelKey: 'nav.versions', icon: '🔧' },
   { path: '/settings', labelKey: 'nav.settings', icon: '⚙️' },
 ];
 
@@ -35,13 +32,12 @@ export function Sidebar() {
   return (
     <aside
       className={`
-        flex flex-col bg-white/70 dark:bg-viewport/70 backdrop-blur-xl
-        border-r border-white/50 dark:border-steel/50 transition-all duration-300
+        sidebar-container flex flex-col transition-all duration-300
         ${collapsed ? 'w-16' : 'w-64'}
       `}
     >
       {/* Logo */}
-      <div className="flex items-center h-16 px-4 border-b border-white/50 dark:border-steel/50">
+      <div className="flex items-center h-16 px-4 border-b border-white/10">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-azure to-teal dark:from-tech-orange dark:to-tech-orange-600 flex items-center justify-center shadow-lg">
             <span className="text-white font-bold text-sm">AEM</span>
@@ -67,33 +63,25 @@ export function Sidebar() {
               key={item.path}
               to={item.path}
               className={`
-                nav-item relative flex items-center gap-3 px-4 py-3 rounded-xl
-                transition-all duration-200
-                ${
-                  isActive
-                    ? 'bg-white dark:bg-charcoal text-azure-500 dark:text-tech-orange shadow-soft dark:shadow-none'
-                    : 'text-slate-600 dark:text-gray-400 hover:bg-white/60 dark:hover:bg-viewport-light/60'
-                }
+                nav-item
+                ${isActive ? 'active' : 'hover:bg-white/50 dark:hover:bg-white/5'}
                 ${collapsed ? 'justify-center px-2' : ''}
               `}
               title={collapsed ? label : undefined}
             >
-              {isActive && !collapsed && (
-                <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r-sm bg-gradient-to-b from-azure to-teal dark:from-tech-orange dark:to-tech-orange-600" />
-              )}
-              <span className="text-xl">{item.icon}</span>
-              {!collapsed && <span className="font-medium">{label}</span>}
+              <span className="text-xl relative z-10">{item.icon}</span>
+              {!collapsed && <span className="font-medium relative z-10">{label}</span>}
             </NavLink>
           );
         })}
       </nav>
 
       {/* Collapse Toggle */}
-      <div className="p-3 border-t border-white/50 dark:border-steel/50">
+      <div className="p-3 border-t border-white/10">
         <button
           onClick={toggleCollapsed}
-          className="w-full flex items-center justify-center p-2.5 rounded-xl text-slate-400 dark:text-gray-500 hover:bg-white/60 dark:hover:bg-viewport-light/60 hover:text-slate-600 dark:hover:text-gray-300 transition-colors"
-          title={collapsed ? '展开侧边栏' : '收起侧边栏'}
+          className="w-full flex items-center justify-center p-2.5 rounded-xl text-slate-400 dark:text-gray-500 hover:bg-white/60 dark:hover:bg-white/5 hover:text-slate-600 dark:hover:text-gray-300 transition-colors"
+          title={collapsed ? t('nav.expandSidebar') : t('nav.collapseSidebar')}
         >
           {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
         </button>

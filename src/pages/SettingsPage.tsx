@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import {
   Settings,
   FolderOpen,
@@ -23,9 +24,29 @@ import * as settingsApi from '@/api/settings';
 
 type SettingsTab = 'general' | 'paths' | 'data';
 
+const validTabs: SettingsTab[] = ['general', 'paths', 'data'];
+
 export function SettingsPage() {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<SettingsTab>('general');
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Get tab from URL parameter, default to 'general'
+  const tabFromUrl = searchParams.get('tab') as SettingsTab | null;
+  const initialTab = tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : 'general';
+  const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab);
+
+  // Sync URL with active tab
+  useEffect(() => {
+    const currentTabInUrl = searchParams.get('tab');
+    if (currentTabInUrl !== activeTab) {
+      setSearchParams({ tab: activeTab }, { replace: true });
+    }
+  }, [activeTab, searchParams, setSearchParams]);
+
+  // Handle tab change
+  const handleTabChange = (tab: SettingsTab) => {
+    setActiveTab(tab);
+  };
 
   return (
     <div className="space-y-6">
@@ -45,19 +66,19 @@ export function SettingsPage() {
             icon={<Settings size={18} />}
             label={t('settings.tabs.general')}
             active={activeTab === 'general'}
-            onClick={() => setActiveTab('general')}
+            onClick={() => handleTabChange('general')}
           />
           <SettingsNavItem
             icon={<FolderOpen size={18} />}
             label={t('settings.tabs.paths')}
             active={activeTab === 'paths'}
-            onClick={() => setActiveTab('paths')}
+            onClick={() => handleTabChange('paths')}
           />
           <SettingsNavItem
             icon={<Database size={18} />}
             label={t('settings.tabs.data')}
             active={activeTab === 'data'}
-            onClick={() => setActiveTab('data')}
+            onClick={() => handleTabChange('data')}
           />
         </div>
 
@@ -85,8 +106,8 @@ function SettingsNavItem({ icon, label, active, onClick }: SettingsNavItemProps)
       onClick={onClick}
       className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${
         active
-          ? 'bg-azure-50 dark:bg-azure-900/30 text-azure-700 dark:text-azure-400 font-medium'
-          : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'
+          ? 'bg-primary/10 text-primary font-medium'
+          : 'text-slate-600 dark:text-slate-400 hover:bg-black/5 dark:hover:bg-white/5'
       }`}
     >
       {icon}
@@ -583,7 +604,7 @@ function DataSettings() {
           subtitle={t('settings.data.dangerZoneDesc')}
         />
         <CardContent>
-          <div className="flex items-center justify-between p-4 bg-error-50 dark:bg-error-900/30 rounded-lg">
+          <div className="flex items-center justify-between p-4 bg-error/10 rounded-lg">
             <div>
               <p className="font-medium text-error-700 dark:text-error-400">
                 {t('settings.data.resetAll')}
@@ -605,25 +626,19 @@ function DataSettings() {
 
       {/* Reset Confirmation Modal */}
       {showResetConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl max-w-md w-full mx-4 overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="panel max-w-md w-full mx-4 overflow-hidden p-0">
             <div className="p-6">
               <div className="flex items-center gap-4 mb-4">
-                <div className="p-3 rounded-full bg-error-100 dark:bg-error-900/50">
+                <div className="p-3 rounded-full bg-error/20">
                   <AlertTriangle size={24} className="text-error-600 dark:text-error-400" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                    {t('settings.data.confirmReset')}
-                  </h3>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {t('settings.data.cannotUndo')}
-                  </p>
+                  <h3 className="text-lg font-semibold">{t('settings.data.confirmReset')}</h3>
+                  <p className="text-sm opacity-70">{t('settings.data.cannotUndo')}</p>
                 </div>
               </div>
-              <p className="text-slate-600 dark:text-slate-400 mb-6">
-                {t('settings.data.confirmResetMessage')}
-              </p>
+              <p className="opacity-80 mb-6">{t('settings.data.confirmResetMessage')}</p>
               <div className="flex justify-end gap-3">
                 <Button variant="outline" onClick={() => setShowResetConfirm(false)}>
                   {t('common.cancel')}
@@ -653,8 +668,8 @@ function ThemeButton({ icon, label, active, onClick }: ThemeButtonProps) {
       onClick={onClick}
       className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
         active
-          ? 'bg-azure-100 dark:bg-azure-900/50 text-azure-700 dark:text-azure-400'
-          : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600'
+          ? 'bg-primary/20 text-primary'
+          : 'bg-black/5 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:bg-black/10 dark:hover:bg-white/10'
       }`}
     >
       {icon}
@@ -675,7 +690,7 @@ function ToggleSetting({ icon, title, description, enabled, onChange }: ToggleSe
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-start gap-3">
-        <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400">
+        <div className="p-2 rounded-lg bg-black/5 dark:bg-white/5 text-slate-600 dark:text-slate-400">
           {icon}
         </div>
         <div>
@@ -686,7 +701,7 @@ function ToggleSetting({ icon, title, description, enabled, onChange }: ToggleSe
       <button
         onClick={() => onChange(!enabled)}
         className={`relative w-11 h-6 rounded-full transition-colors ${
-          enabled ? 'bg-azure' : 'bg-slate-300 dark:bg-slate-600'
+          enabled ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-600'
         }`}
       >
         <div
@@ -714,7 +729,7 @@ function PathInputSingle({
   placeholder,
   onChange,
   onBrowse,
-  browseLabel = '浏览',
+  browseLabel = 'Browse',
 }: PathInputSingleProps) {
   return (
     <div>

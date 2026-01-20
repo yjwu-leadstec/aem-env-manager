@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Search,
   Coffee,
@@ -11,6 +12,10 @@ import {
   Loader2,
   AlertCircle,
   Settings,
+  Terminal,
+  FolderCog,
+  Plus,
+  Rocket,
 } from 'lucide-react';
 import { Button } from '@/components/common/Button';
 import { useAppStore } from '@/store';
@@ -18,41 +23,61 @@ import {
   scanJavaVersions,
   scanNodeVersions,
   detectVersionManagers,
-  listMavenConfigs,
+  scanMavenSettings,
   type JavaVersion,
   type NodeVersion,
   type VersionManager,
-  type MavenConfig,
+  type MavenSettingsFile,
 } from '@/api';
-import { listInstances, type AemInstance } from '@/api/instance';
+import { scanAemInstances, type AemInstance, type ScannedAemInstance } from '@/api/instance';
+import {
+  checkEnvironmentStatus,
+  initializeEnvironment,
+  type EnvironmentStatus,
+  type InitResult,
+} from '@/api/environment';
 
-type WizardStep = 'scan' | 'java' | 'node' | 'maven' | 'aem' | 'complete';
+// Simplified wizard: init → scan → complete
+type WizardStep = 'init' | 'scan' | 'complete';
 
 interface ScanResults {
   javaVersions: JavaVersion[];
   nodeVersions: NodeVersion[];
   versionManagers: VersionManager[];
-  mavenConfigs: MavenConfig[];
+  mavenSettings: MavenSettingsFile[];
   aemInstances: AemInstance[];
+  scannedAemInstances: ScannedAemInstance[];
 }
 
-const steps: { id: WizardStep; label: string; icon: React.ReactNode }[] = [
-  { id: 'scan', label: '扫描', icon: <Search size={18} /> },
-  { id: 'java', label: 'Java', icon: <Coffee size={18} /> },
-  { id: 'node', label: 'Node', icon: <Hexagon size={18} /> },
-  { id: 'maven', label: 'Maven', icon: <Settings size={18} /> },
-  { id: 'aem', label: 'AEM', icon: <Server size={18} /> },
-  { id: 'complete', label: '完成', icon: <CheckCircle size={18} /> },
-];
-
 export function WizardPage() {
-  const [currentStep, setCurrentStep] = useState<WizardStep>('scan');
+  const { t } = useTranslation();
+  const [currentStep, setCurrentStep] = useState<WizardStep>('init');
+  const [envStatus, setEnvStatus] = useState<EnvironmentStatus | null>(null);
   const [scanResults, setScanResults] = useState<ScanResults | null>(null);
-  const [selectedJava, setSelectedJava] = useState<string | null>(null);
-  const [selectedNode, setSelectedNode] = useState<string | null>(null);
-  const [selectedMaven, setSelectedMaven] = useState<string | null>(null);
   const navigate = useNavigate();
   const updatePreferences = useAppStore((s) => s.updatePreferences);
+
+  // Simplified 3-step wizard
+  const steps: { id: WizardStep; label: string; icon: React.ReactNode }[] = [
+    { id: 'init', label: t('wizard.steps.init'), icon: <FolderCog size={18} /> },
+    { id: 'scan', label: t('wizard.steps.scan'), icon: <Search size={18} /> },
+    { id: 'complete', label: t('wizard.steps.complete'), icon: <CheckCircle size={18} /> },
+  ];
+
+  // Check environment status on mount
+  useEffect(() => {
+    checkEnvironmentStatus()
+      .then((status) => {
+        setEnvStatus(status);
+        // If already initialized, skip to scan step
+        if (status.is_initialized) {
+          setCurrentStep('scan');
+        }
+      })
+      .catch(() => {
+        // Silently ignore errors on status check
+      });
+  }, []);
 
   const currentIndex = steps.findIndex((s) => s.id === currentStep);
 
@@ -70,23 +95,26 @@ export function WizardPage() {
     }
   };
 
+  const handleScanComplete = (results: ScanResults) => {
+    setScanResults(results);
+  };
+
   const handleFinish = () => {
     // Mark wizard as completed
-    updatePreferences({ defaultView: 'dashboard' });
+    updatePreferences({ defaultView: 'dashboard', wizardCompleted: true });
     navigate('/dashboard');
   };
 
-  const handleScanComplete = (results: ScanResults) => {
-    setScanResults(results);
-    // Set defaults
-    const defaultJava = results.javaVersions.find((j) => j.is_current || j.is_default);
-    if (defaultJava) setSelectedJava(defaultJava.version);
+  const handleCreateInstance = () => {
+    // Mark wizard as completed and go to instances page with action=new
+    updatePreferences({ defaultView: 'dashboard', wizardCompleted: true });
+    navigate('/instances?action=new');
+  };
 
-    const defaultNode = results.nodeVersions.find((n) => n.is_current || n.is_default);
-    if (defaultNode) setSelectedNode(defaultNode.version);
-
-    const defaultMaven = results.mavenConfigs.find((m) => m.is_active);
-    if (defaultMaven) setSelectedMaven(defaultMaven.id);
+  const handleCreateProfile = () => {
+    // Mark wizard as completed and go to profiles page with action=new
+    updatePreferences({ defaultView: 'dashboard', wizardCompleted: true });
+    navigate('/profiles?action=new');
   };
 
   return (
@@ -101,46 +129,43 @@ export function WizardPage() {
             <h1 className="text-xl font-bold text-slate-800 dark:text-slate-200">
               AEM Environment Manager
             </h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400">设置向导</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t('wizard.title')}</p>
           </div>
         </div>
       </header>
 
       {/* Progress */}
       <div className="px-8 py-4">
-        <div className="max-w-3xl mx-auto">
-          <div className="flex items-center justify-between">
+        <div className="max-w-xl mx-auto">
+          <div className="flex items-center">
             {steps.map((step, index) => (
-              <div key={step.id} className="flex items-center">
-                <div
-                  className={`flex items-center justify-center w-10 h-10 rounded-full transition-colors ${
-                    index <= currentIndex
-                      ? 'bg-azure text-white'
-                      : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
-                  }`}
-                >
-                  {step.icon}
+              <div key={step.id} className="flex items-center flex-1 last:flex-none">
+                <div className="flex flex-col items-center">
+                  <div
+                    className={`flex items-center justify-center w-10 h-10 rounded-full transition-colors ${
+                      index <= currentIndex
+                        ? 'bg-azure text-white'
+                        : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
+                    }`}
+                  >
+                    {step.icon}
+                  </div>
+                  <span
+                    className={`text-xs font-medium mt-2 ${
+                      step.id === currentStep ? 'text-azure' : 'text-slate-400 dark:text-slate-500'
+                    }`}
+                  >
+                    {step.label}
+                  </span>
                 </div>
                 {index < steps.length - 1 && (
                   <div
-                    className={`w-16 h-1 mx-2 rounded transition-colors ${
+                    className={`flex-1 h-1 mx-3 rounded transition-colors ${
                       index < currentIndex ? 'bg-azure' : 'bg-slate-200 dark:bg-slate-700'
                     }`}
                   />
                 )}
               </div>
-            ))}
-          </div>
-          <div className="flex justify-between mt-2">
-            {steps.map((step) => (
-              <span
-                key={step.id}
-                className={`text-xs font-medium ${
-                  step.id === currentStep ? 'text-azure' : 'text-slate-400 dark:text-slate-500'
-                }`}
-              >
-                {step.label}
-              </span>
             ))}
           </div>
         </div>
@@ -149,80 +174,178 @@ export function WizardPage() {
       {/* Content */}
       <main className="flex-1 px-8 py-6">
         <div className="max-w-2xl mx-auto">
+          {currentStep === 'init' && (
+            <InitStep envStatus={envStatus} onNext={handleNext} onStatusUpdate={setEnvStatus} />
+          )}
           {currentStep === 'scan' && (
-            <ScanStep onComplete={handleScanComplete} onNext={handleNext} />
+            <ScanStep onComplete={handleScanComplete} onNext={handleNext} onBack={handlePrev} />
           )}
-          {currentStep === 'java' && (
-            <JavaStep
-              versions={scanResults?.javaVersions || []}
-              managers={
-                scanResults?.versionManagers.filter((m) =>
-                  ['sdkman', 'jenv', 'jabba'].includes(m.manager_type)
-                ) || []
-              }
-              selected={selectedJava}
-              onSelect={setSelectedJava}
-            />
-          )}
-          {currentStep === 'node' && (
-            <NodeStep
-              versions={scanResults?.nodeVersions || []}
-              managers={
-                scanResults?.versionManagers.filter((m) =>
-                  ['nvm', 'fnm', 'volta', 'nvmwindows'].includes(m.manager_type)
-                ) || []
-              }
-              selected={selectedNode}
-              onSelect={setSelectedNode}
-            />
-          )}
-          {currentStep === 'maven' && (
-            <MavenStep
-              configs={scanResults?.mavenConfigs || []}
-              selected={selectedMaven}
-              onSelect={setSelectedMaven}
-            />
-          )}
-          {currentStep === 'aem' && <AemStep instances={scanResults?.aemInstances || []} />}
           {currentStep === 'complete' && (
-            <CompleteStep onFinish={handleFinish} scanResults={scanResults} />
+            <CompleteStep
+              onFinish={handleFinish}
+              onCreateInstance={handleCreateInstance}
+              onCreateProfile={handleCreateProfile}
+              scanResults={scanResults}
+            />
           )}
         </div>
       </main>
-
-      {/* Footer */}
-      {currentStep !== 'complete' && currentStep !== 'scan' && (
-        <footer className="px-8 py-6 border-t border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50">
-          <div className="max-w-2xl mx-auto flex justify-between">
-            <Button
-              variant="ghost"
-              icon={<ArrowLeft size={16} />}
-              onClick={handlePrev}
-              disabled={currentIndex === 0}
-            >
-              上一步
-            </Button>
-            <Button
-              variant="primary"
-              icon={<ArrowRight size={16} />}
-              iconPosition="right"
-              onClick={handleNext}
-            >
-              {currentIndex === steps.length - 2 ? '完成' : '下一步'}
-            </Button>
-          </div>
-        </footer>
-      )}
     </div>
   );
 }
 
+// ============================================
+// Init Step - Environment Initialization
+// ============================================
+
+interface InitStepProps {
+  envStatus: EnvironmentStatus | null;
+  onNext: () => void;
+  onStatusUpdate: (status: EnvironmentStatus) => void;
+}
+
+function InitStep({ envStatus, onNext, onStatusUpdate }: InitStepProps) {
+  const { t } = useTranslation();
+  const [initializing, setInitializing] = useState(false);
+  const [initResult, setInitResult] = useState<InitResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleInitialize = async () => {
+    setInitializing(true);
+    setError(null);
+
+    try {
+      const result = await initializeEnvironment();
+      setInitResult(result);
+
+      if (result.success) {
+        // Refresh status
+        const newStatus = await checkEnvironmentStatus();
+        onStatusUpdate(newStatus);
+      } else {
+        setError(result.message);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Initialization failed');
+    } finally {
+      setInitializing(false);
+    }
+  };
+
+  const isInitialized = envStatus?.is_initialized || initResult?.success;
+
+  return (
+    <div className="panel p-8 text-center">
+      <div className="w-20 h-20 mx-auto rounded-full bg-primary/10 flex items-center justify-center mb-6">
+        {initializing ? (
+          <Loader2 size={40} className="text-azure animate-spin" />
+        ) : error ? (
+          <AlertCircle size={40} className="text-error" />
+        ) : isInitialized ? (
+          <CheckCircle size={40} className="text-success" />
+        ) : (
+          <Terminal size={40} className="text-azure" />
+        )}
+      </div>
+
+      <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-2">
+        {t('wizard.init.title')}
+      </h2>
+      <p className="text-slate-500 dark:text-slate-400 mb-6 max-w-md mx-auto">
+        {initializing
+          ? t('wizard.init.initializing')
+          : error
+            ? t('wizard.init.error', { error })
+            : isInitialized
+              ? t('wizard.init.complete')
+              : t('wizard.init.description')}
+      </p>
+
+      {/* Environment Status Details */}
+      {envStatus && !isInitialized && (
+        <div className="bg-slate-50 dark:bg-slate-700 rounded-lg p-4 mb-6 text-left">
+          <h3 className="font-medium text-slate-700 dark:text-slate-200 mb-3">
+            {t('wizard.init.whatWillHappen')}
+          </h3>
+          <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-300">
+            <li className="flex items-start gap-2">
+              <FolderCog size={16} className="text-azure mt-0.5 flex-shrink-0" />
+              <span>{t('wizard.init.step1', { path: envStatus.env_dir })}</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <Terminal size={16} className="text-azure mt-0.5 flex-shrink-0" />
+              <span>{t('wizard.init.step2')}</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <CheckCircle size={16} className="text-azure mt-0.5 flex-shrink-0" />
+              <span>{t('wizard.init.step3')}</span>
+            </li>
+          </ul>
+        </div>
+      )}
+
+      {/* Init Result Details */}
+      {initResult?.success && (
+        <div className="bg-success-50 dark:bg-success-900/30 rounded-lg p-4 mb-6 text-left">
+          <h3 className="font-medium text-success-700 dark:text-success-300 mb-2">
+            {t('wizard.init.successTitle')}
+          </h3>
+          <ul className="space-y-1 text-sm text-success-600 dark:text-success-400">
+            <li>✓ {t('wizard.init.createdDir', { path: initResult.env_dir })}</li>
+            {initResult.shell_config_updated && <li>✓ {t('wizard.init.updatedShell')}</li>}
+          </ul>
+          <p className="mt-3 text-xs text-success-500 dark:text-success-400">
+            {t('wizard.init.restartTerminal')}
+          </p>
+        </div>
+      )}
+
+      {/* Action Buttons */}
+      <div className="flex items-center justify-center gap-4">
+        {!isInitialized && !initializing && (
+          <Button
+            variant="primary"
+            size="lg"
+            icon={<Terminal size={18} />}
+            onClick={handleInitialize}
+          >
+            {t('wizard.init.initButton')}
+          </Button>
+        )}
+
+        {error && (
+          <Button
+            variant="primary"
+            size="lg"
+            icon={<Terminal size={18} />}
+            onClick={handleInitialize}
+          >
+            {t('wizard.init.retry')}
+          </Button>
+        )}
+
+        {isInitialized && (
+          <Button variant="primary" size="lg" icon={<ArrowRight size={18} />} onClick={onNext}>
+            {t('wizard.init.continue')}
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ============================================
+// Scan Step - Environment Scanning
+// ============================================
+
 interface ScanStepProps {
   onComplete: (results: ScanResults) => void;
   onNext: () => void;
+  onBack: () => void;
 }
 
-function ScanStep({ onComplete, onNext }: ScanStepProps) {
+function ScanStep({ onComplete, onNext, onBack }: ScanStepProps) {
+  const { t } = useTranslation();
   const [scanning, setScanning] = useState(false);
   const [scanComplete, setScanComplete] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -233,22 +356,23 @@ function ScanStep({ onComplete, onNext }: ScanStepProps) {
     setError(null);
 
     try {
-      // Run all scans in parallel
-      const [javaVersions, nodeVersions, versionManagers, mavenConfigs, aemInstances] =
+      // Run all scans in parallel - only scan for NEW data, don't use stored data
+      const [javaVersions, nodeVersions, versionManagers, mavenSettings, scannedAemInstances] =
         await Promise.all([
           scanJavaVersions().catch(() => []),
           scanNodeVersions().catch(() => []),
           detectVersionManagers().catch(() => []),
-          listMavenConfigs().catch(() => []),
-          listInstances().catch(() => []),
+          scanMavenSettings().catch(() => []),
+          scanAemInstances().catch(() => []),
         ]);
 
       const scanResults: ScanResults = {
         javaVersions,
         nodeVersions,
         versionManagers,
-        mavenConfigs,
-        aemInstances,
+        mavenSettings,
+        aemInstances: [], // Don't include stored instances in wizard scan
+        scannedAemInstances,
       };
 
       setResults(scanResults);
@@ -268,9 +392,17 @@ function ScanStep({ onComplete, onNext }: ScanStepProps) {
     }
   }, [handleScan, scanning, scanComplete, error]);
 
+  const handleRescan = useCallback(() => {
+    setScanComplete(false);
+    setResults(null);
+    setError(null);
+    // Directly trigger scan
+    handleScan();
+  }, [handleScan]);
+
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-soft text-center">
-      <div className="w-20 h-20 mx-auto rounded-full bg-azure-50 dark:bg-azure-900/30 flex items-center justify-center mb-6">
+    <div className="panel p-8 text-center">
+      <div className="w-20 h-20 mx-auto rounded-full bg-primary/10 flex items-center justify-center mb-6">
         {scanning ? (
           <Loader2 size={40} className="text-azure animate-spin" />
         ) : error ? (
@@ -282,53 +414,79 @@ function ScanStep({ onComplete, onNext }: ScanStepProps) {
         )}
       </div>
 
-      <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-2">环境扫描</h2>
+      <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-2">
+        {t('wizard.scan.title')}
+      </h2>
       <p className="text-slate-500 dark:text-slate-400 mb-6 max-w-md mx-auto">
         {scanning
-          ? '正在扫描系统中的 Java、Node.js、Maven 和 AEM 安装...'
+          ? t('wizard.scan.scanning')
           : error
-            ? `扫描失败: ${error}`
+            ? t('wizard.scan.error', { error })
             : scanComplete
-              ? '扫描完成！我们在您的系统中发现了以下安装。'
-              : '让我们开始扫描您系统中的开发工具。'}
+              ? t('wizard.scan.complete')
+              : t('wizard.scan.start')}
       </p>
 
       {scanComplete && results && (
         <div className="grid grid-cols-2 gap-4 mb-6 text-left">
           <ScanResult
             icon={<Coffee size={20} />}
-            label="Java 版本"
+            label={t('wizard.scan.results.java')}
             count={results.javaVersions.length}
           />
           <ScanResult
             icon={<Hexagon size={20} />}
-            label="Node 版本"
+            label={t('wizard.scan.results.node')}
             count={results.nodeVersions.length}
           />
           <ScanResult
             icon={<Settings size={20} />}
-            label="Maven 配置"
-            count={results.mavenConfigs.length}
+            label={t('wizard.scan.results.maven')}
+            count={results.mavenSettings.length}
           />
           <ScanResult
             icon={<Server size={20} />}
-            label="AEM 实例"
-            count={results.aemInstances.length}
+            label={t('wizard.scan.results.aem')}
+            count={results.aemInstances.length + results.scannedAemInstances.length}
           />
         </div>
       )}
 
-      {scanComplete && (
-        <Button variant="primary" size="lg" icon={<ArrowRight size={18} />} onClick={onNext}>
-          继续设置
+      {/* Action buttons */}
+      <div className="flex items-center justify-center gap-4">
+        <Button
+          variant="ghost"
+          size="lg"
+          icon={<ArrowLeft size={18} />}
+          onClick={onBack}
+          disabled={scanning}
+        >
+          {t('wizard.nav.prev')}
         </Button>
-      )}
 
-      {error && (
-        <Button variant="primary" size="lg" icon={<Search size={18} />} onClick={handleScan}>
-          重新扫描
-        </Button>
-      )}
+        {scanComplete && (
+          <>
+            <Button variant="outline" size="lg" icon={<Search size={18} />} onClick={handleRescan}>
+              {t('wizard.scan.rescan')}
+            </Button>
+            <Button
+              variant="primary"
+              size="lg"
+              icon={<ArrowRight size={18} />}
+              iconPosition="right"
+              onClick={onNext}
+            >
+              {t('wizard.scan.continue')}
+            </Button>
+          </>
+        )}
+
+        {error && (
+          <Button variant="primary" size="lg" icon={<Search size={18} />} onClick={handleScan}>
+            {t('wizard.scan.retry')}
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
@@ -342,329 +500,99 @@ function ScanResult({
   label: string;
   count: number;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
       <div className="text-slate-500 dark:text-slate-400">{icon}</div>
       <div>
-        <p className="font-medium text-slate-700 dark:text-slate-200">发现 {count} 个</p>
+        <p className="font-medium text-slate-700 dark:text-slate-200">
+          {t('wizard.scan.results.found', { count })}
+        </p>
         <p className="text-sm text-slate-500 dark:text-slate-400">{label}</p>
       </div>
     </div>
   );
 }
 
-interface JavaStepProps {
-  versions: JavaVersion[];
-  managers: VersionManager[];
-  selected: string | null;
-  onSelect: (version: string) => void;
-}
-
-function JavaStep({ versions, managers, selected, onSelect }: JavaStepProps) {
-  const activeManager = managers.find((m) => m.is_active);
-
-  return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-soft">
-      <div className="flex items-center gap-4 mb-6">
-        <div className="w-12 h-12 rounded-full bg-warning-50 dark:bg-warning-900/30 flex items-center justify-center">
-          <Coffee size={24} className="text-warning" />
-        </div>
-        <div>
-          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">Java 配置</h2>
-          <p className="text-slate-500 dark:text-slate-400">
-            选择您的默认 Java 版本
-            {activeManager && `（由 ${activeManager.name} 管理）`}
-          </p>
-        </div>
-      </div>
-
-      {versions.length === 0 ? (
-        <EmptyState message="未在您的系统中找到 Java 安装" />
-      ) : (
-        <div className="space-y-3 max-h-80 overflow-y-auto">
-          {versions.map((java) => (
-            <VersionOption
-              key={java.version}
-              version={java.version}
-              vendor={java.vendor}
-              path={java.path}
-              selected={selected === java.version}
-              isCurrent={java.is_current}
-              onClick={() => onSelect(java.version)}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-interface NodeStepProps {
-  versions: NodeVersion[];
-  managers: VersionManager[];
-  selected: string | null;
-  onSelect: (version: string) => void;
-}
-
-function NodeStep({ versions, managers, selected, onSelect }: NodeStepProps) {
-  const activeManager = managers.find((m) => m.is_active);
-
-  return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-soft">
-      <div className="flex items-center gap-4 mb-6">
-        <div className="w-12 h-12 rounded-full bg-success-50 dark:bg-success-900/30 flex items-center justify-center">
-          <Hexagon size={24} className="text-success" />
-        </div>
-        <div>
-          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">Node.js 配置</h2>
-          <p className="text-slate-500 dark:text-slate-400">
-            选择您的默认 Node.js 版本
-            {activeManager && `（由 ${activeManager.name} 管理）`}
-          </p>
-        </div>
-      </div>
-
-      {versions.length === 0 ? (
-        <EmptyState message="未在您的系统中找到 Node.js 安装" />
-      ) : (
-        <div className="space-y-3 max-h-80 overflow-y-auto">
-          {versions.map((node) => (
-            <VersionOption
-              key={node.version}
-              version={node.version}
-              path={node.path}
-              selected={selected === node.version}
-              isCurrent={node.is_current}
-              onClick={() => onSelect(node.version)}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-interface MavenStepProps {
-  configs: MavenConfig[];
-  selected: string | null;
-  onSelect: (id: string) => void;
-}
-
-function MavenStep({ configs, selected, onSelect }: MavenStepProps) {
-  return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-soft">
-      <div className="flex items-center gap-4 mb-6">
-        <div className="w-12 h-12 rounded-full bg-azure-50 dark:bg-azure-900/30 flex items-center justify-center">
-          <Settings size={24} className="text-azure" />
-        </div>
-        <div>
-          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">Maven 配置</h2>
-          <p className="text-slate-500 dark:text-slate-400">配置 Maven settings.xml 文件</p>
-        </div>
-      </div>
-
-      {configs.length === 0 ? (
-        <div className="space-y-3">
-          <div className="p-4 border border-slate-200 dark:border-slate-600 rounded-lg">
-            <p className="font-medium text-slate-700 dark:text-slate-200">默认 settings.xml</p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">~/.m2/settings.xml</p>
-          </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400 text-center">
-            您可以稍后在设置中添加更多 Maven 配置
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-3 max-h-80 overflow-y-auto">
-          {configs.map((config) => (
-            <div
-              key={config.id}
-              className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-                selected === config.id
-                  ? 'border-azure bg-azure-50 dark:bg-azure-900/30 dark:border-azure-500'
-                  : 'border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500'
-              }`}
-              onClick={() => onSelect(config.id)}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-slate-700 dark:text-slate-200">{config.name}</p>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">{config.path}</p>
-                  {config.description && (
-                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-                      {config.description}
-                    </p>
-                  )}
-                </div>
-                {config.is_active && (
-                  <span className="px-2 py-1 bg-azure-50 dark:bg-azure-900/30 text-azure-700 dark:text-azure-300 text-xs font-medium rounded">
-                    当前
-                  </span>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-interface AemStepProps {
-  instances: AemInstance[];
-}
-
-function AemStep({ instances }: AemStepProps) {
-  const addNotification = useAppStore((s) => s.addNotification);
-
-  return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-soft">
-      <div className="flex items-center gap-4 mb-6">
-        <div className="w-12 h-12 rounded-full bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center">
-          <Server size={24} className="text-teal" />
-        </div>
-        <div>
-          <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">AEM 实例</h2>
-          <p className="text-slate-500 dark:text-slate-400">配置您的 AEM 实例（可选）</p>
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        {instances.length === 0 ? (
-          <EmptyState message="未检测到 AEM 实例" />
-        ) : (
-          instances.map((instance) => (
-            <div
-              key={instance.id}
-              className="p-4 border border-slate-200 dark:border-slate-600 rounded-lg flex items-center justify-between"
-            >
-              <div>
-                <p className="font-medium text-slate-700 dark:text-slate-200">{instance.name}</p>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
-                  {instance.host}:{instance.port} · {instance.instance_type}
-                </p>
-              </div>
-              <span
-                className={`px-2 py-1 text-xs font-medium rounded ${
-                  instance.status === 'running'
-                    ? 'bg-success-50 dark:bg-success-900/30 text-success-700 dark:text-success-300'
-                    : 'bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400'
-                }`}
-              >
-                {instance.status}
-              </span>
-            </div>
-          ))
-        )}
-
-        <Button
-          variant="outline"
-          className="w-full"
-          onClick={() =>
-            addNotification({
-              type: 'info',
-              title: '添加实例',
-              message: '您可以从实例页面添加更多实例',
-            })
-          }
-        >
-          + 添加另一个实例
-        </Button>
-        <p className="text-sm text-slate-500 dark:text-slate-400 text-center">
-          您可以跳过此步骤，稍后添加实例
-        </p>
-      </div>
-    </div>
-  );
-}
+// ============================================
+// Complete Step - Setup Complete with Guidance
+// ============================================
 
 interface CompleteStepProps {
   onFinish: () => void;
+  onCreateInstance: () => void;
+  onCreateProfile: () => void;
   scanResults: ScanResults | null;
 }
 
-function CompleteStep({ onFinish, scanResults }: CompleteStepProps) {
+function CompleteStep({
+  onFinish,
+  onCreateInstance,
+  onCreateProfile,
+  scanResults,
+}: CompleteStepProps) {
+  const { t } = useTranslation();
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-soft text-center">
-      <div className="w-20 h-20 mx-auto rounded-full bg-success-50 dark:bg-success-900/30 flex items-center justify-center mb-6">
+    <div className="panel p-8 text-center">
+      <div className="w-20 h-20 mx-auto rounded-full badge-success flex items-center justify-center mb-6">
         <CheckCircle size={40} className="text-success" />
       </div>
 
-      <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-2">设置完成！</h2>
+      <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-200 mb-2">
+        {t('wizard.complete.title')}
+      </h2>
       <p className="text-slate-500 dark:text-slate-400 mb-6 max-w-md mx-auto">
-        您的 AEM 开发环境已准备就绪。您现在可以轻松管理配置、切换版本和控制 AEM 实例。
+        {t('wizard.complete.subtitle')}
       </p>
 
       {scanResults && (
         <div className="bg-slate-50 dark:bg-slate-700 rounded-lg p-4 mb-6 text-left">
-          <h3 className="font-medium text-slate-700 dark:text-slate-200 mb-2">快速概览</h3>
+          <h3 className="font-medium text-slate-700 dark:text-slate-200 mb-2">
+            {t('wizard.complete.summary')}
+          </h3>
           <ul className="text-sm text-slate-600 dark:text-slate-300 space-y-1">
-            <li>✓ 已配置 {scanResults.javaVersions.length} 个 Java 版本</li>
-            <li>✓ 已配置 {scanResults.nodeVersions.length} 个 Node.js 版本</li>
-            <li>✓ 已添加 {scanResults.mavenConfigs.length} 个 Maven 配置</li>
-            <li>✓ 已检测到 {scanResults.aemInstances.length} 个 AEM 实例</li>
+            <li>
+              ✓ {t('wizard.complete.configuredJava', { count: scanResults.javaVersions.length })}
+            </li>
+            <li>
+              ✓ {t('wizard.complete.configuredNode', { count: scanResults.nodeVersions.length })}
+            </li>
+            <li>
+              ✓ {t('wizard.complete.configuredMaven', { count: scanResults.mavenSettings.length })}
+            </li>
+            <li>
+              ✓{' '}
+              {t('wizard.complete.detectedAem', {
+                count: scanResults.aemInstances.length + scanResults.scannedAemInstances.length,
+              })}
+            </li>
           </ul>
         </div>
       )}
 
-      <Button variant="primary" size="lg" onClick={onFinish}>
-        前往仪表盘
-      </Button>
-    </div>
-  );
-}
-
-function VersionOption({
-  version,
-  vendor,
-  path,
-  selected,
-  isCurrent,
-  onClick,
-}: {
-  version: string;
-  vendor?: string;
-  path: string;
-  selected?: boolean;
-  isCurrent?: boolean;
-  onClick?: () => void;
-}) {
-  return (
-    <div
-      className={`p-4 border rounded-lg cursor-pointer transition-colors ${
-        selected
-          ? 'border-azure bg-azure-50 dark:bg-azure-900/30 dark:border-azure-500'
-          : 'border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500'
-      }`}
-      onClick={onClick}
-    >
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="font-medium text-slate-700 dark:text-slate-200">v{version}</span>
-            {vendor && <span className="text-sm text-slate-500 dark:text-slate-400">{vendor}</span>}
-            {isCurrent && (
-              <span className="px-1.5 py-0.5 bg-success-50 dark:bg-success-900/30 text-success-700 dark:text-success-300 text-xs font-medium rounded">
-                当前
-              </span>
-            )}
-          </div>
-          <p className="text-sm text-slate-400 dark:text-slate-500 truncate max-w-xs">{path}</p>
-        </div>
-        {selected && (
-          <div className="w-5 h-5 rounded-full bg-azure flex items-center justify-center">
-            <CheckCircle size={14} className="text-white" />
-          </div>
-        )}
+      {/* Next Step Guidance - AEM Instance First */}
+      <div className="bg-azure-50 dark:bg-azure-900/30 rounded-lg p-4 mb-6 text-left">
+        <h3 className="font-medium text-azure-700 dark:text-azure-300 mb-2 flex items-center gap-2">
+          <Rocket size={18} />
+          {t('wizard.complete.nextStep')}
+        </h3>
+        <p className="text-sm text-azure-600 dark:text-azure-400 mb-3">
+          {t('wizard.complete.nextStepDescAem')}
+        </p>
       </div>
-    </div>
-  );
-}
 
-function EmptyState({ message }: { message: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-8 text-center">
-      <AlertCircle size={32} className="text-slate-400 dark:text-slate-500 mb-3" />
-      <p className="text-slate-500 dark:text-slate-400">{message}</p>
+      {/* Action Buttons - AEM Instance as Primary */}
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+        <Button variant="primary" size="lg" icon={<Server size={18} />} onClick={onCreateInstance}>
+          {t('wizard.complete.createInstance')}
+        </Button>
+        <Button variant="outline" size="lg" icon={<Plus size={18} />} onClick={onCreateProfile}>
+          {t('wizard.complete.createProfile')}
+        </Button>
+        <Button variant="ghost" size="lg" onClick={onFinish}>
+          {t('wizard.complete.later')}
+        </Button>
+      </div>
     </div>
   );
 }

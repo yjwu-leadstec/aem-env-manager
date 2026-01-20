@@ -26,7 +26,7 @@ export function StatusBar() {
   };
 
   return (
-    <footer className="h-10 bg-white/70 dark:bg-charcoal/70 backdrop-blur-xl border-t border-white/50 dark:border-steel/50 flex items-center justify-between px-4 text-xs text-slate-500 dark:text-gray-400">
+    <footer className="h-10 bg-white/70 dark:bg-charcoal backdrop-blur-xl dark:backdrop-blur-none border-t border-white/50 dark:border-border flex items-center justify-between px-4 text-xs text-slate-500 dark:text-gray-400">
       {/* Left Section - Status */}
       <div className="flex items-center gap-4">
         {/* Active Profile */}

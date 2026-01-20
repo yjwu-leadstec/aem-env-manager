@@ -8,6 +8,7 @@ pub trait ShellExecutor {
     fn execute(&self, command: &str) -> Result<String, String>;
 
     /// Execute a command that modifies environment
+    #[allow(dead_code)]
     fn execute_env_command(
         &self,
         command: &str,
@@ -15,6 +16,7 @@ pub trait ShellExecutor {
     ) -> Result<String, String>;
 
     /// Get the shell configuration file path
+    #[allow(dead_code)]
     fn get_shell_config_path(&self) -> Option<PathBuf>;
 }
 
@@ -30,6 +32,7 @@ pub trait VersionManagerOps {
     fn switch_version(&self, version: &str) -> Result<(), String>;
 
     /// Get current active version
+    #[allow(dead_code)]
     fn current_version(&self) -> Result<Option<String>, String>;
 }
 
@@ -37,6 +40,7 @@ pub trait VersionManagerOps {
 /// Unified interface for macOS and Windows differences
 pub trait PlatformOps: Send + Sync {
     // Environment variable operations
+    #[allow(dead_code)]
     fn get_env_var(&self, name: &str) -> Result<String, String>;
     fn set_env_var(&self, name: &str, value: &str) -> Result<(), String>;
 
@@ -53,7 +57,9 @@ pub trait PlatformOps: Send + Sync {
     fn append_to_shell_config(&self, content: &str) -> Result<(), String>;
 
     // System operations
+    #[allow(dead_code)]
     fn open_terminal(&self, cwd: &std::path::Path) -> Result<(), String>;
+    #[allow(dead_code)]
     fn open_file_manager(&self, path: &std::path::Path) -> Result<(), String>;
     fn open_browser(&self, url: &str) -> Result<(), String>;
 
@@ -64,6 +70,7 @@ pub trait PlatformOps: Send + Sync {
     // Configuration paths
     fn get_config_dir(&self) -> PathBuf;
     fn get_data_dir(&self) -> PathBuf;
+    #[allow(dead_code)]
     fn get_cache_dir(&self) -> PathBuf;
 }
 
@@ -78,6 +85,7 @@ pub fn get_app_config_dir() -> Option<PathBuf> {
 }
 
 /// Get the application cache directory
+#[allow(dead_code)]
 pub fn get_app_cache_dir() -> Option<PathBuf> {
     dirs::cache_dir().map(|p| p.join("aem-env-manager"))
 }
@@ -92,6 +100,7 @@ pub fn ensure_dir_exists(path: &PathBuf) -> Result<(), String> {
 }
 
 /// Initialize all application directories
+#[allow(dead_code)]
 pub fn init_app_directories() -> Result<AppDirectories, String> {
     let config_dir = get_app_config_dir().ok_or("Failed to get config directory")?;
     let data_dir = get_app_data_dir().ok_or("Failed to get data directory")?;
@@ -125,6 +134,7 @@ pub fn init_app_directories() -> Result<AppDirectories, String> {
 }
 
 /// Application directory structure
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct AppDirectories {
     pub config: PathBuf,
@@ -138,16 +148,19 @@ pub struct AppDirectories {
 
 impl AppDirectories {
     /// Get path to main config file
+    #[allow(dead_code)]
     pub fn config_file(&self) -> PathBuf {
         self.config.join("config.yaml")
     }
 
     /// Get path to a specific profile file
+    #[allow(dead_code)]
     pub fn profile_file(&self, profile_id: &str) -> PathBuf {
         self.profiles.join(format!("{}.yaml", profile_id))
     }
 
     /// Check if this is first run (config doesn't exist)
+    #[allow(dead_code)]
     pub fn is_first_run(&self) -> bool {
         !self.config_file().exists()
     }

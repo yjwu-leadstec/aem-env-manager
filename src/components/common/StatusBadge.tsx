@@ -34,7 +34,9 @@ export function StatusBadge({ status, size = 'md', showLabel = false }: StatusBa
           />
         )}
       </div>
-      {showLabel && <span className="text-sm text-slate-600">{config.label}</span>}
+      {showLabel && (
+        <span className="text-sm text-slate-600 dark:text-gray-400">{config.label}</span>
+      )}
     </div>
   );
 }

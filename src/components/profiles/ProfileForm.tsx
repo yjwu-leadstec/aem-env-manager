@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
-import { X, Save, Coffee, Hexagon, FileCode } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { X, Save, Coffee, Hexagon, FileCode, Server } from 'lucide-react';
 import { Button } from '../common/Button';
 import * as versionApi from '../../api/version';
+import * as instanceApi from '../../api/instance';
 
 export interface ProfileFormData {
   name: string;
@@ -11,6 +13,8 @@ export interface ProfileFormData {
   nodeVersion: string | null;
   nodeManagerId: string | null;
   mavenConfigId: string | null;
+  authorInstanceId: string | null;
+  publishInstanceId: string | null;
   envVars: Record<string, string>;
 }
 
@@ -22,13 +26,8 @@ interface ProfileFormProps {
   title?: string;
 }
 
-export function ProfileForm({
-  initialData,
-  isOpen,
-  onClose,
-  onSubmit,
-  title = '新建配置',
-}: ProfileFormProps) {
+export function ProfileForm({ initialData, isOpen, onClose, onSubmit, title }: ProfileFormProps) {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState<ProfileFormData>({
     name: '',
     description: '',
@@ -37,6 +36,8 @@ export function ProfileForm({
     nodeVersion: null,
     nodeManagerId: null,
     mavenConfigId: null,
+    authorInstanceId: null,
+    publishInstanceId: null,
     envVars: {},
     ...initialData,
   });
@@ -44,6 +45,7 @@ export function ProfileForm({
   const [javaVersions, setJavaVersions] = useState<versionApi.JavaVersion[]>([]);
   const [nodeVersions, setNodeVersions] = useState<versionApi.NodeVersion[]>([]);
   const [mavenConfigs, setMavenConfigs] = useState<versionApi.MavenConfig[]>([]);
+  const [aemInstances, setAemInstances] = useState<instanceApi.AemInstance[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -59,6 +61,8 @@ export function ProfileForm({
         nodeVersion: null,
         nodeManagerId: null,
         mavenConfigId: null,
+        authorInstanceId: null,
+        publishInstanceId: null,
         envVars: {},
         ...initialData,
       });
@@ -69,14 +73,16 @@ export function ProfileForm({
   const loadVersionOptions = async () => {
     setIsLoading(true);
     try {
-      const [java, node, maven] = await Promise.all([
+      const [java, node, maven, instances] = await Promise.all([
         versionApi.scanJavaVersions(),
         versionApi.scanNodeVersions(),
         versionApi.listMavenConfigs(),
+        instanceApi.listInstances(),
       ]);
       setJavaVersions(java);
       setNodeVersions(node);
       setMavenConfigs(maven);
+      setAemInstances(instances);
     } catch {
       // Failed to load version options
     } finally {
@@ -88,9 +94,9 @@ export function ProfileForm({
     const newErrors: Record<string, string> = {};
 
     if (!formData.name.trim()) {
-      newErrors.name = '名称为必填项';
+      newErrors.name = t('profile.form.nameRequired');
     } else if (formData.name.length < 2) {
-      newErrors.name = '名称至少需要 2 个字符';
+      newErrors.name = t('profile.form.nameMinLength');
     }
 
     setErrors(newErrors);
@@ -108,7 +114,7 @@ export function ProfileForm({
       onClose();
     } catch (error) {
       setErrors({
-        submit: error instanceof Error ? error.message : '保存配置失败',
+        submit: error instanceof Error ? error.message : t('profile.form.saveFailed'),
       });
     } finally {
       setIsSaving(false);
@@ -123,15 +129,15 @@ export function ProfileForm({
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
       {/* Dialog */}
-      <div className="relative w-full max-w-lg max-h-[90vh] overflow-auto bg-white dark:bg-slate-800 rounded-2xl shadow-xl m-4">
+      <div className="relative w-full max-w-lg max-h-[90vh] overflow-auto panel m-4 p-0">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{title}</h2>
+        <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-white/10">
+          <h2 className="text-lg font-semibold">{title || t('profile.form.createTitle')}</h2>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+            className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
           >
-            <X size={20} className="text-slate-500" />
+            <X size={20} className="opacity-50" />
           </button>
         </div>
 
@@ -139,37 +145,37 @@ export function ProfileForm({
         <form onSubmit={handleSubmit} className="p-4 space-y-4">
           {/* Name */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              配置名称 *
+            <label className="block text-sm font-medium mb-1 opacity-70">
+              {t('profile.form.name')}
             </label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className={`input ${errors.name ? 'input-error' : ''}`}
-              placeholder="例如: AEM 6.5 开发环境"
+              className={`input ${errors.name ? 'border-error text-error' : ''}`}
+              placeholder={t('profile.form.namePlaceholder')}
             />
-            {errors.name && <p className="text-sm text-error-500 mt-1">{errors.name}</p>}
+            {errors.name && <p className="text-sm text-error mt-1">{errors.name}</p>}
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              描述
+            <label className="block text-sm font-medium mb-1 opacity-70">
+              {t('profile.form.description')}
             </label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               className="input min-h-[80px] resize-none"
-              placeholder="可选的配置描述"
+              placeholder={t('profile.form.descriptionPlaceholder')}
             />
           </div>
 
           {/* Java Version */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-sm font-medium mb-1 opacity-70">
               <Coffee size={14} className="inline mr-1" />
-              Java 版本
+              {t('profile.form.javaVersion')}
             </label>
             <select
               value={formData.javaVersion || ''}
@@ -177,10 +183,10 @@ export function ProfileForm({
               className="select"
               disabled={isLoading}
             >
-              <option value="">选择 Java 版本...</option>
+              <option value="">{t('profile.form.selectJava')}</option>
               {javaVersions.map((v) => (
                 <option key={v.version} value={v.version}>
-                  {v.version} ({v.vendor}){v.is_current && ' - 当前'}
+                  {v.version} ({v.vendor}){v.is_current && ` - ${t('profile.form.current')}`}
                 </option>
               ))}
             </select>
@@ -188,9 +194,9 @@ export function ProfileForm({
 
           {/* Node Version */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-sm font-medium mb-1 opacity-70">
               <Hexagon size={14} className="inline mr-1" />
-              Node 版本
+              {t('profile.form.nodeVersion')}
             </label>
             <select
               value={formData.nodeVersion || ''}
@@ -198,11 +204,11 @@ export function ProfileForm({
               className="select"
               disabled={isLoading}
             >
-              <option value="">选择 Node 版本...</option>
+              <option value="">{t('profile.form.selectNode')}</option>
               {nodeVersions.map((v) => (
                 <option key={v.version} value={v.version}>
                   {v.version}
-                  {v.is_current && ' - 当前'}
+                  {v.is_current && ` - ${t('profile.form.current')}`}
                 </option>
               ))}
             </select>
@@ -210,9 +216,9 @@ export function ProfileForm({
 
           {/* Maven Config */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+            <label className="block text-sm font-medium mb-1 opacity-70">
               <FileCode size={14} className="inline mr-1" />
-              Maven 配置
+              {t('profile.form.mavenConfig')}
             </label>
             <select
               value={formData.mavenConfigId || ''}
@@ -220,13 +226,63 @@ export function ProfileForm({
               className="select"
               disabled={isLoading}
             >
-              <option value="">使用默认 settings.xml</option>
+              <option value="">{t('profile.form.defaultMaven')}</option>
               {mavenConfigs.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
-                  {c.is_active && ' - 当前'}
+                  {c.is_active && ` - ${t('profile.form.current')}`}
                 </option>
               ))}
+            </select>
+          </div>
+
+          {/* AEM Author Instance */}
+          <div>
+            <label className="block text-sm font-medium mb-1 opacity-70">
+              <Server size={14} className="inline mr-1" />
+              {t('profile.form.authorInstance')}
+            </label>
+            <select
+              value={formData.authorInstanceId || ''}
+              onChange={(e) =>
+                setFormData({ ...formData, authorInstanceId: e.target.value || null })
+              }
+              className="select"
+              disabled={isLoading}
+            >
+              <option value="">{t('profile.form.noAuthorInstance')}</option>
+              {aemInstances
+                .filter((instance) => instance.instance_type === 'author')
+                .map((instance) => (
+                  <option key={instance.id} value={instance.id}>
+                    {instance.name} - {instance.host}:{instance.port}
+                  </option>
+                ))}
+            </select>
+          </div>
+
+          {/* AEM Publish Instance */}
+          <div>
+            <label className="block text-sm font-medium mb-1 opacity-70">
+              <Server size={14} className="inline mr-1" />
+              {t('profile.form.publishInstance')}
+            </label>
+            <select
+              value={formData.publishInstanceId || ''}
+              onChange={(e) =>
+                setFormData({ ...formData, publishInstanceId: e.target.value || null })
+              }
+              className="select"
+              disabled={isLoading}
+            >
+              <option value="">{t('profile.form.noPublishInstance')}</option>
+              {aemInstances
+                .filter((instance) => instance.instance_type === 'publish')
+                .map((instance) => (
+                  <option key={instance.id} value={instance.id}>
+                    {instance.name} - {instance.host}:{instance.port}
+                  </option>
+                ))}
             </select>
           </div>
 
@@ -238,9 +294,9 @@ export function ProfileForm({
           )}
 
           {/* Actions */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-white/10">
             <Button variant="outline" onClick={onClose} disabled={isSaving}>
-              取消
+              {t('profile.form.cancel')}
             </Button>
             <Button
               type="submit"
@@ -248,7 +304,7 @@ export function ProfileForm({
               icon={<Save size={16} />}
               disabled={isSaving || isLoading}
             >
-              {isSaving ? '保存中...' : '保存配置'}
+              {isSaving ? t('profile.form.saving') : t('profile.form.save')}
             </Button>
           </div>
         </form>

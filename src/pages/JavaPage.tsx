@@ -1,11 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Coffee, RefreshCw, Check, ExternalLink, AlertCircle } from 'lucide-react';
 import { Card, CardHeader, CardContent } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
 import { useAppStore } from '@/store';
 import * as versionApi from '@/api/version';
+import { updateProfile, getActiveProfile } from '@/api/profile';
+import { setJavaSymlink } from '@/api/environment';
 
 export function JavaPage() {
+  const { t } = useTranslation();
   const [isScanning, setIsScanning] = useState(false);
   const [javaInfo, setJavaInfo] = useState<versionApi.VersionInfo['java'] | null>(null);
   const [switchingVersion, setSwitchingVersion] = useState<string | null>(null);
@@ -19,41 +23,64 @@ export function JavaPage() {
     } catch (error) {
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: error instanceof Error ? error.message : '未知错误',
+        title: t('java.notifications.loadFailed'),
+        message: error instanceof Error ? error.message : t('common.unknown'),
       });
     } finally {
       setIsScanning(false);
     }
-  }, [addNotification]);
+  }, [addNotification, t]);
 
   useEffect(() => {
     loadJavaInfo();
   }, [loadJavaInfo]);
 
-  const handleSwitch = async (version: string) => {
+  // Handle "Use" button click - updates current profile and sets symlink
+  const handleSwitch = async (version: string, javaPath: string) => {
     setSwitchingVersion(version);
     try {
-      const result = await versionApi.switchJavaVersion(version);
-      if (result.success) {
+      // Get current active profile
+      const activeProfile = await getActiveProfile();
+
+      if (!activeProfile) {
+        addNotification({
+          type: 'warning',
+          title: t('java.notifications.noProfile'),
+          message: t('java.notifications.noProfileMessage'),
+        });
+        setSwitchingVersion(null);
+        return;
+      }
+
+      // Update profile with new java version and path
+      await updateProfile(activeProfile.id, {
+        java_version: version,
+        java_path: javaPath,
+      });
+
+      // Set symlink to immediately apply the change
+      const symlinkResult = await setJavaSymlink(javaPath);
+
+      if (symlinkResult.success) {
         addNotification({
           type: 'success',
-          title: 'Java 版本已切换',
-          message: `当前使用 Java ${result.current_version}`,
+          title: t('java.notifications.switched'),
+          message: t('java.notifications.switchedMessage', { version }),
         });
         loadJavaInfo();
       } else {
         addNotification({
-          type: 'error',
-          title: '切换失败',
-          message: result.error || '未知错误',
+          type: 'warning',
+          title: t('java.notifications.switched'),
+          message: symlinkResult.message || t('java.notifications.switchedMessage', { version }),
         });
+        loadJavaInfo();
       }
     } catch (error) {
       addNotification({
         type: 'error',
-        title: '切换失败',
-        message: error instanceof Error ? error.message : '未知错误',
+        title: t('java.notifications.switchFailed'),
+        message: error instanceof Error ? error.message : t('common.unknown'),
       });
     } finally {
       setSwitchingVersion(null);
@@ -66,9 +93,10 @@ export function JavaPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-            <span className="mr-2">☕</span>Java 版本管理
+            <span className="mr-2">☕</span>
+            {t('java.title')}
           </h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">管理和切换 Java 运行环境版本</p>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">{t('java.subtitle')}</p>
         </div>
         <Button
           variant="outline"
@@ -78,7 +106,7 @@ export function JavaPage() {
           onClick={loadJavaInfo}
           disabled={isScanning}
         >
-          扫描版本
+          {t('java.scan')}
         </Button>
       </div>
 
@@ -90,7 +118,7 @@ export function JavaPage() {
         <div className="space-y-6">
           {/* Version Managers */}
           <Card>
-            <CardHeader title="版本管理器" subtitle="检测到的 Java 版本管理工具" />
+            <CardHeader title={t('java.managers.title')} subtitle={t('java.managers.subtitle')} />
             <CardContent>
               {!javaInfo?.managers || javaInfo.managers.length === 0 ? (
                 <div className="text-center py-6">
@@ -99,7 +127,7 @@ export function JavaPage() {
                     className="mx-auto mb-3 text-slate-300 dark:text-slate-600"
                   />
                   <p className="text-slate-500 dark:text-slate-400 mb-4">
-                    未检测到 Java 版本管理器
+                    {t('java.managers.empty')}
                   </p>
                   <div className="flex justify-center gap-2">
                     <ManagerLink name="SDKMAN" url="https://sdkman.io" />
@@ -130,8 +158,8 @@ export function JavaPage() {
           {/* Installed Versions */}
           <Card>
             <CardHeader
-              title="已安装版本"
-              subtitle={`检测到 ${javaInfo?.versions.length || 0} 个 Java 安装`}
+              title={t('java.versions.title')}
+              subtitle={t('java.versions.subtitle', { count: javaInfo?.versions.length || 0 })}
             />
             <CardContent>
               {!javaInfo?.versions || javaInfo.versions.length === 0 ? (
@@ -140,9 +168,9 @@ export function JavaPage() {
                     size={40}
                     className="mx-auto mb-3 text-slate-300 dark:text-slate-600"
                   />
-                  <p className="text-slate-500 dark:text-slate-400">未检测到 Java 安装</p>
+                  <p className="text-slate-500 dark:text-slate-400">{t('java.versions.empty')}</p>
                   <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-                    安装版本管理器来管理 Java 版本
+                    {t('java.versions.emptyHint')}
                   </p>
                 </div>
               ) : (
@@ -165,7 +193,7 @@ export function JavaPage() {
                             </span>
                             {v.is_current && (
                               <span className="px-1.5 py-0.5 bg-azure-100 dark:bg-azure-800 text-azure-700 dark:text-azure-300 text-xs rounded">
-                                当前
+                                {t('common.current')}
                               </span>
                             )}
                             <span className="text-xs text-slate-500 dark:text-slate-400">
@@ -181,13 +209,13 @@ export function JavaPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleSwitch(v.version)}
+                          onClick={() => handleSwitch(v.version, v.path)}
                           disabled={switchingVersion === v.version}
                         >
                           {switchingVersion === v.version ? (
                             <RefreshCw size={14} className="animate-spin" />
                           ) : (
-                            '使用'
+                            t('common.use')
                           )}
                         </Button>
                       )}

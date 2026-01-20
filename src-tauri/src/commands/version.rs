@@ -81,18 +81,45 @@ pub struct MavenConfig {
     pub path: String,
     pub is_active: bool,
     pub description: Option<String>,
+    pub local_repository: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MavenSettingsFile {
+    pub name: String,
+    pub path: String,
+    pub local_repository: Option<String>,
 }
 
 // ============================================
 // Java Version Management
 // ============================================
 
+/// Get the current Java symlink target path
+fn get_current_java_symlink_target() -> Option<PathBuf> {
+    if let Some(home) = dirs::home_dir() {
+        let symlink_path = home.join(".aem-env-manager").join("java").join("current");
+        if symlink_path.is_symlink() {
+            // Read the symlink target
+            if let Ok(target) = std::fs::read_link(&symlink_path) {
+                // Resolve to absolute path if relative
+                if target.is_absolute() {
+                    return Some(target);
+                } else if let Some(parent) = symlink_path.parent() {
+                    return Some(parent.join(target));
+                }
+            }
+        }
+    }
+    None
+}
+
 /// Scan system for installed Java versions
 #[command]
 pub async fn scan_java_versions() -> Result<Vec<JavaVersion>, String> {
     let platform = crate::platform::current_platform();
     let scan_paths = platform.get_java_scan_paths();
-    let current_java_home = platform.get_java_home().ok();
+    let current_symlink_target = get_current_java_symlink_target();
     let mut versions = Vec::new();
 
     for base_path in scan_paths {
@@ -118,9 +145,10 @@ pub async fn scan_java_versions() -> Result<Vec<JavaVersion>, String> {
                         };
 
                         if let Some(version_info) = parse_java_version(&actual_path) {
-                            let is_current = current_java_home
+                            // Check if this path matches our symlink target
+                            let is_current = current_symlink_target
                                 .as_ref()
-                                .map(|h| h == &actual_path)
+                                .map(|target| target == &actual_path)
                                 .unwrap_or(false);
 
                             versions.push(JavaVersion {
@@ -350,12 +378,31 @@ async fn switch_java_with_manager(
 // Node Version Management
 // ============================================
 
+/// Get the current Node symlink target path
+fn get_current_node_symlink_target() -> Option<PathBuf> {
+    if let Some(home) = dirs::home_dir() {
+        let symlink_path = home.join(".aem-env-manager").join("node").join("current");
+        if symlink_path.is_symlink() {
+            // Read the symlink target
+            if let Ok(target) = std::fs::read_link(&symlink_path) {
+                // Resolve to absolute path if relative
+                if target.is_absolute() {
+                    return Some(target);
+                } else if let Some(parent) = symlink_path.parent() {
+                    return Some(parent.join(target));
+                }
+            }
+        }
+    }
+    None
+}
+
 /// Scan system for installed Node versions
 #[command]
 pub async fn scan_node_versions() -> Result<Vec<NodeVersion>, String> {
     let platform = crate::platform::current_platform();
     let scan_paths = platform.get_node_scan_paths();
-    let current = get_current_node_version().await.ok().flatten();
+    let current_symlink_target = get_current_node_symlink_target();
     let mut versions = Vec::new();
 
     for base_path in scan_paths {
@@ -379,9 +426,10 @@ pub async fn scan_node_versions() -> Result<Vec<NodeVersion>, String> {
 
                     if node_bin.exists() || node_bin_direct.exists() {
                         if let Some(version) = extract_node_version_from_path(&path) {
-                            let is_current = current
+                            // Check if this path matches our symlink target
+                            let is_current = current_symlink_target
                                 .as_ref()
-                                .map(|c| c == &version || c.trim_start_matches('v') == version)
+                                .map(|target| target == &path)
                                 .unwrap_or(false);
 
                             versions.push(NodeVersion {
@@ -454,8 +502,40 @@ fn compare_versions(a: &str, b: &str) -> std::cmp::Ordering {
 }
 
 /// Get current Node version
+/// First checks our managed symlink, then falls back to system node
 #[command]
 pub async fn get_current_node_version() -> Result<Option<String>, String> {
+    // First, check our managed symlink
+    if let Some(home) = dirs::home_dir() {
+        let symlink_path = home.join(".aem-env-manager").join("node").join("current");
+        if symlink_path.is_symlink() || symlink_path.exists() {
+            // Try to get version from the symlink target
+            let node_bin = symlink_path.join("bin").join("node");
+            let node_bin_direct = symlink_path.join("node");
+
+            let final_bin = if node_bin.exists() {
+                node_bin
+            } else if node_bin_direct.exists() {
+                node_bin_direct
+            } else {
+                // Symlink exists but no node binary found, continue to fallback
+                symlink_path.join("bin").join("node")
+            };
+
+            if final_bin.exists() {
+                if let Ok(output) = Command::new(&final_bin).args(["-v"]).output() {
+                    if output.status.success() {
+                        let version = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                        if !version.is_empty() {
+                            return Ok(Some(version));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Fallback to system node command
     let output = Command::new("node")
         .args(["-v"])
         .output()
@@ -477,8 +557,6 @@ pub async fn switch_node_version(
     version: String,
     manager_id: Option<String>,
 ) -> Result<VersionSwitchResult, String> {
-    let previous = get_current_node_version().await.ok().flatten();
-
     // Use version manager if specified
     if let Some(manager) = manager_id {
         return switch_node_with_manager(&version, &manager).await;
@@ -742,12 +820,14 @@ pub async fn list_maven_configs() -> Result<Vec<MavenConfig>, String> {
                     .map(|c| c == &path.to_string_lossy().to_string())
                     .unwrap_or(false);
 
+                let local_repo = parse_maven_local_repository(&path);
                 configs.push(MavenConfig {
                     id: name.clone(),
                     name,
                     path: path.to_string_lossy().to_string(),
                     is_active,
                     description: None,
+                    local_repository: local_repo,
                 });
             }
         }
@@ -769,6 +849,238 @@ fn get_current_maven_settings() -> Result<Option<String>, String> {
     }
 }
 
+/// Parse Maven settings.xml to extract localRepository path
+/// Returns default ~/.m2/repository if not configured or if the value is a placeholder
+fn parse_maven_local_repository(settings_path: &std::path::Path) -> Option<String> {
+    let content = std::fs::read_to_string(settings_path).ok()?;
+
+    // First, remove all XML comments to avoid matching commented-out examples
+    let mut clean_content = String::new();
+    let mut remaining = content.as_str();
+    while let Some(comment_start) = remaining.find("<!--") {
+        clean_content.push_str(&remaining[..comment_start]);
+        if let Some(comment_end) = remaining[comment_start..].find("-->") {
+            remaining = &remaining[comment_start + comment_end + 3..];
+        } else {
+            // Unclosed comment, skip rest
+            break;
+        }
+    }
+    clean_content.push_str(remaining);
+
+    // Now parse <localRepository>...</localRepository> from clean content
+    if let Some(start) = clean_content.find("<localRepository>") {
+        let start_idx = start + "<localRepository>".len();
+        if let Some(end) = clean_content[start_idx..].find("</localRepository>") {
+            let repo_path = clean_content[start_idx..start_idx + end].trim();
+            if !repo_path.is_empty() {
+                // Skip placeholder/example paths that are clearly not real
+                let lower_path = repo_path.to_lowercase();
+                if lower_path.contains("/path/to/")
+                    || lower_path.contains("\\path\\to\\")
+                    || lower_path.contains("/your/")
+                    || lower_path.contains("${")
+                    || lower_path.starts_with("path/")
+                    || lower_path == "path"
+                {
+                    // This is a placeholder, return default
+                    return dirs::home_dir().map(|h| h.join(".m2").join("repository").to_string_lossy().to_string());
+                }
+
+                // Expand ~ to home directory
+                if repo_path.starts_with("~/") || repo_path.starts_with("~\\") {
+                    if let Some(home) = dirs::home_dir() {
+                        return Some(home.join(&repo_path[2..]).to_string_lossy().to_string());
+                    }
+                }
+                return Some(repo_path.to_string());
+            }
+        }
+    }
+
+    // Not configured - return default
+    dirs::home_dir().map(|h| h.join(".m2").join("repository").to_string_lossy().to_string())
+}
+
+/// Scan system for Maven settings files
+#[command]
+pub async fn scan_maven_settings() -> Result<Vec<MavenSettingsFile>, String> {
+    let mut found_files = Vec::new();
+    let mut checked_paths = std::collections::HashSet::new();
+
+    // 1. Check ~/.m2/ directory for settings*.xml files
+    if let Some(home) = dirs::home_dir() {
+        let m2_dir = home.join(".m2");
+        if m2_dir.exists() {
+            if let Ok(entries) = std::fs::read_dir(&m2_dir) {
+                for entry in entries.flatten() {
+                    let path = entry.path();
+                    let filename = path.file_name()
+                        .map(|n| n.to_string_lossy().to_lowercase())
+                        .unwrap_or_default();
+
+                    // Match settings.xml, settings-*.xml, .m2.*.xml patterns
+                    if path.extension().map(|e| e == "xml").unwrap_or(false)
+                        && (filename.starts_with("settings") || filename.contains(".m2."))
+                    {
+                        let path_str = path.to_string_lossy().to_string();
+                        if checked_paths.insert(path_str.clone()) {
+                            let local_repo = parse_maven_local_repository(&path);
+                            found_files.push(MavenSettingsFile {
+                                name: path.file_name()
+                                    .map(|n| n.to_string_lossy().to_string())
+                                    .unwrap_or_else(|| "settings.xml".to_string()),
+                                path: path_str,
+                                local_repository: local_repo,
+                            });
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // 2. Check MAVEN_HOME/conf/settings.xml
+    if let Ok(maven_home) = std::env::var("MAVEN_HOME") {
+        let maven_settings = PathBuf::from(&maven_home).join("conf").join("settings.xml");
+        if maven_settings.exists() {
+            let path_str = maven_settings.to_string_lossy().to_string();
+            if checked_paths.insert(path_str.clone()) {
+                let local_repo = parse_maven_local_repository(&maven_settings);
+                found_files.push(MavenSettingsFile {
+                    name: format!("Maven Home ({})", maven_home),
+                    path: path_str,
+                    local_repository: local_repo,
+                });
+            }
+        }
+    }
+
+    // 3. Check M2_HOME/conf/settings.xml
+    if let Ok(m2_home) = std::env::var("M2_HOME") {
+        let m2_settings = PathBuf::from(&m2_home).join("conf").join("settings.xml");
+        if m2_settings.exists() {
+            let path_str = m2_settings.to_string_lossy().to_string();
+            if checked_paths.insert(path_str.clone()) {
+                let local_repo = parse_maven_local_repository(&m2_settings);
+                found_files.push(MavenSettingsFile {
+                    name: format!("M2 Home ({})", m2_home),
+                    path: path_str,
+                    local_repository: local_repo,
+                });
+            }
+        }
+    }
+
+    // 4. Check common installation paths
+    let common_paths = vec![
+        "/usr/local/maven/conf/settings.xml",
+        "/usr/share/maven/conf/settings.xml",
+        "/opt/maven/conf/settings.xml",
+        "/opt/homebrew/opt/maven/libexec/conf/settings.xml",
+    ];
+
+    for path_str in common_paths {
+        let path = PathBuf::from(path_str);
+        if path.exists() && checked_paths.insert(path_str.to_string()) {
+            let local_repo = parse_maven_local_repository(&path);
+            found_files.push(MavenSettingsFile {
+                name: format!("System Maven ({})", path_str),
+                path: path_str.to_string(),
+                local_repository: local_repo,
+            });
+        }
+    }
+
+    Ok(found_files)
+}
+
+/// Scan a specific directory for Maven settings files
+/// This allows users to specify a custom path to search for .m2 directories and settings.xml files
+#[command]
+pub async fn scan_maven_settings_in_path(search_path: String) -> Result<Vec<MavenSettingsFile>, String> {
+    let mut found_files = Vec::new();
+    let mut checked_paths = std::collections::HashSet::new();
+    let base_path = PathBuf::from(&search_path);
+
+    if !base_path.exists() {
+        return Err(format!("Path does not exist: {}", search_path));
+    }
+
+    // Helper function to check if a file is a Maven settings file
+    fn is_maven_settings_file(filename: &str) -> bool {
+        let lower = filename.to_lowercase();
+        (lower.starts_with("settings") && lower.ends_with(".xml")) ||
+        (lower.contains(".m2.") && lower.ends_with(".xml")) ||
+        lower == "settings.xml"
+    }
+
+    // Helper function to scan a directory for Maven settings files
+    fn scan_directory(
+        dir: &PathBuf,
+        found_files: &mut Vec<MavenSettingsFile>,
+        checked_paths: &mut std::collections::HashSet<String>,
+        depth: usize,
+        max_depth: usize,
+    ) {
+        if depth > max_depth {
+            return;
+        }
+
+        if let Ok(entries) = std::fs::read_dir(dir) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                let filename = path.file_name()
+                    .map(|n| n.to_string_lossy().to_string())
+                    .unwrap_or_default();
+
+                if path.is_file() && is_maven_settings_file(&filename) {
+                    let path_str = path.to_string_lossy().to_string();
+                    if checked_paths.insert(path_str.clone()) {
+                        let local_repo = parse_maven_local_repository(&path);
+                        found_files.push(MavenSettingsFile {
+                            name: filename,
+                            path: path_str,
+                            local_repository: local_repo,
+                        });
+                    }
+                } else if path.is_dir() {
+                    let dir_name = filename.to_lowercase();
+                    // Prioritize .m2 directories and conf directories
+                    if dir_name == ".m2" || dir_name == "conf" || dir_name == "maven" {
+                        scan_directory(&path, found_files, checked_paths, depth + 1, max_depth);
+                    } else if depth < 2 {
+                        // For other directories, only scan first 2 levels
+                        scan_directory(&path, found_files, checked_paths, depth + 1, 2);
+                    }
+                }
+            }
+        }
+    }
+
+    // Start scanning from the specified path
+    // If it's a file, check if it's a settings file directly
+    if base_path.is_file() {
+        let filename = base_path.file_name()
+            .map(|n| n.to_string_lossy().to_string())
+            .unwrap_or_default();
+        if is_maven_settings_file(&filename) {
+            let path_str = base_path.to_string_lossy().to_string();
+            let local_repo = parse_maven_local_repository(&base_path);
+            found_files.push(MavenSettingsFile {
+                name: filename,
+                path: path_str,
+                local_repository: local_repo,
+            });
+        }
+    } else {
+        // Scan directory with max depth of 3 for .m2/conf/maven directories
+        scan_directory(&base_path, &mut found_files, &mut checked_paths, 0, 3);
+    }
+
+    Ok(found_files)
+}
+
 /// Get current Maven settings
 #[command]
 pub async fn get_current_maven_config() -> Result<Option<MavenConfig>, String> {
@@ -777,12 +1089,14 @@ pub async fn get_current_maven_config() -> Result<Option<MavenConfig>, String> {
         .ok_or("Could not determine home directory")?;
 
     if m2_settings.exists() {
+        let local_repo = parse_maven_local_repository(&m2_settings);
         Ok(Some(MavenConfig {
             id: "current".to_string(),
             name: "Current settings.xml".to_string(),
             path: m2_settings.to_string_lossy().to_string(),
             is_active: true,
             description: None,
+            local_repository: local_repo,
         }))
     } else {
         Ok(None)
@@ -847,13 +1161,55 @@ pub async fn import_maven_config(name: String, source_path: String) -> Result<Ma
     std::fs::copy(&source, &target)
         .map_err(|e| format!("Failed to import Maven config: {}", e))?;
 
+    let local_repo = parse_maven_local_repository(&target);
     Ok(MavenConfig {
         id: name.clone(),
         name,
         path: target.to_string_lossy().to_string(),
         is_active: false,
         description: None,
+        local_repository: local_repo,
     })
+}
+
+/// Delete a Maven configuration
+#[command]
+pub async fn delete_maven_config(config_id: String) -> Result<bool, String> {
+    let platform = crate::platform::current_platform();
+    let config_dir = platform.get_data_dir().join("maven-configs");
+    let config_path = config_dir.join(format!("{}.xml", config_id));
+
+    if !config_path.exists() {
+        return Err(format!("Maven config '{}' not found", config_id));
+    }
+
+    // Check if this is the currently active config
+    let current_settings = get_current_maven_settings()?;
+    if let Some(current) = current_settings {
+        if current == config_path.to_string_lossy().to_string() {
+            return Err("Cannot delete the currently active Maven configuration".to_string());
+        }
+    }
+
+    std::fs::remove_file(&config_path)
+        .map_err(|e| format!("Failed to delete Maven config: {}", e))?;
+
+    Ok(true)
+}
+
+/// Read Maven settings.xml content
+#[command]
+pub async fn read_maven_config(config_id: String) -> Result<String, String> {
+    let platform = crate::platform::current_platform();
+    let config_dir = platform.get_data_dir().join("maven-configs");
+    let config_path = config_dir.join(format!("{}.xml", config_id));
+
+    if !config_path.exists() {
+        return Err(format!("Maven config '{}' not found", config_id));
+    }
+
+    std::fs::read_to_string(&config_path)
+        .map_err(|e| format!("Failed to read Maven config: {}", e))
 }
 
 // ============================================
@@ -883,6 +1239,404 @@ pub async fn install_node_version(version: String, manager_id: String) -> Result
         "Please use {} to install Node {}. Run the appropriate install command.",
         manager_id, version
     ))
+}
+
+// ============================================
+// Manual Path Validation Commands
+// ============================================
+
+/// Validate a Java installation at the given path and return version info if valid
+/// This allows users to manually add Java installations not detected by version managers
+#[command]
+pub async fn validate_java_path(path: String) -> Result<JavaVersion, String> {
+    let java_home = PathBuf::from(&path);
+
+    // Check if path exists
+    if !java_home.exists() {
+        return Err("Path does not exist".to_string());
+    }
+
+    if !java_home.is_dir() {
+        return Err("Path is not a directory".to_string());
+    }
+
+    // Check for java binary
+    let java_bin = if cfg!(target_os = "windows") {
+        java_home.join("bin").join("java.exe")
+    } else {
+        java_home.join("bin").join("java")
+    };
+
+    // Also check Contents/Home on macOS
+    let java_bin_macos = java_home.join("Contents/Home/bin/java");
+
+    let actual_path = if java_bin_macos.exists() {
+        java_home.join("Contents/Home")
+    } else if java_bin.exists() {
+        java_home.clone()
+    } else {
+        return Err("Invalid Java installation: no java binary found in bin directory".to_string());
+    };
+
+    // Verify the binary again for actual_path
+    let final_java_bin = if cfg!(target_os = "windows") {
+        actual_path.join("bin").join("java.exe")
+    } else {
+        actual_path.join("bin").join("java")
+    };
+
+    if !final_java_bin.exists() {
+        return Err("Invalid Java installation: no java binary found".to_string());
+    }
+
+    // Get current JAVA_HOME to check if this is the current version
+    let platform = crate::platform::current_platform();
+    let current_java_home = platform.get_java_home().ok();
+    let is_current = current_java_home
+        .as_ref()
+        .map(|h| h == &actual_path)
+        .unwrap_or(false);
+
+    // Parse version info
+    if let Some(version_info) = parse_java_version(&actual_path) {
+        Ok(JavaVersion {
+            version: version_info.0,
+            vendor: version_info.1,
+            path: actual_path.to_string_lossy().to_string(),
+            is_default: false,
+            is_current,
+            full_version: version_info.2,
+        })
+    } else {
+        // If we can't parse version, try running java -version
+        let output = Command::new(&final_java_bin)
+            .args(["-version"])
+            .output()
+            .map_err(|e| format!("Failed to execute java -version: {}", e))?;
+
+        let output_str = String::from_utf8_lossy(&output.stderr);
+        let mut version = String::from("Unknown");
+        let mut vendor = String::from("Unknown");
+
+        for line in output_str.lines() {
+            if line.contains("version") {
+                if let Some(start) = line.find('"') {
+                    if let Some(end) = line[start + 1..].find('"') {
+                        let full_ver = &line[start + 1..start + 1 + end];
+                        version = extract_java_major_version(full_ver);
+                    }
+                }
+            }
+            if line.contains("OpenJDK") {
+                vendor = "OpenJDK".to_string();
+            } else if line.contains("HotSpot") || line.contains("Oracle") {
+                vendor = "Oracle".to_string();
+            } else if line.contains("Temurin") || line.contains("Adoptium") {
+                vendor = "Eclipse Adoptium".to_string();
+            } else if line.contains("Zulu") {
+                vendor = "Azul Zulu".to_string();
+            } else if line.contains("Corretto") {
+                vendor = "Amazon Corretto".to_string();
+            }
+        }
+
+        Ok(JavaVersion {
+            version,
+            vendor,
+            path: actual_path.to_string_lossy().to_string(),
+            is_default: false,
+            is_current,
+            full_version: None,
+        })
+    }
+}
+
+/// Validate a Node installation at the given path and return version info if valid
+/// This allows users to manually add Node installations not detected by version managers
+#[command]
+pub async fn validate_node_path(path: String) -> Result<NodeVersion, String> {
+    let node_path = PathBuf::from(&path);
+
+    // Check if path exists
+    if !node_path.exists() {
+        return Err("Path does not exist".to_string());
+    }
+
+    if !node_path.is_dir() {
+        return Err("Path is not a directory".to_string());
+    }
+
+    // Check for node binary in various locations
+    let node_bin = if cfg!(target_os = "windows") {
+        node_path.join("node.exe")
+    } else {
+        node_path.join("bin").join("node")
+    };
+
+    // Also check directly in the directory (some setups)
+    let node_bin_direct = if cfg!(target_os = "windows") {
+        node_path.join("node.exe")
+    } else {
+        node_path.join("node")
+    };
+
+    let final_node_bin = if node_bin.exists() {
+        node_bin
+    } else if node_bin_direct.exists() {
+        node_bin_direct
+    } else {
+        return Err("Invalid Node installation: no node binary found".to_string());
+    };
+
+    // Get version by running node --version
+    let output = Command::new(&final_node_bin)
+        .args(["--version"])
+        .output()
+        .map_err(|e| format!("Failed to execute node --version: {}", e))?;
+
+    if !output.status.success() {
+        return Err("Failed to get Node version".to_string());
+    }
+
+    let version = String::from_utf8_lossy(&output.stdout).trim().to_string();
+
+    // Get current node version to check if this is current
+    let current = get_current_node_version().await.ok().flatten();
+    let is_current = current
+        .as_ref()
+        .map(|c| c == &version)
+        .unwrap_or(false);
+
+    Ok(NodeVersion {
+        version,
+        path: node_path.to_string_lossy().to_string(),
+        is_default: false,
+        is_current,
+    })
+}
+
+/// Scan a custom directory for Java installations
+/// Returns all valid Java installations found in the directory and its subdirectories
+#[command]
+pub async fn scan_java_in_path(path: String) -> Result<Vec<JavaVersion>, String> {
+    let base_path = PathBuf::from(&path);
+
+    if !base_path.exists() {
+        return Err("Path does not exist".to_string());
+    }
+
+    if !base_path.is_dir() {
+        return Err("Path is not a directory".to_string());
+    }
+
+    // Use our managed symlink target for is_current detection
+    let current_symlink_target = get_current_java_symlink_target();
+    let mut versions = Vec::new();
+
+    // Recursive scan function
+    fn scan_java_dir(
+        dir: &PathBuf,
+        current_symlink_target: &Option<PathBuf>,
+        versions: &mut Vec<JavaVersion>,
+        depth: usize,
+        max_depth: usize,
+    ) {
+        if depth > max_depth {
+            return;
+        }
+
+        // Check if this directory is a valid Java installation
+        let java_bin = if cfg!(target_os = "windows") {
+            dir.join("bin").join("java.exe")
+        } else {
+            dir.join("bin").join("java")
+        };
+
+        let java_bin_macos = dir.join("Contents/Home/bin/java");
+
+        if java_bin.exists() || java_bin_macos.exists() {
+            let actual_path = if java_bin_macos.exists() {
+                dir.join("Contents/Home")
+            } else {
+                dir.clone()
+            };
+
+            if let Some(version_info) = parse_java_version(&actual_path) {
+                let is_current = current_symlink_target
+                    .as_ref()
+                    .map(|target| target == &actual_path)
+                    .unwrap_or(false);
+
+                versions.push(JavaVersion {
+                    version: version_info.0,
+                    vendor: version_info.1,
+                    path: actual_path.to_string_lossy().to_string(),
+                    is_default: false,
+                    is_current,
+                    full_version: version_info.2,
+                });
+            }
+            // Don't scan subdirectories of a valid Java installation
+            return;
+        }
+
+        // Scan subdirectories
+        if let Ok(entries) = std::fs::read_dir(dir) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.is_dir() {
+                    scan_java_dir(&path, current_symlink_target, versions, depth + 1, max_depth);
+                }
+            }
+        }
+    }
+
+    scan_java_dir(&base_path, &current_symlink_target, &mut versions, 0, 2);
+
+    // Deduplicate by path
+    versions.sort_by(|a, b| a.path.cmp(&b.path));
+    versions.dedup_by(|a, b| a.path == b.path);
+
+    // Sort by version
+    versions.sort_by(|a, b| b.version.cmp(&a.version));
+
+    Ok(versions)
+}
+
+/// Scan a custom directory for Node installations
+/// Returns all valid Node installations found in the directory and its subdirectories
+#[command]
+pub async fn scan_node_in_path(path: String) -> Result<Vec<NodeVersion>, String> {
+    let base_path = PathBuf::from(&path);
+
+    if !base_path.exists() {
+        return Err("Path does not exist".to_string());
+    }
+
+    if !base_path.is_dir() {
+        return Err("Path is not a directory".to_string());
+    }
+
+    // Use our managed symlink target for is_current detection
+    let current_symlink_target = get_current_node_symlink_target();
+    let mut versions = Vec::new();
+
+    // Helper to check if a directory is a valid Node installation
+    fn check_node_installation(path: &PathBuf, current_symlink_target: &Option<PathBuf>) -> Option<NodeVersion> {
+        let node_bin = if cfg!(target_os = "windows") {
+            path.join("node.exe")
+        } else {
+            path.join("bin").join("node")
+        };
+
+        let node_bin_direct = if cfg!(target_os = "windows") {
+            path.join("node.exe")
+        } else {
+            path.join("node")
+        };
+
+        let final_bin = if node_bin.exists() {
+            node_bin
+        } else if node_bin_direct.exists() {
+            node_bin_direct
+        } else {
+            return None;
+        };
+
+        // Get version
+        let output = Command::new(&final_bin)
+            .args(["--version"])
+            .output()
+            .ok()?;
+
+        if !output.status.success() {
+            return None;
+        }
+
+        let version = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        let is_current = current_symlink_target
+            .as_ref()
+            .map(|target| target == path)
+            .unwrap_or(false);
+
+        Some(NodeVersion {
+            version,
+            path: path.to_string_lossy().to_string(),
+            is_default: false,
+            is_current,
+        })
+    }
+
+    // Check the base path itself
+    if let Some(v) = check_node_installation(&base_path, &current_symlink_target) {
+        versions.push(v);
+    }
+
+    // Scan subdirectories (max depth 2)
+    fn scan_dir(
+        dir: &PathBuf,
+        current_symlink_target: &Option<PathBuf>,
+        versions: &mut Vec<NodeVersion>,
+        depth: usize,
+        max_depth: usize,
+    ) {
+        if depth > max_depth {
+            return;
+        }
+
+        if let Ok(entries) = std::fs::read_dir(dir) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.is_dir() {
+                    // Check for node binary
+                    let node_bin = if cfg!(target_os = "windows") {
+                        path.join("node.exe")
+                    } else {
+                        path.join("bin").join("node")
+                    };
+
+                    let node_bin_direct = if cfg!(target_os = "windows") {
+                        path.join("node.exe")
+                    } else {
+                        path.join("node")
+                    };
+
+                    if node_bin.exists() || node_bin_direct.exists() {
+                        let final_bin = if node_bin.exists() { node_bin } else { node_bin_direct };
+                        if let Ok(output) = Command::new(&final_bin).args(["--version"]).output() {
+                            if output.status.success() {
+                                let version = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                                let is_current = current_symlink_target
+                                    .as_ref()
+                                    .map(|target| target == &path)
+                                    .unwrap_or(false);
+                                versions.push(NodeVersion {
+                                    version,
+                                    path: path.to_string_lossy().to_string(),
+                                    is_default: false,
+                                    is_current,
+                                });
+                            }
+                        }
+                    } else {
+                        // Continue scanning subdirectories
+                        scan_dir(&path, current_symlink_target, versions, depth + 1, max_depth);
+                    }
+                }
+            }
+        }
+    }
+
+    scan_dir(&base_path, &current_symlink_target, &mut versions, 0, 2);
+
+    // Deduplicate by path
+    versions.sort_by(|a, b| a.path.cmp(&b.path));
+    versions.dedup_by(|a, b| a.path == b.path);
+
+    // Sort by version (newest first)
+    versions.sort_by(|a, b| compare_versions(&b.version, &a.version));
+
+    Ok(versions)
 }
 
 #[cfg(test)]

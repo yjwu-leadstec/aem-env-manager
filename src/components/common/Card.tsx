@@ -22,10 +22,8 @@ export function Card({
   hover = false,
   onClick,
 }: CardProps) {
-  const baseClasses = 'card';
-  const hoverClasses = hover
-    ? 'cursor-pointer hover:shadow-soft hover:border-azure-200 transition-all'
-    : '';
+  const baseClasses = 'panel';
+  const hoverClasses = hover ? 'cursor-pointer hover:shadow-soft transition-all' : '';
 
   return (
     <div
@@ -49,8 +47,8 @@ export function CardHeader({ title, subtitle, action }: CardHeaderProps) {
   return (
     <div className="flex items-center justify-between mb-4">
       <div>
-        <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
-        {subtitle && <p className="text-sm text-slate-500 mt-0.5">{subtitle}</p>}
+        <h3 className="text-lg font-semibold">{title}</h3>
+        {subtitle && <p className="text-sm opacity-70 mt-0.5">{subtitle}</p>}
       </div>
       {action && <div>{action}</div>}
     </div>

@@ -1,17 +1,22 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { useAppStore, useAemInstances, useIsLoading, useConfig } from '../store';
+import { useAppStore, useAemInstances, useIsLoading } from '../store';
 import * as instanceApi from '../api/instance';
-import { mapApiInstanceToFrontend, mapApiHealthCheckToFrontend } from '../api/mappers';
+import { mapApiInstanceToFrontend } from '../api/mappers';
 import type { AEMInstance, AEMInstanceStatus } from '../types';
 
 /**
  * Hook for managing AEM instances
+ *
+ * AEM instances are now controlled directly via Terminal windows.
+ * Start button opens a Terminal window running AEM.
+ * Stop button sends an HTTP stop request or kills the process.
+ * Status tracking is simplified - we don't poll for status.
  */
 export function useInstanceManager() {
   const instances = useAemInstances();
   const isLoading = useIsLoading();
-  const config = useConfig();
 
+  // Store selectors - these are stable references
   const setInstances = useAppStore((s) => s.setAemInstances);
   const updateInstance = useAppStore((s) => s.updateAemInstance);
   const addInstance = useAppStore((s) => s.addAemInstance);
@@ -20,7 +25,7 @@ export function useInstanceManager() {
   const setError = useAppStore((s) => s.setError);
   const addNotification = useAppStore((s) => s.addNotification);
 
-  const healthCheckIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const hasLoadedRef = useRef(false);
 
   // Load instances on mount
   const loadInstances = useCallback(async () => {
@@ -41,28 +46,26 @@ export function useInstanceManager() {
     }
   }, [setInstances, setLoading, setError, addNotification]);
 
-  // Start an instance
+  // Start an instance - opens in Terminal window
   const startInstance = useCallback(
     async (instanceId: string) => {
       const instance = instances.find((i) => i.id === instanceId);
       if (!instance) return;
 
-      updateInstance(instanceId, { status: 'starting' as AEMInstanceStatus });
-
       try {
         const success = await instanceApi.startInstance(instanceId);
         if (success) {
-          updateInstance(instanceId, { status: 'running' as AEMInstanceStatus });
+          // Update local state to unknown since user controls the process in Terminal
+          updateInstance(instanceId, { status: 'unknown' as AEMInstanceStatus });
           addNotification({
             type: 'success',
-            title: 'Instance started',
-            message: `${instance.name} is now running`,
+            title: 'Terminal opened',
+            message: `${instance.name} is running in a new Terminal window`,
           });
         } else {
-          throw new Error('Failed to start instance');
+          throw new Error('Failed to open terminal');
         }
       } catch (err) {
-        updateInstance(instanceId, { status: 'error' as AEMInstanceStatus });
         addNotification({
           type: 'error',
           title: 'Failed to start instance',
@@ -73,28 +76,26 @@ export function useInstanceManager() {
     [instances, updateInstance, addNotification]
   );
 
-  // Stop an instance
+  // Stop an instance - sends stop request
   const stopInstance = useCallback(
     async (instanceId: string) => {
       const instance = instances.find((i) => i.id === instanceId);
       if (!instance) return;
 
-      updateInstance(instanceId, { status: 'stopping' as AEMInstanceStatus });
-
       try {
         const success = await instanceApi.stopInstance(instanceId);
         if (success) {
-          updateInstance(instanceId, { status: 'stopped' as AEMInstanceStatus });
+          // Update local state to unknown
+          updateInstance(instanceId, { status: 'unknown' as AEMInstanceStatus });
           addNotification({
             type: 'success',
-            title: 'Instance stopped',
-            message: `${instance.name} has been stopped`,
+            title: 'Stop request sent',
+            message: `${instance.name} stop request has been sent`,
           });
         } else {
           throw new Error('Failed to stop instance');
         }
       } catch (err) {
-        updateInstance(instanceId, { status: 'error' as AEMInstanceStatus });
         addNotification({
           type: 'error',
           title: 'Failed to stop instance',
@@ -104,25 +105,6 @@ export function useInstanceManager() {
     },
     [instances, updateInstance, addNotification]
   );
-
-  // Check health of all running instances
-  const checkAllHealth = useCallback(async () => {
-    const runningInstances = instances.filter((i) => i.status === 'running');
-
-    await Promise.all(
-      runningInstances.map(async (instance) => {
-        try {
-          const apiHealth = await instanceApi.checkInstanceHealth(instance.id);
-          const health = mapApiHealthCheckToFrontend(apiHealth);
-          updateInstance(instance.id, {
-            status: health.isHealthy ? 'running' : 'error',
-          });
-        } catch {
-          // Silently handle health check failures
-        }
-      })
-    );
-  }, [instances, updateInstance]);
 
   // Create a new instance
   const createInstance = useCallback(
@@ -204,20 +186,14 @@ export function useInstanceManager() {
     [addNotification]
   );
 
-  // Setup health check interval
+  // Load instances on mount (only once)
   useEffect(() => {
-    loadInstances();
-
-    if (config.healthCheckInterval > 0) {
-      healthCheckIntervalRef.current = setInterval(checkAllHealth, config.healthCheckInterval);
+    if (!hasLoadedRef.current) {
+      hasLoadedRef.current = true;
+      loadInstances();
     }
-
-    return () => {
-      if (healthCheckIntervalRef.current) {
-        clearInterval(healthCheckIntervalRef.current);
-      }
-    };
-  }, [loadInstances, checkAllHealth, config.healthCheckInterval]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return {
     instances,
@@ -228,7 +204,9 @@ export function useInstanceManager() {
     createInstance,
     deleteInstance,
     openInBrowser,
-    checkAllHealth,
+    // Status counts - note that with terminal-based control, status is often 'unknown'
     runningCount: instances.filter((i) => i.status === 'running').length,
+    stoppedCount: instances.filter((i) => i.status === 'stopped').length,
+    unknownCount: instances.filter((i) => i.status === 'unknown').length,
   };
 }

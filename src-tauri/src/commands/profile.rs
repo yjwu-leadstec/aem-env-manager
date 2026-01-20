@@ -11,18 +11,32 @@ use crate::platform::PlatformOps;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EnvironmentProfile {
+    #[serde(default)]
     pub id: String,
     pub name: String,
     pub description: Option<String>,
-    pub java_version: String,
-    pub java_vendor: String,
-    pub node_version: String,
+    // Java configuration
+    pub java_version: Option<String>,
+    pub java_manager_id: Option<String>,
+    pub java_path: Option<String>, // Full path to Java installation (JAVA_HOME)
+    // Node configuration
+    pub node_version: Option<String>,
+    pub node_manager_id: Option<String>,
+    pub node_path: Option<String>, // Full path to Node installation directory
+    // Maven configuration
     pub maven_config_id: Option<String>,
-    pub aem_instance_id: Option<String>,
+    // AEM instance references
+    pub author_instance_id: Option<String>,
+    pub publish_instance_id: Option<String>,
+    // Custom environment variables
     pub env_vars: Option<HashMap<String, String>>,
+    // Timestamps
+    #[serde(default)]
     pub created_at: String,
+    #[serde(default)]
     pub updated_at: String,
     pub last_used_at: Option<String>,
+    #[serde(default)]
     pub is_active: bool,
 }
 
@@ -284,6 +298,7 @@ pub async fn delete_profile(id: String) -> Result<bool, String> {
 // ============================================
 
 /// Switch to a different environment profile
+/// This updates symlinks for Java and Node to enable system-wide version switching
 #[command]
 pub async fn switch_profile(profile_id: String) -> Result<ProfileSwitchResult, String> {
     // Load profile
@@ -302,38 +317,77 @@ pub async fn switch_profile(profile_id: String) -> Result<ProfileSwitchResult, S
 
     let mut errors = Vec::new();
 
-    // Switch Java version
-    if !profile.java_version.is_empty() {
-        match crate::commands::version::switch_java_version(profile.java_version.clone(), None).await {
-            Ok(switch_result) if switch_result.success => {
-                result.java_switched = true;
+    // Switch Java version using symlink (if path is specified)
+    if let Some(ref java_path) = profile.java_path {
+        if !java_path.is_empty() {
+            match crate::commands::environment::set_java_symlink(java_path.clone()).await {
+                Ok(symlink_result) if symlink_result.success => {
+                    result.java_switched = true;
+                }
+                Ok(symlink_result) => {
+                    errors.push(format!(
+                        "Java symlink failed: {}",
+                        symlink_result.message.unwrap_or_default()
+                    ));
+                }
+                Err(e) => {
+                    errors.push(format!("Java symlink error: {}", e));
+                }
             }
-            Ok(switch_result) => {
-                errors.push(format!(
-                    "Java switch failed: {}",
-                    switch_result.error.unwrap_or_default()
-                ));
-            }
-            Err(e) => {
-                errors.push(format!("Java switch error: {}", e));
+        }
+    } else if let Some(ref java_version) = profile.java_version {
+        if !java_version.is_empty() {
+            // Fallback: try to find Java by version and set symlink
+            if let Ok(java_versions) = crate::commands::version::scan_java_versions().await {
+                if let Some(java) = java_versions.iter().find(|v| v.version == *java_version) {
+                    match crate::commands::environment::set_java_symlink(java.path.clone()).await {
+                        Ok(symlink_result) if symlink_result.success => {
+                            result.java_switched = true;
+                        }
+                        Ok(_) | Err(_) => {
+                            errors.push(format!("Failed to set Java symlink for version {}", java_version));
+                        }
+                    }
+                }
             }
         }
     }
 
-    // Switch Node version
-    if !profile.node_version.is_empty() {
-        match crate::commands::version::switch_node_version(profile.node_version.clone(), None).await {
-            Ok(switch_result) if switch_result.success => {
-                result.node_switched = true;
+    // Switch Node version using symlink (if path is specified)
+    if let Some(ref node_path) = profile.node_path {
+        if !node_path.is_empty() {
+            match crate::commands::environment::set_node_symlink(node_path.clone()).await {
+                Ok(symlink_result) if symlink_result.success => {
+                    result.node_switched = true;
+                }
+                Ok(symlink_result) => {
+                    errors.push(format!(
+                        "Node symlink failed: {}",
+                        symlink_result.message.unwrap_or_default()
+                    ));
+                }
+                Err(e) => {
+                    errors.push(format!("Node symlink error: {}", e));
+                }
             }
-            Ok(switch_result) => {
-                errors.push(format!(
-                    "Node switch failed: {}",
-                    switch_result.error.unwrap_or_default()
-                ));
-            }
-            Err(e) => {
-                errors.push(format!("Node switch error: {}", e));
+        }
+    } else if let Some(ref node_version) = profile.node_version {
+        if !node_version.is_empty() {
+            // Fallback: try to find Node by version and set symlink
+            if let Ok(node_versions) = crate::commands::version::scan_node_versions().await {
+                let target_version = node_version.trim_start_matches('v');
+                if let Some(node) = node_versions.iter().find(|v| {
+                    v.version.trim_start_matches('v') == target_version
+                }) {
+                    match crate::commands::environment::set_node_symlink(node.path.clone()).await {
+                        Ok(symlink_result) if symlink_result.success => {
+                            result.node_switched = true;
+                        }
+                        Ok(_) | Err(_) => {
+                            errors.push(format!("Failed to set Node symlink for version {}", node_version));
+                        }
+                    }
+                }
             }
         }
     }
@@ -417,28 +471,36 @@ pub async fn validate_profile(profile_id: String) -> Result<ProfileValidationRes
     };
 
     // Check Java version
-    if !profile.java_version.is_empty() {
-        let java_versions = crate::commands::version::scan_java_versions().await?;
-        result.java_available = java_versions.iter().any(|v| v.version == profile.java_version);
+    if let Some(ref java_version) = profile.java_version {
+        if !java_version.is_empty() {
+            let java_versions = crate::commands::version::scan_java_versions().await?;
+            result.java_available = java_versions.iter().any(|v| v.version == *java_version);
 
-        if !result.java_available {
-            result.missing_components.push(format!("Java {}", profile.java_version));
-            result.is_valid = false;
+            if !result.java_available {
+                result.missing_components.push(format!("Java {}", java_version));
+                result.is_valid = false;
+            }
+        } else {
+            result.warnings.push("No Java version specified".to_string());
         }
     } else {
         result.warnings.push("No Java version specified".to_string());
     }
 
     // Check Node version
-    if !profile.node_version.is_empty() {
-        let node_versions = crate::commands::version::scan_node_versions().await?;
-        result.node_available = node_versions
-            .iter()
-            .any(|v| v.version == profile.node_version || v.version.trim_start_matches('v') == profile.node_version.trim_start_matches('v'));
+    if let Some(ref node_version) = profile.node_version {
+        if !node_version.is_empty() {
+            let node_versions = crate::commands::version::scan_node_versions().await?;
+            result.node_available = node_versions
+                .iter()
+                .any(|v| v.version == *node_version || v.version.trim_start_matches('v') == node_version.trim_start_matches('v'));
 
-        if !result.node_available {
-            result.missing_components.push(format!("Node {}", profile.node_version));
-            result.is_valid = false;
+            if !result.node_available {
+                result.missing_components.push(format!("Node {}", node_version));
+                result.is_valid = false;
+            }
+        } else {
+            result.warnings.push("No Node version specified".to_string());
         }
     } else {
         result.warnings.push("No Node version specified".to_string());
@@ -455,16 +517,28 @@ pub async fn validate_profile(profile_id: String) -> Result<ProfileValidationRes
         }
     }
 
-    // Check AEM instance
-    if let Some(ref instance_id) = profile.aem_instance_id {
-        let instance = crate::commands::instance::get_instance(instance_id.clone()).await?;
-        result.aem_instance_exists = instance.is_some();
+    // Check AEM instances
+    let mut aem_instances_valid = true;
 
-        if !result.aem_instance_exists {
-            result.missing_components.push(format!("AEM instance '{}'", instance_id));
-            result.warnings.push("AEM instance not found, but profile can still be activated".to_string());
+    if let Some(ref author_id) = profile.author_instance_id {
+        let instance = crate::commands::instance::get_instance(author_id.clone()).await?;
+        if instance.is_none() {
+            result.missing_components.push(format!("AEM Author instance '{}'", author_id));
+            result.warnings.push("AEM Author instance not found, but profile can still be activated".to_string());
+            aem_instances_valid = false;
         }
     }
+
+    if let Some(ref publish_id) = profile.publish_instance_id {
+        let instance = crate::commands::instance::get_instance(publish_id.clone()).await?;
+        if instance.is_none() {
+            result.missing_components.push(format!("AEM Publish instance '{}'", publish_id));
+            result.warnings.push("AEM Publish instance not found, but profile can still be activated".to_string());
+            aem_instances_valid = false;
+        }
+    }
+
+    result.aem_instance_exists = aem_instances_valid;
 
     Ok(result)
 }

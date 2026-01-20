@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Plus,
   MoreVertical,
@@ -23,6 +24,7 @@ import * as profileApi from '@/api/profile';
 import { mapApiProfileToFrontend } from '@/api/mappers';
 
 export function ProfilesPage() {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const profiles = useProfiles();
   const activeProfile = useActiveProfile();
@@ -55,13 +57,13 @@ export function ProfilesPage() {
     } catch (error) {
       addNotification({
         type: 'error',
-        title: '加载配置文件失败',
-        message: error instanceof Error ? error.message : '未知错误',
+        title: t('profile.notifications.loadFailed'),
+        message: error instanceof Error ? error.message : t('common.unknown'),
       });
     } finally {
       setIsLoading(false);
     }
-  }, [setProfiles, setActiveProfile, addNotification]);
+  }, [setProfiles, setActiveProfile, addNotification, t]);
 
   const handleImportClick = useCallback(() => {
     const input = document.createElement('input');
@@ -75,20 +77,20 @@ export function ProfilesPage() {
           await loadProfiles();
           addNotification({
             type: 'success',
-            title: '导入成功',
-            message: `${imported.name} 已导入`,
+            title: t('profile.notifications.importSuccess'),
+            message: t('profile.notifications.imported', { name: imported.name }),
           });
         } catch (error) {
           addNotification({
             type: 'error',
-            title: '导入失败',
-            message: error instanceof Error ? error.message : '未知错误',
+            title: t('profile.notifications.importFailed'),
+            message: error instanceof Error ? error.message : t('common.unknown'),
           });
         }
       }
     };
     input.click();
-  }, [loadProfiles, addNotification]);
+  }, [loadProfiles, addNotification, t]);
 
   // Load profiles on mount
   useEffect(() => {
@@ -118,22 +120,22 @@ export function ProfilesPage() {
         await loadProfiles();
         addNotification({
           type: 'success',
-          title: '配置已激活',
-          message: `已切换到 ${profile.name}`,
+          title: t('profile.notifications.activated'),
+          message: t('profile.notifications.switchedTo', { name: profile.name }),
         });
       } else {
-        const errors = result.errors.join(', ') || '未知错误';
+        const errors = result.errors.join(', ') || t('common.unknown');
         addNotification({
           type: 'error',
-          title: '切换失败',
+          title: t('profile.notifications.switchFailed'),
           message: errors,
         });
       }
     } catch (error) {
       addNotification({
         type: 'error',
-        title: '切换失败',
-        message: error instanceof Error ? error.message : '未知错误',
+        title: t('profile.notifications.switchFailed'),
+        message: error instanceof Error ? error.message : t('common.unknown'),
       });
     } finally {
       setIsSwitching(null);
@@ -141,46 +143,66 @@ export function ProfilesPage() {
   };
 
   const handleCreate = async (data: ProfileFormData) => {
-    const apiProfile = await profileApi.createProfile({
-      name: data.name,
-      description: data.description || null,
-      java_version: data.javaVersion,
-      java_manager_id: data.javaManagerId,
-      node_version: data.nodeVersion,
-      node_manager_id: data.nodeManagerId,
-      maven_config_id: data.mavenConfigId,
-      env_vars: data.envVars,
-    });
+    try {
+      const apiProfile = await profileApi.createProfile({
+        name: data.name,
+        description: data.description || null,
+        java_version: data.javaVersion,
+        java_manager_id: data.javaManagerId,
+        node_version: data.nodeVersion,
+        node_manager_id: data.nodeManagerId,
+        maven_config_id: data.mavenConfigId,
+        author_instance_id: data.authorInstanceId,
+        publish_instance_id: data.publishInstanceId,
+        env_vars: data.envVars,
+      });
 
-    await loadProfiles();
-    addNotification({
-      type: 'success',
-      title: '配置已创建',
-      message: `${apiProfile.name} 已创建`,
-    });
+      await loadProfiles();
+      addNotification({
+        type: 'success',
+        title: t('profile.notifications.created'),
+        message: t('profile.notifications.createdMessage', { name: apiProfile.name }),
+      });
+    } catch (error) {
+      addNotification({
+        type: 'error',
+        title: t('profile.notifications.createFailed'),
+        message: error instanceof Error ? error.message : t('common.unknown'),
+      });
+    }
   };
 
   const handleEdit = async (data: ProfileFormData) => {
     if (!editingProfile) return;
 
-    await profileApi.updateProfile(editingProfile.id, {
-      name: data.name,
-      description: data.description || null,
-      java_version: data.javaVersion,
-      java_manager_id: data.javaManagerId,
-      node_version: data.nodeVersion,
-      node_manager_id: data.nodeManagerId,
-      maven_config_id: data.mavenConfigId,
-      env_vars: data.envVars,
-    });
+    try {
+      await profileApi.updateProfile(editingProfile.id, {
+        name: data.name,
+        description: data.description || null,
+        java_version: data.javaVersion,
+        java_manager_id: data.javaManagerId,
+        node_version: data.nodeVersion,
+        node_manager_id: data.nodeManagerId,
+        maven_config_id: data.mavenConfigId,
+        author_instance_id: data.authorInstanceId,
+        publish_instance_id: data.publishInstanceId,
+        env_vars: data.envVars,
+      });
 
-    await loadProfiles();
-    setEditingProfile(null);
-    addNotification({
-      type: 'success',
-      title: '配置已更新',
-      message: `${data.name} 已更新`,
-    });
+      await loadProfiles();
+      setEditingProfile(null);
+      addNotification({
+        type: 'success',
+        title: t('profile.notifications.updated'),
+        message: t('profile.notifications.updatedMessage', { name: data.name }),
+      });
+    } catch (error) {
+      addNotification({
+        type: 'error',
+        title: t('profile.notifications.updateFailed'),
+        message: error instanceof Error ? error.message : t('common.unknown'),
+      });
+    }
   };
 
   const handleDelete = async () => {
@@ -192,14 +214,14 @@ export function ProfilesPage() {
       await loadProfiles();
       addNotification({
         type: 'success',
-        title: '配置已删除',
-        message: `${deleteConfirm.name} 已删除`,
+        title: t('profile.notifications.deleted'),
+        message: t('profile.notifications.deletedMessage', { name: deleteConfirm.name }),
       });
     } catch (error) {
       addNotification({
         type: 'error',
-        title: '删除失败',
-        message: error instanceof Error ? error.message : '未知错误',
+        title: t('profile.notifications.deleteFailed'),
+        message: error instanceof Error ? error.message : t('common.unknown'),
       });
     } finally {
       setIsDeleting(false);
@@ -213,14 +235,14 @@ export function ProfilesPage() {
       await loadProfiles();
       addNotification({
         type: 'success',
-        title: '配置已复制',
-        message: `已创建 "${duplicated.name}"`,
+        title: t('profile.notifications.duplicated'),
+        message: t('profile.notifications.duplicatedMessage', { name: duplicated.name }),
       });
     } catch (error) {
       addNotification({
         type: 'error',
-        title: '复制失败',
-        message: error instanceof Error ? error.message : '未知错误',
+        title: t('profile.notifications.duplicateFailed'),
+        message: error instanceof Error ? error.message : t('common.unknown'),
       });
     }
   };
@@ -230,14 +252,14 @@ export function ProfilesPage() {
       await profileApi.exportProfileToFile(profile.id, `${profile.name}.json`);
       addNotification({
         type: 'success',
-        title: '导出成功',
-        message: `${profile.name} 已导出`,
+        title: t('profile.notifications.exportSuccess'),
+        message: t('profile.notifications.exported', { name: profile.name }),
       });
     } catch (error) {
       addNotification({
         type: 'error',
-        title: '导出失败',
-        message: error instanceof Error ? error.message : '未知错误',
+        title: t('profile.notifications.exportFailed'),
+        message: error instanceof Error ? error.message : t('common.unknown'),
       });
     }
   };
@@ -248,20 +270,21 @@ export function ProfilesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-            <span className="mr-2">📋</span>环境配置
+            <span className="mr-2">📋</span>
+            {t('profile.title')}
           </h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">管理开发环境配置文件</p>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">{t('profile.subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" icon={<Upload size={16} />} onClick={handleImportClick}>
-            导入
+            {t('common.import')}
           </Button>
           <Button
             variant="primary"
             icon={<Plus size={16} />}
             onClick={() => setShowProfileForm(true)}
           >
-            新建配置
+            {t('profile.create')}
           </Button>
         </div>
       </div>
@@ -298,7 +321,7 @@ export function ProfilesPage() {
         isOpen={showProfileForm}
         onClose={() => setShowProfileForm(false)}
         onSubmit={handleCreate}
-        title="新建配置"
+        title={t('profile.create')}
       />
 
       {/* Edit Profile Dialog */}
@@ -307,7 +330,7 @@ export function ProfilesPage() {
           isOpen={!!editingProfile}
           onClose={() => setEditingProfile(null)}
           onSubmit={handleEdit}
-          title="编辑配置"
+          title={t('profile.edit')}
           initialData={{
             name: editingProfile.name,
             description: editingProfile.description || '',
@@ -315,9 +338,11 @@ export function ProfilesPage() {
               editingProfile.javaVersion === 'Not set' ? null : editingProfile.javaVersion,
             nodeVersion:
               editingProfile.nodeVersion === 'Not set' ? null : editingProfile.nodeVersion,
-            javaManagerId: null,
-            nodeManagerId: null,
-            mavenConfigId: null,
+            javaManagerId: editingProfile.javaManagerId || null,
+            nodeManagerId: editingProfile.nodeManagerId || null,
+            mavenConfigId: editingProfile.mavenConfigId || null,
+            authorInstanceId: editingProfile.authorInstanceId || null,
+            publishInstanceId: editingProfile.publishInstanceId || null,
             envVars: editingProfile.envVars || {},
           }}
         />
@@ -328,9 +353,9 @@ export function ProfilesPage() {
         isOpen={!!deleteConfirm}
         onClose={() => setDeleteConfirm(null)}
         onConfirm={handleDelete}
-        title="删除配置？"
-        message={`确定要删除 "${deleteConfirm?.name}" 吗？此操作无法撤销。`}
-        confirmText="删除"
+        title={t('profile.dialog.deleteTitle')}
+        message={t('profile.dialog.deleteConfirm', { name: deleteConfirm?.name })}
+        confirmText={t('common.delete')}
         variant="danger"
         isLoading={isDeleting}
       />
@@ -363,6 +388,7 @@ function ProfileCard({
   onDelete,
   onExport,
 }: ProfileCardProps) {
+  const { t } = useTranslation();
   const [showMenu, setShowMenu] = useState(false);
 
   return (
@@ -375,7 +401,7 @@ function ProfileCard({
       {isActive && (
         <div className="absolute -top-2 -right-2 px-2 py-0.5 bg-azure text-white text-xs font-medium rounded-full flex items-center gap-1">
           <Check size={12} />
-          当前
+          {t('profile.current')}
         </div>
       )}
 
@@ -425,20 +451,20 @@ function ProfileCard({
           <div>
             <span className="text-slate-500 dark:text-slate-400">Java:</span>
             <span className="ml-2 font-medium text-slate-700 dark:text-slate-300">
-              {profile.javaVersion || '未设置'}
+              {profile.javaVersion || t('common.notSet')}
             </span>
           </div>
           <div>
             <span className="text-slate-500 dark:text-slate-400">Node:</span>
             <span className="ml-2 font-medium text-slate-700 dark:text-slate-300">
-              {profile.nodeVersion || '未设置'}
+              {profile.nodeVersion || t('common.notSet')}
             </span>
           </div>
         </div>
 
         {/* Last Updated */}
         <div className="text-xs text-slate-400 dark:text-slate-500">
-          更新时间: {formatDate(profile.updatedAt)}
+          {t('profile.updatedAt', { date: formatDate(profile.updatedAt) })}
         </div>
 
         {/* Actions */}
@@ -456,7 +482,7 @@ function ProfileCard({
             }}
             disabled={isSwitching}
           >
-            {isSwitching ? '切换中...' : '激活'}
+            {isSwitching ? t('profile.switching') : t('profile.activate')}
           </Button>
         )}
       </CardContent>
@@ -481,6 +507,7 @@ function ProfileMenu({
   onDelete,
   isActive,
 }: ProfileMenuProps) {
+  const { t } = useTranslation();
   return (
     <>
       <div className="fixed inset-0 z-10" onClick={onClose} />
@@ -489,19 +516,19 @@ function ProfileMenu({
           onClick={onEdit}
           className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
         >
-          <Edit2 size={14} /> 编辑
+          <Edit2 size={14} /> {t('common.edit')}
         </button>
         <button
           onClick={onDuplicate}
           className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
         >
-          <Copy size={14} /> 复制
+          <Copy size={14} /> {t('common.copy')}
         </button>
         <button
           onClick={onExport}
           className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
         >
-          <Download size={14} /> 导出
+          <Download size={14} /> {t('common.export')}
         </button>
         <hr className="my-1 border-slate-200 dark:border-slate-700" />
         <button
@@ -515,9 +542,9 @@ function ProfileMenu({
                 : 'text-error-500 hover:bg-error-50 dark:hover:bg-error-900/30'
             }
           `}
-          title={isActive ? '无法删除当前激活的配置' : undefined}
+          title={isActive ? t('profile.cannotDeleteActive') : undefined}
         >
-          <Trash2 size={14} /> 删除
+          <Trash2 size={14} /> {t('common.delete')}
         </button>
       </div>
     </>
@@ -529,17 +556,23 @@ interface EmptyStateProps {
 }
 
 function EmptyState({ onCreateClick }: EmptyStateProps) {
+  const { t } = useTranslation();
   return (
     <Card className="p-12 text-center">
       <div className="w-16 h-16 mx-auto rounded-full bg-azure-50 dark:bg-azure-900/30 flex items-center justify-center mb-4">
         <Plus size={24} className="text-azure" />
       </div>
-      <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300">暂无配置</h3>
+      <div className="w-16 h-16 mx-auto rounded-full bg-azure-50 dark:bg-azure-900/30 flex items-center justify-center mb-4">
+        <Plus size={24} className="text-azure" />
+      </div>
+      <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300">
+        {t('profile.empty.title')}
+      </h3>
       <p className="text-slate-500 dark:text-slate-400 mt-2 mb-6 max-w-md mx-auto">
-        创建您的第一个环境配置来开始管理 AEM 开发环境。
+        {t('profile.empty.description')}
       </p>
       <Button icon={<Plus size={16} />} onClick={onCreateClick}>
-        创建配置
+        {t('profile.create')}
       </Button>
     </Card>
   );

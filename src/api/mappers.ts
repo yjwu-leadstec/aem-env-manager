@@ -33,6 +33,8 @@ export interface FrontendProfile {
   nodeVersion: string | null;
   nodeManagerId: string | null;
   mavenConfigId: string | null;
+  authorInstanceId: string | null;
+  publishInstanceId: string | null;
   envVars: Record<string, string>;
   isActive: boolean;
   createdAt: string;
@@ -108,10 +110,13 @@ export function mapFrontendInstanceToApi(
 }
 
 export function mapApiHealthCheckToFrontend(api: HealthCheckResult): FrontendHealthCheck {
+  // Determine isHealthy based on status from backend
+  const isHealthy = api.status === 'running';
+
   return {
-    isHealthy: api.is_healthy,
-    responseTimeMs: api.response_time_ms,
-    statusCode: api.status_code,
+    isHealthy,
+    responseTimeMs: api.response_time ?? null,
+    statusCode: null, // Not returned by backend anymore
     bundleStatus: api.bundle_status
       ? {
           total: api.bundle_status.total,
@@ -127,8 +132,8 @@ export function mapApiHealthCheckToFrontend(api: HealthCheckResult): FrontendHea
           heapUsagePercent: api.memory_status.heap_usage_percent,
         }
       : null,
-    error: api.error,
-    checkedAt: api.checked_at,
+    error: null, // Not returned by backend anymore
+    checkedAt: api.timestamp,
   };
 }
 
@@ -146,6 +151,8 @@ export function mapApiProfileToFrontend(api: EnvironmentProfile): FrontendProfil
     nodeVersion: api.node_version,
     nodeManagerId: api.node_manager_id,
     mavenConfigId: api.maven_config_id,
+    authorInstanceId: api.author_instance_id,
+    publishInstanceId: api.publish_instance_id,
     envVars: api.env_vars,
     isActive: api.is_active,
     createdAt: api.created_at,
@@ -166,6 +173,10 @@ export function mapFrontendProfileToApi(
   if (frontend.nodeVersion !== undefined) result.node_version = frontend.nodeVersion;
   if (frontend.nodeManagerId !== undefined) result.node_manager_id = frontend.nodeManagerId;
   if (frontend.mavenConfigId !== undefined) result.maven_config_id = frontend.mavenConfigId;
+  if (frontend.authorInstanceId !== undefined)
+    result.author_instance_id = frontend.authorInstanceId;
+  if (frontend.publishInstanceId !== undefined)
+    result.publish_instance_id = frontend.publishInstanceId;
   if (frontend.envVars !== undefined) result.env_vars = frontend.envVars;
   if (frontend.isActive !== undefined) result.is_active = frontend.isActive;
 

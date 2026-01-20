@@ -94,14 +94,14 @@ import { mapApiProfileToFrontend, mapFrontendProfileToApi } from '@/api/mappers'
 ```
 src-tauri/src/
 ├── commands/         # Tauri command handlers
-│   ├── config.rs     # Config file operations
-│   ├── java.rs       # Java version management
-│   ├── node.rs       # Node version management
-│   ├── maven.rs      # Maven configuration
-│   └── aem.rs        # AEM instance management
+│   ├── profile.rs    # Profile CRUD, switching, import/export
+│   ├── version.rs    # Java/Node/Maven version management
+│   ├── instance.rs   # AEM instance lifecycle (start/stop/health)
+│   └── settings.rs   # Scan paths, config export/import/reset
 ├── platform/         # Cross-platform adapters
 │   ├── macos.rs      # macOS-specific (#[cfg(target_os = "macos")])
-│   └── windows.rs    # Windows-specific
+│   ├── windows.rs    # Windows-specific
+│   └── common.rs     # Shared platform utilities
 └── lib.rs            # Module exports and Tauri setup
 ```
 
@@ -152,6 +152,47 @@ import { useProfiles } from '@/store';
 - **AEM Instance**: Author or Publish instance with host, port, and status
 - **Version Manager**: Tools like SDKMAN, nvm, fnm that manage runtime versions
 
+## Constants & Configuration
+
+Centralized constants in `src/constants/index.ts`:
+- `INSTANCE_DEFAULTS`: Default ports (4502/4503), host, run modes
+- `TIMING`: Delays and intervals (status refresh, notifications, health check)
+- `UI`: Layout constants (sidebar width, max recent profiles)
+- `AEM_QUICK_LINKS`: Standard AEM admin URLs
+- `VALIDATION`: Port ranges, name length limits
+
+## First-Time User Flow
+
+The app uses a setup wizard for first-time users:
+- `RequireSetup` component in `src/components/common/` guards main routes
+- Checks `preferences.wizardCompleted` flag in Zustand store
+- Redirects to `/wizard` if not completed
+- WizardPage (`src/pages/WizardPage.tsx`) has 7 steps: init → scan → java → node → maven → aem → complete
+- On completion, sets `wizardCompleted: true` and navigates to dashboard
+
+To test first-time experience: `localStorage.removeItem('aem-env-manager-storage')`
+
+## Internationalization (i18n)
+
+The app supports multiple languages via react-i18next:
+- **Locales**: `src/i18n/locales/` (zh-CN, zh-TW, en)
+- **Fallback**: zh-CN
+- **Storage**: localStorage key `aem-env-manager-language`
+
+Usage in components:
+```typescript
+import { useTranslation } from 'react-i18next';
+const { t } = useTranslation();
+// t('key.nested.path')
+```
+
+## Theming
+
+Dark mode is supported via Tailwind's `darkMode: 'class'`:
+- Theme state stored in Zustand: `config.theme` ('light' | 'dark' | 'system')
+- CSS variables defined in `src/index.css` for theme-aware colors
+- Use `dark:` prefix for dark mode styles: `bg-white dark:bg-slate-800`
+
 ## Design Documentation
 
 ### Design Reference Files
@@ -172,75 +213,13 @@ docs/
 
 ### 🎯 Target UI Design: Cloud Theme
 
-**The official UI design to implement is:**
-`docs/ui-design-themes/aem-env-manager-ui-themes/aem-env-manager-ui-cloud.html`
+**Reference design:** `docs/ui-design-themes/aem-env-manager-ui-themes/aem-env-manager-ui-cloud.html`
 
-This is a fully interactive HTML prototype with the following design specifications:
+Key design principles:
+- **Colors**: Azure (#0EA5E9) primary, Teal (#14B8A6) secondary, Slate for text
+- **Background**: Sky gradient (E0F2FE → DBEAFE → EFF6FF)
+- **Panels**: White with soft shadows, rounded corners (16px main, 12px soft)
+- **Navigation**: 264px sidebar with frosted glass effect
+- **Buttons**: Gradient backgrounds with glow shadows on hover
 
-#### Color System
-```css
-/* Primary Azure */
-'azure': '#0EA5E9'
-'azure-light': '#38BDF8'
-'azure-dark': '#0284C7'
-'azure-50': '#F0F9FF'
-
-/* Secondary Slate */
-'slate': '#64748B'
-'slate-light': '#94A3B8'
-'slate-dark': '#475569'
-'slate-900': '#0F172A'
-
-/* Accents */
-'teal': '#14B8A6'
-'teal-light': '#2DD4BF'
-'teal-50': '#F0FDFA'
-'folder': '#FCD34D'
-'folder-dark': '#F59E0B'
-
-/* Sky gradients */
-'sky-start': '#E0F2FE'
-'sky-end': '#DBEAFE'
-
-/* Semantic */
-'success': '#22C55E'
-'warning': '#F59E0B'
-'error': '#EF4444'
-```
-
-#### Design Characteristics
-- **Background**: Sky gradient (`linear-gradient(180deg, #E0F2FE 0%, #DBEAFE 50%, #EFF6FF 100%)`)
-- **Panels**: White with soft shadows, rounded corners (16px for main, 12px for soft, 10px for flat)
-- **Navigation**: Left sidebar with 264px width, frosted glass effect (`backdrop-blur-xl`)
-- **Active nav**: White background with azure left border gradient
-- **Buttons**:
-  - Primary: Azure gradient with glow shadow on hover
-  - Teal: Teal gradient for secondary actions
-  - Soft: Light azure background
-  - Outline: White with border
-  - Ghost: Transparent with hover background
-- **Badges**: Gradient backgrounds (success, warning, error, azure, teal, slate)
-- **Status indicators**: Pulse animation for running status
-
-#### Key UI Components from Design
-1. **Dashboard**: 4-column status cards + AEM instances grid + Quick actions
-2. **Profiles Page**: Profile cards with environment badges
-3. **AEM Instances**: Detailed instance cards with status, version info, quick links
-4. **Java/Node/Maven Pages**: Version list with current highlight
-5. **Licenses Page**: License cards with expiry status
-6. **Settings Page**: Grouped settings panels with toggles
-
-#### Shadow System
-```css
-'soft': '0 2px 8px -2px rgba(0, 0, 0, 0.08), 0 4px 16px -4px rgba(0, 0, 0, 0.06)'
-'panel': '0 4px 20px -4px rgba(0, 0, 0, 0.1), 0 8px 32px -8px rgba(0, 0, 0, 0.08)'
-'elevated': '0 8px 30px -6px rgba(0, 0, 0, 0.12), 0 16px 48px -12px rgba(0, 0, 0, 0.1)'
-'glow-azure': '0 4px 14px -2px rgba(14, 165, 233, 0.25)'
-'glow-teal': '0 4px 14px -2px rgba(20, 184, 166, 0.25)'
-```
-
-### Other Available Themes (for reference)
-- `aem-env-manager-ui-dark.html` - Dark mode version
-- `aem-env-manager-ui-material.html` - Material Design
-- `aem-env-manager-ui-fluent.html` - Microsoft Fluent
-- And 15+ other creative themes
+All color values and shadow definitions are in `tailwind.config.js`.

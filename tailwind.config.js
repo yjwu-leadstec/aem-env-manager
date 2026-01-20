@@ -11,18 +11,33 @@ export default {
         sans: ['Inter', 'system-ui', 'sans-serif'],
       },
       colors: {
-        // Technical Theme Colors (for dark mode)
+        // Technical Theme Colors (Detailed from Design)
+        'surface': 'rgb(var(--color-surface) / <alpha-value>)',
         'viewport': {
-          DEFAULT: '#1F1F1F',
+          DEFAULT: 'rgb(var(--color-viewport) / <alpha-value>)',
           light: '#2A2A2A',
         },
-        'charcoal': '#262626',
+        'viewport-light': '#2A2A2A', // strict match
+        'orange': {
+          DEFAULT: '#F97316',
+          dark: '#EA580C',
+        },
+        'orange-dark': '#EA580C', // strict match
         'steel': {
           DEFAULT: '#475569',
           light: '#64748B',
           dark: '#334155',
         },
-        // Orange accent for Technical theme
+        'steel-light': '#64748B', // strict match
+        'grid': '#374151',
+        'selection': '#FDE047',
+        'charcoal': '#262626',
+        'metal': '#94A3B8',
+        'border': '#374151', // same as grid
+        'text': '#E5E7EB',
+        'text-dim': '#6B7280',
+
+        // Existing Colors (Mapped or preserved)
         'tech-orange': {
           DEFAULT: '#F97316',
           50: '#FFF7ED',
@@ -97,7 +112,6 @@ export default {
         },
         'error': {
           DEFAULT: '#EF4444',
-          50: '#FEF2F2',
           100: '#FEE2E2',
           400: '#F87171',
           500: '#EF4444',

@@ -16,10 +16,10 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary: 'btn-azure',
-  secondary: 'btn-teal',
-  outline: 'border border-slate-300 text-slate-700 hover:bg-slate-50',
-  ghost: 'text-slate-600 hover:bg-slate-100',
-  danger: 'bg-error text-white hover:bg-error-600',
+  secondary: 'btn-ghost', // Using ghost style for secondary as per design
+  outline: 'btn-outline',
+  ghost: 'btn-ghost',
+  danger: 'btn-danger',
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -41,7 +41,7 @@ export function Button({
   ...props
 }: ButtonProps) {
   const baseClasses =
-    'inline-flex items-center justify-center gap-2 font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-azure-300 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+    'inline-flex items-center justify-center gap-2 font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-azure-300 dark:focus:ring-tech-orange/50 focus:ring-offset-2 dark:focus:ring-offset-viewport disabled:opacity-50 disabled:cursor-not-allowed';
 
   return (
     <button

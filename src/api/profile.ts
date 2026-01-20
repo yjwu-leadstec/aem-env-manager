@@ -13,9 +13,13 @@ export interface EnvironmentProfile {
   description: string | null;
   java_version: string | null;
   java_manager_id: string | null;
+  java_path: string | null; // Full path to Java installation (JAVA_HOME)
   node_version: string | null;
   node_manager_id: string | null;
+  node_path: string | null; // Full path to Node installation directory
   maven_config_id: string | null;
+  author_instance_id: string | null; // Associated AEM Author instance
+  publish_instance_id: string | null; // Associated AEM Publish instance
   env_vars: Record<string, string>;
   is_active: boolean;
   created_at: string;

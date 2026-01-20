@@ -20,14 +20,14 @@ export function DashboardView() {
         <ProfileSwitcher />
       </div>
 
-      {/* Status Cards - 4 columns */}
+      {/* Quick Actions - Horizontal */}
+      <QuickActionsPanel />
+
+      {/* Status Cards - 3 columns */}
       <StatusCards />
 
       {/* AEM Instances Section */}
       <AemInstanceCards />
-
-      {/* Quick Actions - Horizontal */}
-      <QuickActionsPanel />
     </div>
   );
 }

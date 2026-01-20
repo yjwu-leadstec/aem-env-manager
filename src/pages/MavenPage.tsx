@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { FileCode, RefreshCw, Check, Plus } from 'lucide-react';
 import { Card, CardHeader, CardContent } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
@@ -6,6 +7,7 @@ import { useAppStore } from '@/store';
 import * as versionApi from '@/api/version';
 
 export function MavenPage() {
+  const { t } = useTranslation();
   const [isScanning, setIsScanning] = useState(false);
   const [mavenInfo, setMavenInfo] = useState<versionApi.VersionInfo['maven'] | null>(null);
   const [switchingConfig, setSwitchingConfig] = useState<string | null>(null);
@@ -19,13 +21,13 @@ export function MavenPage() {
     } catch (error) {
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: error instanceof Error ? error.message : '未知错误',
+        title: t('maven.notifications.loadFailed'),
+        message: error instanceof Error ? error.message : t('common.unknown'),
       });
     } finally {
       setIsScanning(false);
     }
-  }, [addNotification]);
+  }, [addNotification, t]);
 
   useEffect(() => {
     loadMavenInfo();
@@ -37,15 +39,15 @@ export function MavenPage() {
       await versionApi.switchMavenConfig(configId);
       addNotification({
         type: 'success',
-        title: 'Maven 配置已切换',
-        message: '成功更新 Maven settings',
+        title: t('maven.notifications.switched'),
+        message: t('maven.notifications.switchedMessage'),
       });
       loadMavenInfo();
     } catch (error) {
       addNotification({
         type: 'error',
-        title: '切换失败',
-        message: error instanceof Error ? error.message : '未知错误',
+        title: t('maven.notifications.switchFailed'),
+        message: error instanceof Error ? error.message : t('common.unknown'),
       });
     } finally {
       setSwitchingConfig(null);
@@ -58,11 +60,10 @@ export function MavenPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-            <span className="mr-2">🔧</span>Maven 配置管理
+            <span className="mr-2">🔧</span>
+            {t('maven.title')}
           </h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-1">
-            管理和切换 Maven settings.xml 配置文件
-          </p>
+          <p className="text-slate-500 dark:text-slate-400 mt-1">{t('maven.subtitle')}</p>
         </div>
         <Button
           variant="outline"
@@ -72,7 +73,7 @@ export function MavenPage() {
           onClick={loadMavenInfo}
           disabled={isScanning}
         >
-          刷新配置
+          {t('maven.refresh')}
         </Button>
       </div>
 
@@ -84,7 +85,7 @@ export function MavenPage() {
         <div className="space-y-6">
           {/* Current Configuration */}
           <Card>
-            <CardHeader title="当前配置" subtitle="活跃的 Maven settings.xml" />
+            <CardHeader title={t('maven.current.title')} subtitle={t('maven.current.subtitle')} />
             <CardContent>
               {mavenInfo?.current ? (
                 <div className="flex items-center justify-between p-3 rounded-lg bg-azure-50 dark:bg-azure-900/30">
@@ -100,7 +101,7 @@ export function MavenPage() {
                 </div>
               ) : (
                 <p className="text-slate-500 dark:text-slate-400 text-center py-4">
-                  使用默认 Maven settings
+                  {t('maven.current.default')}
                 </p>
               )}
             </CardContent>
@@ -109,11 +110,11 @@ export function MavenPage() {
           {/* Saved Configurations */}
           <Card>
             <CardHeader
-              title="已保存配置"
-              subtitle={`${mavenInfo?.configs.length || 0} 个 Maven 配置文件`}
+              title={t('maven.configs.title')}
+              subtitle={t('maven.configs.subtitle', { count: mavenInfo?.configs.length || 0 })}
               action={
                 <Button variant="outline" size="sm" icon={<Plus size={14} />}>
-                  导入
+                  {t('common.import')}
                 </Button>
               }
             />
@@ -121,9 +122,11 @@ export function MavenPage() {
               {!mavenInfo?.configs || mavenInfo.configs.length === 0 ? (
                 <div className="text-center py-6">
                   <FileCode size={40} className="mx-auto mb-3 text-slate-300 dark:text-slate-600" />
-                  <p className="text-slate-500 dark:text-slate-400 mb-4">没有已保存的 Maven 配置</p>
+                  <p className="text-slate-500 dark:text-slate-400 mb-4">
+                    {t('maven.configs.empty')}
+                  </p>
                   <Button variant="outline" size="sm" icon={<Plus size={14} />}>
-                    导入 settings.xml
+                    {t('maven.configs.importHint')}
                   </Button>
                 </div>
               ) : (
@@ -146,7 +149,7 @@ export function MavenPage() {
                             </p>
                             {config.is_active && (
                               <span className="px-1.5 py-0.5 bg-azure-100 dark:bg-azure-800 text-azure-700 dark:text-azure-300 text-xs rounded">
-                                活跃
+                                {t('common.active')}
                               </span>
                             )}
                           </div>
@@ -165,7 +168,7 @@ export function MavenPage() {
                           {switchingConfig === config.id ? (
                             <RefreshCw size={14} className="animate-spin" />
                           ) : (
-                            '使用'
+                            t('common.use')
                           )}
                         </Button>
                       )}
@@ -178,20 +181,20 @@ export function MavenPage() {
 
           {/* Tips */}
           <Card>
-            <CardHeader title="提示" />
+            <CardHeader title={t('maven.tips.title')} />
             <CardContent>
               <div className="space-y-3 text-sm text-slate-600 dark:text-slate-400">
                 <div className="flex items-start gap-2">
                   <span className="text-azure">•</span>
-                  <p>Maven settings.xml 文件通常位于 ~/.m2/settings.xml</p>
+                  <p>{t('maven.tips.1')}</p>
                 </div>
                 <div className="flex items-start gap-2">
                   <span className="text-azure">•</span>
-                  <p>你可以为不同的项目或环境保存多个配置文件</p>
+                  <p>{t('maven.tips.2')}</p>
                 </div>
                 <div className="flex items-start gap-2">
                   <span className="text-azure">•</span>
-                  <p>切换配置会更新 ~/.m2/settings.xml 的符号链接</p>
+                  <p>{t('maven.tips.3')}</p>
                 </div>
               </div>
             </CardContent>

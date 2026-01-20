@@ -33,13 +33,14 @@ export interface AemInstance {
 }
 
 export interface HealthCheckResult {
-  is_healthy: boolean;
-  response_time_ms: number | null;
-  status_code: number | null;
+  instance_id: string;
+  timestamp: string;
+  status: AemInstanceStatus;
+  response_time: number | null;
   bundle_status: BundleStatus | null;
   memory_status: MemoryStatus | null;
-  error: string | null;
-  checked_at: string;
+  aem_version: string | null;
+  oak_version: string | null;
 }
 
 export interface BundleStatus {
@@ -53,6 +54,58 @@ export interface MemoryStatus {
   heap_used_mb: number;
   heap_max_mb: number;
   heap_usage_percent: number;
+}
+
+/**
+ * Result from scanning filesystem for AEM instances
+ */
+export interface ScannedAemInstance {
+  name: string;
+  path: string;
+  instance_type: AemInstanceType;
+  port: number;
+  jar_path: string | null;
+  /** Path to license.properties file if found in the same directory */
+  license_file_path: string | null;
+}
+
+// ============================================
+// Instance Discovery/Scanning
+// ============================================
+
+/**
+ * Scan filesystem for AEM instances based on common naming patterns
+ * Supports patterns like:
+ * - aem-author-p{port} (e.g., aem-author-p4502)
+ * - aem-publish-p{port} (e.g., aem-publish-p4503)
+ * - aem-sdk-quickstart-* (e.g., aem-sdk-quickstart-2024.8.xxx)
+ * @param customPaths - Optional custom paths to scan in addition to defaults
+ */
+export async function scanAemInstances(customPaths?: string[]): Promise<ScannedAemInstance[]> {
+  return invoke<ScannedAemInstance[]>('scan_aem_instances', { customPaths: customPaths ?? null });
+}
+
+/**
+ * Scan a specific directory for AEM JAR files
+ * Looks for JAR files matching AEM patterns:
+ * - aem-author-p{port}.jar
+ * - aem-publish-p{port}.jar
+ * - aem-sdk-quickstart-*.jar
+ * - cq-quickstart-*.jar
+ * @param directory - Directory path to scan
+ * @returns Array of found AEM instances with JAR info
+ */
+export async function scanDirectoryForJars(directory: string): Promise<ScannedAemInstance[]> {
+  return invoke<ScannedAemInstance[]>('scan_directory_for_jars', { directory });
+}
+
+/**
+ * Parse a specific JAR file to extract AEM instance information
+ * @param jarPath - Full path to the JAR file
+ * @returns Parsed AEM instance info or null if not a valid AEM JAR
+ */
+export async function parseJarFile(jarPath: string): Promise<ScannedAemInstance | null> {
+  return invoke<ScannedAemInstance | null>('parse_jar_file', { jarPath });
 }
 
 // ============================================
@@ -232,7 +285,7 @@ export async function checkAllInstancesHealth(): Promise<HealthSummary> {
       try {
         const health = await checkInstanceHealth(instance.id);
         results.set(instance.id, health);
-        if (health.is_healthy) {
+        if (health.status === 'running') {
           healthy++;
         } else {
           unhealthy++;
@@ -240,13 +293,14 @@ export async function checkAllInstancesHealth(): Promise<HealthSummary> {
       } catch {
         unknown++;
         results.set(instance.id, {
-          is_healthy: false,
-          response_time_ms: null,
-          status_code: null,
+          instance_id: instance.id,
+          timestamp: new Date().toISOString(),
+          status: 'error' as AemInstanceStatus,
+          response_time: null,
           bundle_status: null,
           memory_status: null,
-          error: 'Failed to check health',
-          checked_at: new Date().toISOString(),
+          aem_version: null,
+          oak_version: null,
         });
       }
     })

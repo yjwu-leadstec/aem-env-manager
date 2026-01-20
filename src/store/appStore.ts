@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { TIMING, UI } from '../constants';
 import type {
   EnvironmentProfile,
   VersionManager,
@@ -78,7 +79,7 @@ interface AppStore {
 const defaultConfig: AppConfig = {
   theme: 'light',
   autoSwitchProfile: true,
-  healthCheckInterval: 30000,
+  healthCheckInterval: TIMING.HEALTH_CHECK_INTERVAL,
   startMinimized: false,
   showNotifications: true,
   logLevel: 'info',
@@ -89,6 +90,7 @@ const defaultPreferences: UserPreferences = {
   favoriteInstances: [],
   defaultView: 'dashboard',
   sidebarCollapsed: false,
+  wizardCompleted: false,
 };
 
 const initialState = {
@@ -120,7 +122,7 @@ export const useAppStore = create<AppStore>()(
           const recentProfiles = [
             profile.id,
             ...get().preferences.recentProfiles.filter((id) => id !== profile.id),
-          ].slice(0, 5);
+          ].slice(0, UI.MAX_RECENT_PROFILES);
           set((state) => ({
             preferences: { ...state.preferences, recentProfiles },
           }));
@@ -193,7 +195,7 @@ export const useAppStore = create<AppStore>()(
         if (notification.duration !== 0) {
           setTimeout(() => {
             get().removeNotification(id);
-          }, notification.duration || 5000);
+          }, notification.duration || TIMING.NOTIFICATION_DURATION);
         }
       },
 

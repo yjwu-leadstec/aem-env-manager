@@ -11,6 +11,7 @@ use std::process::Command;
 
 /// macOS platform operations implementation
 pub struct MacOSPlatform {
+    #[allow(dead_code)]
     executor: MacOSShellExecutor,
 }
 
@@ -532,6 +533,7 @@ impl VersionManagerOps for JenvManager {
 }
 
 /// Get the platform-specific implementation
+#[allow(dead_code)]
 pub fn get_platform() -> MacOSPlatform {
     MacOSPlatform::new()
 }

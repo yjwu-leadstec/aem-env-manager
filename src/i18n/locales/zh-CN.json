@@ -7,11 +7,14 @@
     "dashboard": "首页",
     "profiles": "环境配置",
     "instances": "AEM 实例",
+    "versions": "版本管理",
     "java": "Java",
     "node": "Node",
     "maven": "Maven",
     "licenses": "许可证",
-    "settings": "设置"
+    "settings": "设置",
+    "expandSidebar": "展开侧边栏",
+    "collapseSidebar": "收起侧边栏"
   },
   "common": {
     "save": "保存",
@@ -32,7 +35,30 @@
     "no": "否",
     "browse": "浏览",
     "unknown": "未知",
-    "none": "无"
+    "current": "当前",
+    "active": "有效",
+    "none": "无",
+    "copy": "复制",
+    "import": "导入",
+    "export": "导出",
+    "notSet": "未设置",
+    "use": "使用",
+    "active": "当前使用",
+    "tips": "提示",
+    "errorBoundary": {
+      "title": "出错了",
+      "description": "发生了意外错误。请重试或刷新页面。",
+      "tryAgain": "重试",
+      "refreshPage": "刷新页面"
+    },
+    "dialog": {
+      "selectFolder": "选择文件夹",
+      "selectFile": "选择文件",
+      "saveFile": "保存文件",
+      "exportConfig": "导出配置",
+      "importConfig": "导入配置",
+      "cancelled": "操作已取消"
+    }
   },
   "dashboard": {
     "title": "仪表板",
@@ -45,7 +71,8 @@
     "aemInstances": "AEM 实例",
     "viewAll": "查看全部",
     "noInstances": "暂无配置的 AEM 实例",
-    "moreInstances": "还有 {count} 个实例...",
+    "noActiveInstance": "请先激活一个 AEM 实例",
+    "moreInstances": "还有 {{count}} 个实例...",
     "profileSwitcher": {
       "selectProfile": "选择配置",
       "current": "当前",
@@ -77,32 +104,68 @@
       "stopped": "已停止",
       "starting": "启动中",
       "stopping": "停止中",
-      "error": "错误"
+      "error": "错误",
+      "unknown": "未知"
+    },
+    "stats": {
+      "running": "{{count}} 运行中",
+      "stopped": "{{count}} 已停止"
     },
     "type": {
       "author": "Author",
-      "publish": "Publish"
+      "publish": "Publish",
+      "dispatcher": "Dispatcher"
     },
     "actions": {
       "start": "启动",
       "stop": "停止",
       "crxde": "CRXDE",
-      "packageManager": "包管理",
+      "packageManager": "包管理器",
       "console": "控制台",
-      "openBrowser": "在浏览器中打开"
+      "logs": "日志",
+      "openBrowser": "在浏览器中打开",
+      "open": "打开",
+      "healthCheck": "健康检查"
     },
     "notifications": {
+      "loadFailed": "加载失败",
+      "cannotLoad": "无法加载 AEM 实例",
       "started": "实例已启动",
+      "startingTitle": "实例启动中",
       "runningMessage": "实例正在运行",
       "stopped": "实例已停止",
+      "stoppingTitle": "实例停止中",
       "stoppedMessage": "实例已停止运行",
       "startFailed": "启动失败",
       "cannotStart": "无法启动实例",
+      "cannotStartName": "无法启动 {{name}}",
       "stopFailed": "停止失败",
       "cannotStop": "无法停止实例",
+      "cannotStopName": "无法停止 {{name}}",
       "openBrowserFailed": "打开浏览器失败",
       "startingProgress": "正在启动...",
-      "stoppingProgress": "正在停止..."
+      "stoppingProgress": "正在停止...",
+      "healthCheckComplete": "健康检查完成",
+      "healthy": "{{name}} 运行正常",
+      "unhealthy": "{{name}} 存在问题: {{error}}",
+      "healthCheckFailed": "健康检查失败",
+      "cannotCheckHealth": "无法检查 {{name}} 的健康状态",
+      "deleted": "实例已删除",
+      "removed": "{{name}} 已被移除",
+      "deleteFailed": "删除失败",
+      "cannotDelete": "无法删除实例",
+      "updated": "实例已更新",
+      "updatedMessage": "{{name}} 已更新",
+      "added": "实例已添加",
+      "addedMessage": "{{name}} 已添加",
+      "healthCheckStarted": "健康检查已开始",
+      "checkingHealth": "正在检查 {{name}} 的健康状态...",
+      "updateFailed": "更新失败",
+      "addFailed": "添加失败",
+      "terminalOpened": "终端已打开",
+      "runningInTerminal": "{{name}} 正在新的终端窗口中运行",
+      "stopRequestSent": "停止请求已发送",
+      "stopRequestMessage": "已向 {{name}} 发送停止信号"
     },
     "fields": {
       "name": "名称",
@@ -111,57 +174,465 @@
       "type": "类型",
       "version": "版本",
       "runningTime": "运行时间"
+    },
+    "quickLinks": {
+      "title": "快捷链接",
+      "subtitle": "运行中实例的常用 AEM 路径"
+    },
+    "dialog": {
+      "deleteTitle": "删除实例",
+      "deleteConfirm": "确定要删除这个实例吗？此操作无法撤销。",
+      "editTitle": "编辑实例",
+      "addTitle": "添加实例"
+    },
+    "form": {
+      "name": "实例名称 *",
+      "namePlaceholder": "例如: 本地作者实例",
+      "nameRequired": "名称为必填项",
+      "type": "实例类型",
+      "host": "主机 *",
+      "port": "端口 *",
+      "portRange": "端口号必须在 1-65535 之间",
+      "path": "实例路径 *",
+      "pathRequired": "路径为必填项",
+      "selectPath": "选择 AEM 实例文件夹",
+      "selectJarTitle": "选择 JAR 文件",
+      "multipleJarsFound": "发现多个 AEM JAR 文件，请选择一个：",
+      "pathHint": "选择包含 AEM JAR 文件的文件夹以自动检测",
+      "hostRequired": "主机为必填项",
+      "javaOpts": "Java 参数",
+      "javaOptsPlaceholder": "-Xmx4g -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005",
+      "javaOptsHint": "内存设置 (-Xmx)、远程调试 (-agentlib:jdwp)、GC 选项等",
+      "runModes": "运行模式 (逗号分隔)",
+      "saveFailed": "保存实例失败",
+      "save": "保存实例",
+      "saving": "保存中..."
+    },
+    "empty": {
+      "title": "暂无配置的实例",
+      "description": "添加您的第一个 AEM 实例来开始管理开发环境。"
+    },
+    "card": {
+      "runModes": "运行模式:",
+      "path": "路径:",
+      "terminalControl": "AEM 将在终端窗口中运行。使用终端来监控和控制实例。",
+      "terminalControlShort": "在终端窗口运行"
+    },
+    "terminalInfo": "AEM 实例在终端窗口中运行。点击\"在终端中启动\"来启动实例，然后使用终端来监控和控制它。",
+    "health": {
+      "healthy": "正常",
+      "unhealthy": "异常",
+      "bundleStatus": "Bundle 状态:",
+      "active": "活跃",
+      "memory": "内存:"
     }
   },
   "profile": {
     "title": "环境配置",
     "subtitle": "管理您的开发环境配置",
     "add": "添加配置",
+    "edit": "编辑配置",
+    "create": "新建配置",
+    "activate": "激活",
+    "switching": "切换中...",
+    "current": "当前",
+    "updatedAt": "更新时间: {{date}}",
+    "cannotDeleteActive": "无法删除当前激活的配置",
     "fields": {
-      "name": "配置名称",
-      "description": "描述",
-      "javaVersion": "Java 版本",
       "nodeVersion": "Node 版本",
       "mavenVersion": "Maven 版本"
     },
+    "form": {
+      "createTitle": "新建配置",
+      "editTitle": "编辑配置",
+      "name": "配置名称 *",
+      "namePlaceholder": "例如: AEM 6.5 开发环境",
+      "description": "描述",
+      "descriptionPlaceholder": "可选的配置描述",
+      "javaVersion": "Java 版本",
+      "nodeVersion": "Node 版本",
+      "mavenConfig": "Maven 配置",
+      "authorInstance": "AEM Author 实例",
+      "publishInstance": "AEM Publish 实例",
+      "selectJava": "选择 Java 版本...",
+      "selectNode": "选择 Node 版本...",
+      "defaultMaven": "使用默认 settings.xml",
+      "noAuthorInstance": "无 Author 实例",
+      "noPublishInstance": "无 Publish 实例",
+      "current": "当前",
+      "cancel": "取消",
+      "save": "保存配置",
+      "saving": "保存中...",
+      "nameRequired": "名称为必填项",
+      "nameMinLength": "名称至少需要 2 个字符",
+      "saveFailed": "保存配置失败"
+    },
     "notifications": {
+      "loadFailed": "加载配置文件失败",
+      "importSuccess": "导入成功",
+      "imported": "{{name}} 已导入",
+      "importFailed": "导入失败",
+      "activated": "配置已激活",
       "switched": "配置已切换",
-      "switchedTo": "已成功切换到 {name}",
+      "switchedTo": "已成功切换到 {{name}}",
       "switchFailed": "切换失败",
-      "saved": "配置已保存",
-      "deleted": "配置已删除"
+      "created": "配置已创建",
+      "createdMessage": "{{name}} 已创建",
+      "updated": "配置已更新",
+      "updatedMessage": "{{name}} 已更新",
+      "deleted": "配置已删除",
+      "deletedMessage": "{{name}} 已删除",
+      "deleteFailed": "删除失败",
+      "duplicated": "配置已复制",
+      "duplicatedMessage": "已创建 \"{{name}}\"",
+      "duplicateFailed": "复制失败",
+      "exportSuccess": "导出成功",
+      "exported": "{{name}} 已导出",
+      "exportFailed": "导出失败",
+      "saved": "配置已保存"
+    },
+    "dialog": {
+      "deleteTitle": "删除配置？",
+      "deleteConfirm": "确定要删除 \"{{name}}\" 吗？此操作无法撤销。"
+    },
+    "empty": {
+      "title": "暂无配置",
+      "description": "创建您的第一个环境配置来开始管理 AEM 开发环境。"
     }
   },
   "java": {
-    "title": "Java 版本",
-    "subtitle": "管理已安装的 Java 版本",
-    "scan": "扫描 Java",
-    "noVersions": "未找到 Java 版本",
+    "title": "Java 版本管理",
+    "subtitle": "管理和切换 Java 运行环境版本",
+    "scan": "扫描版本",
+    "managers": {
+      "title": "版本管理器",
+      "subtitle": "检测到的 Java 版本管理工具",
+      "empty": "未检测到 Java 版本管理器"
+    },
+    "versions": {
+      "title": "已安装版本",
+      "subtitle": "检测到 {{count}} 个 Java 安装",
+      "empty": "未检测到 Java 安装",
+      "emptyHint": "安装版本管理器来管理 Java 版本"
+    },
+    "notifications": {
+      "loadFailed": "加载失败",
+      "switched": "Java 版本已切换",
+      "switchedMessage": "当前使用 Java {{version}}",
+      "switchFailed": "切换失败",
+      "noProfile": "无活动配置",
+      "noProfileMessage": "请先激活一个配置文件来设置 Java 版本"
+    },
     "fields": {
       "version": "版本",
       "vendor": "供应商",
       "path": "路径",
       "isDefault": "默认"
+    },
+    "search": {
+      "title": "手动搜索 Java",
+      "subtitle": "在指定目录中搜索 Java 安装",
+      "placeholder": "输入要搜索的目录路径",
+      "browse": "选择目录",
+      "selectDirectory": "选择要搜索的目录",
+      "search": "搜索",
+      "noPath": "未指定路径",
+      "noPathMessage": "请输入或选择要搜索的目录",
+      "noResults": "未找到 Java",
+      "noResultsMessage": "在指定目录中没有找到 Java 安装",
+      "found": "搜索完成",
+      "foundMessage": "找到 {{count}} 个 Java 安装",
+      "failed": "搜索失败",
+      "results": "找到 {{count}} 个 Java 安装"
     }
   },
   "node": {
-    "title": "Node 版本",
-    "subtitle": "管理已安装的 Node.js 版本",
-    "scan": "扫描 Node",
-    "noVersions": "未找到 Node 版本",
+    "title": "Node.js 版本管理",
+    "subtitle": "管理和切换 Node.js 运行环境版本",
+    "scan": "扫描版本",
+    "managers": {
+      "title": "版本管理器",
+      "subtitle": "检测到的 Node.js 版本管理工具",
+      "empty": "未检测到 Node.js 版本管理器"
+    },
+    "versions": {
+      "title": "已安装版本",
+      "subtitle": "检测到 {{count}} 个 Node.js 安装",
+      "empty": "未检测到 Node.js 安装",
+      "emptyHint": "安装版本管理器来管理 Node.js 版本"
+    },
+    "notifications": {
+      "loadFailed": "加载失败",
+      "switched": "Node 版本已切换",
+      "switchedMessage": "当前使用 Node.js {{version}}",
+      "switchFailed": "切换失败",
+      "noProfile": "无活动配置",
+      "noProfileMessage": "请先激活一个配置文件来设置 Node.js 版本"
+    },
     "fields": {
       "version": "版本",
       "path": "路径",
       "isDefault": "默认"
+    },
+    "search": {
+      "title": "手动搜索 Node.js",
+      "subtitle": "在指定目录中搜索 Node.js 安装",
+      "placeholder": "输入要搜索的目录路径",
+      "browse": "选择目录",
+      "selectDirectory": "选择要搜索的目录",
+      "search": "搜索",
+      "noPath": "未指定路径",
+      "noPathMessage": "请输入或选择要搜索的目录",
+      "noResults": "未找到 Node.js",
+      "noResultsMessage": "在指定目录中没有找到 Node.js 安装",
+      "found": "搜索完成",
+      "foundMessage": "找到 {{count}} 个 Node.js 安装",
+      "failed": "搜索失败",
+      "results": "找到 {{count}} 个 Node.js 安装"
     }
   },
   "maven": {
-    "title": "Maven",
-    "subtitle": "管理 Maven 配置",
-    "fields": {
-      "version": "版本",
-      "home": "主目录",
-      "settingsPath": "配置文件路径"
+    "title": "Maven 配置管理",
+    "subtitle": "管理和切换 Maven settings.xml 配置文件",
+    "refresh": "刷新配置",
+    "current": {
+      "title": "当前配置",
+      "subtitle": "活跃的 Maven settings.xml",
+      "default": "使用默认 Maven settings"
+    },
+    "configs": {
+      "title": "已保存配置",
+      "subtitle": "{{count}} 个 Maven 配置文件",
+      "empty": "没有已保存的 Maven 配置",
+      "importHint": "导入 settings.xml"
+    },
+    "notifications": {
+      "loadFailed": "加载失败",
+      "switched": "Maven 配置已切换",
+      "switchedMessage": "成功更新 Maven settings",
+      "switchFailed": "切换失败",
+      "importSuccess": "导入成功",
+      "imported": "已导入配置: {{name}}",
+      "importFailed": "导入失败",
+      "importEmptyFields": "请填写配置名称和文件路径",
+      "deleteSuccess": "删除成功",
+      "deleted": "已删除配置: {{name}}",
+      "deleteFailed": "删除失败"
+    },
+    "confirmDelete": "确定要删除 \"{{name}}\" 配置吗？此操作无法撤销。",
+    "viewDetail": "查看详情",
+    "localRepo": "本地仓库",
+    "search": {
+      "title": "搜索 Maven 配置",
+      "description": "指定一个目录来搜索 .m2、settings.xml 等 Maven 配置文件",
+      "pathPlaceholder": "输入要搜索的目录路径，如 /Users/xxx",
+      "browse": "选择目录",
+      "selectDirectory": "选择要搜索的目录",
+      "noPath": "未指定路径",
+      "noPathMessage": "请输入或选择要搜索的目录",
+      "noResults": "未找到配置",
+      "noResultsMessage": "在指定目录中没有找到 Maven 配置文件",
+      "found": "搜索完成",
+      "foundMessage": "找到 {{count}} 个 Maven 配置文件",
+      "failed": "搜索失败",
+      "resultsTitle": "找到 {{count}} 个配置文件 (点击选择)"
+    },
+    "importDialog": {
+      "title": "导入 Maven 配置",
+      "name": "配置名称",
+      "namePlaceholder": "例如: 公司内网仓库配置",
+      "path": "文件路径",
+      "pathPlaceholder": "/path/to/settings.xml",
+      "pathHint": "settings.xml 文件的完整路径",
+      "orManual": "或手动输入"
+    },
+    "detail": {
+      "title": "配置详情",
+      "loadError": "无法加载配置文件内容"
+    },
+    "tips": {
+      "title": "提示",
+      "1": "Maven settings.xml 文件通常位于 ~/.m2/settings.xml",
+      "2": "你可以为不同的项目或环境保存多个配置文件",
+      "3": "切换配置会更新 ~/.m2/settings.xml 的符号链接"
+    }
+  },
+  "licenses": {
+    "title": "AEM 许可证",
+    "subtitle": "管理您的 Adobe Experience Manager 许可证文件和密钥",
+    "addLicense": "添加许可证",
+    "noLicenses": "暂无配置的许可证",
+    "noMatchingLicenses": "没有符合当前筛选条件的许可证",
+    "linkedToInstance": "已关联实例",
+    "confirmDelete": "确定要删除 \"{name}\" 吗？此操作无法撤销。",
+    "form": {
+      "addTitle": "添加许可证",
+      "editTitle": "编辑许可证",
+      "name": "许可证名称",
+      "namePlaceholder": "例如: 我的 AEM 许可证",
+      "productName": "产品名称",
+      "productVersion": "产品版本",
+      "expiryDate": "到期日期",
+      "customerName": "客户名称",
+      "licenseKey": "许可证密钥",
+      "licenseFilePath": "许可证文件路径",
+      "notes": "备注",
+      "uploadTitle": "上传许可证文件",
+      "uploadDesc": "选择 license.properties 文件，系统将自动解析许可证信息",
+      "selectFile": "选择文件",
+      "parsing": "解析中...",
+      "associateInstance": "关联 AEM 实例",
+      "associateInstanceDesc": "可选：将此许可证关联到特定的 AEM 实例",
+      "noInstance": "不关联实例",
+      "showAdvanced": "显示高级选项",
+      "hideAdvanced": "隐藏高级选项"
+    },
+    "status": {
+      "valid": "有效",
+      "expiring": "即将过期",
+      "expired": "已过期",
+      "invalid": "无效",
+      "unknown": "未知"
+    },
+    "stats": {
+      "total": "许可证总数",
+      "valid": "有效",
+      "expiring": "即将过期",
+      "expired": "已过期"
+    },
+    "filters": {
+      "all": "全部",
+      "valid": "有效",
+      "expiring": "即将过期",
+      "expired": "已过期",
+      "unknown": "未知"
+    },
+    "list": {
+      "title": "许可证列表",
+      "subtitle": "显示 {count} 个许可证"
+    },
+    "notifications": {
+      "loadFailed": "加载许可证失败",
+      "updateSuccess": "许可证已更新",
+      "updated": "{name} 已更新",
+      "addSuccess": "许可证已添加",
+      "added": "{name} 已添加",
+      "saveFailed": "保存许可证失败",
+      "deleteSuccess": "许可证已删除",
+      "deleted": "{name} 已删除",
+      "deleteFailed": "删除许可证失败",
+      "parseSuccess": "许可证文件解析成功",
+      "parsed": "已从文件中提取许可证信息"
+    }
+  },
+  "wizard": {
+    "title": "设置向导",
+    "appTitle": "AEM 环境管理器",
+    "steps": {
+      "init": "初始化",
+      "scan": "扫描",
+      "complete": "完成"
+    },
+    "init": {
+      "title": "环境初始化",
+      "description": "在开始之前，让我们先设置环境管理系统。这将配置您的 Shell 以使用托管的 Java 和 Node.js 版本。",
+      "initializing": "正在初始化环境...",
+      "error": "初始化失败: {{error}}",
+      "complete": "环境已准备就绪！您的 Shell 已配置为使用托管版本。",
+      "whatWillHappen": "将执行以下操作：",
+      "step1": "在 {{path}} 创建目录结构",
+      "step2": "在您的 Shell 配置文件（.zshrc 或 .bash_profile）中添加配置块",
+      "step3": "设置 Java 和 Node.js 版本切换的符号链接",
+      "successTitle": "环境初始化成功",
+      "createdDir": "已创建目录: {{path}}",
+      "updatedShell": "已更新 Shell 配置",
+      "restartTerminal": "注意：请重启终端或运行 'source ~/.zshrc' 以使更改生效。",
+      "initButton": "初始化环境",
+      "retry": "重试",
+      "continue": "继续设置"
+    },
+    "scan": {
+      "title": "环境扫描",
+      "description": "添加包含 AEM 实例的文件夹，然后扫描检测所有开发工具。",
+      "scanning": "正在扫描系统中的 Java、Node.js、Maven 和 AEM 安装...",
+      "error": "扫描失败: {{error}}",
+      "complete": "扫描完成！我们在您的系统中发现了以下安装。",
+      "start": "让我们开始扫描您系统中的开发工具。",
+      "startScan": "开始扫描",
+      "retry": "重新扫描",
+      "rescan": "重新扫描",
+      "continue": "继续设置",
+      "aemFolders": "AEM 安装目录",
+      "addFolder": "添加目录",
+      "selectAemFolder": "选择 AEM 安装目录",
+      "noCustomFolders": "未添加自定义目录",
+      "defaultFoldersHint": "将自动扫描默认位置（~/aem、~/AEM、~/Adobe 等）",
+      "results": {
+        "java": "Java 版本",
+        "node": "Node 版本",
+        "maven": "Maven 配置",
+        "aem": "AEM 实例",
+        "found": "发现 {{count}} 个"
+      }
+    },
+    "java": {
+      "title": "Java 配置",
+      "subtitle": "选择您的默认 Java 版本",
+      "managedBy": "（由 {{manager}} 管理）",
+      "empty": "未在您的系统中找到 Java 安装"
+    },
+    "node": {
+      "title": "Node.js 配置",
+      "subtitle": "选择您的默认 Node.js 版本",
+      "managedBy": "（由 {{manager}} 管理）",
+      "empty": "未在您的系统中找到 Node.js 安装"
+    },
+    "maven": {
+      "title": "Maven 配置",
+      "subtitle": "配置 Maven settings.xml 文件",
+      "default": "默认 settings.xml",
+      "later": "您可以稍后在设置中添加更多 Maven 配置",
+      "localRepo": "本地仓库"
+    },
+    "aem": {
+      "title": "AEM 实例",
+      "subtitle": "配置您的 AEM 实例（可选）",
+      "empty": "未检测到 AEM 实例",
+      "discovered": "发现的实例",
+      "configured": "已配置的实例",
+      "import": "导入",
+      "add": "添加另一个实例",
+      "addHint": "您可以从实例页面添加更多实例",
+      "skip": "您可以跳过此步骤，稍后添加实例"
+    },
+    "complete": {
+      "title": "设置完成！",
+      "subtitle": "您的 AEM 开发环境已准备就绪。您现在可以轻松管理配置、切换版本和控制 AEM 实例。",
+      "summary": "快速概览",
+      "configuredJava": "检测到 {{count}} 个 Java 版本",
+      "configuredNode": "检测到 {{count}} 个 Node.js 版本",
+      "configuredMaven": "检测到 {{count}} 个 Maven 配置",
+      "detectedAem": "检测到 {{count}} 个 AEM 实例",
+      "nextStep": "下一步",
+      "nextStepDesc": "创建您的第一个配置文件，保存您偏好的 Java、Node.js 和 Maven 配置，以便一键切换环境。",
+      "nextStepDescAem": "首先创建 AEM 实例，然后创建配置文件将其与 Java、Node.js 和 Maven 配置组合，实现一键切换环境。",
+      "createInstance": "创建 AEM 实例",
+      "createProfile": "创建配置",
+      "later": "稍后再说",
+      "dashboard": "前往仪表盘"
+    },
+    "nav": {
+      "prev": "上一步",
+      "next": "下一步",
+      "finish": "完成"
+    }
+  },
+  "versions": {
+    "title": "版本管理",
+    "subtitle": "管理 Java、Node.js 和 Maven 配置",
+    "scan": "扫描版本",
+    "notifications": {
+      "loadFailed": "加载版本失败"
     }
   },
   "settings": {
@@ -170,7 +641,8 @@
     "tabs": {
       "general": "通用",
       "paths": "路径",
-      "data": "数据"
+      "data": "数据",
+      "licenses": "许可证"
     },
     "general": {
       "appearance": "外观",
@@ -181,7 +653,7 @@
       "themeDark": "深色",
       "themeSystem": "系统",
       "themeUpdated": "主题已更新",
-      "themeChangedTo": "已切换到{theme}模式",
+      "themeChangedTo": "已切换到{{theme}}模式",
       "language": "语言",
       "languageDesc": "选择界面显示语言",
       "notifications": "通知",
@@ -222,10 +694,10 @@
       "importing": "导入中...",
       "exportImportNote": "导出包含所有配置文件、实例和设置。敏感数据如密码会被加密。",
       "exportSuccess": "导出成功",
-      "exportedCount": "已导出 {profiles} 个配置文件和 {instances} 个实例",
+      "exportedCount": "已导出 {{profiles}} 个配置文件和 {{instances}} 个实例",
       "exportFailed": "导出失败",
       "importSuccess": "导入成功",
-      "importedCount": "已导入 {profiles} 个配置文件和 {instances} 个实例",
+      "importedCount": "已导入 {{profiles}} 个配置文件和 {{instances}} 个实例",
       "importFailed": "导入失败",
       "dangerZone": "危险区域",
       "dangerZoneDesc": "不可逆的操作",
@@ -237,7 +709,7 @@
       "cannotUndo": "此操作不可撤销",
       "confirmResetMessage": "您确定要重置所有设置吗？这将删除所有配置文件、AEM 实例配置和应用程序设置。此操作无法恢复。",
       "resetSuccess": "重置成功",
-      "resetCount": "已删除 {profiles} 个配置文件和 {instances} 个实例",
+      "resetCount": "已删除 {{profiles}} 个配置文件和 {{instances}} 个实例",
       "resetFailed": "重置失败"
     }
   },

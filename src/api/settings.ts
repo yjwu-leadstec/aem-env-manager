@@ -3,6 +3,7 @@
 
 import { invoke } from '@tauri-apps/api/core';
 import { open, save } from '@tauri-apps/plugin-dialog';
+import i18n from '../i18n';
 
 // ============================================
 // Types
@@ -65,7 +66,9 @@ export async function saveScanPaths(paths: ScanPaths): Promise<void> {
 /**
  * Open a folder selection dialog
  */
-export async function selectFolder(title: string = '选择文件夹'): Promise<string | null> {
+export async function selectFolder(
+  title: string = i18n.t('common.dialog.selectFolder')
+): Promise<string | null> {
   const result = await open({
     directory: true,
     multiple: false,
@@ -78,7 +81,7 @@ export async function selectFolder(title: string = '选择文件夹'): Promise<s
  * Open a file selection dialog
  */
 export async function selectFile(
-  title: string = '选择文件',
+  title: string = i18n.t('common.dialog.selectFile'),
   filters?: Array<{ name: string; extensions: string[] }>
 ): Promise<string | null> {
   const result = await open({
@@ -94,7 +97,7 @@ export async function selectFile(
  * Open a save file dialog
  */
 export async function selectSaveFile(
-  title: string = '保存文件',
+  title: string = i18n.t('common.dialog.saveFile'),
   defaultPath?: string,
   filters?: Array<{ name: string; extensions: string[] }>
 ): Promise<string | null> {
@@ -114,9 +117,11 @@ export async function selectSaveFile(
  * Export all configuration with file dialog
  */
 export async function exportConfiguration(): Promise<ExportResult> {
-  const savePath = await selectSaveFile('导出配置', 'aem-env-manager-backup.zip', [
-    { name: 'ZIP Archive', extensions: ['zip'] },
-  ]);
+  const savePath = await selectSaveFile(
+    i18n.t('common.dialog.exportConfig'),
+    'aem-env-manager-backup.zip',
+    [{ name: 'ZIP Archive', extensions: ['zip'] }]
+  );
 
   if (!savePath) {
     return {
@@ -124,7 +129,7 @@ export async function exportConfiguration(): Promise<ExportResult> {
       file_path: null,
       profiles_count: 0,
       instances_count: 0,
-      error: '操作已取消',
+      error: i18n.t('common.dialog.cancelled'),
     };
   }
 
@@ -135,7 +140,9 @@ export async function exportConfiguration(): Promise<ExportResult> {
  * Import configuration with file dialog
  */
 export async function importConfiguration(): Promise<ImportResult> {
-  const filePath = await selectFile('导入配置', [{ name: 'ZIP Archive', extensions: ['zip'] }]);
+  const filePath = await selectFile(i18n.t('common.dialog.importConfig'), [
+    { name: 'ZIP Archive', extensions: ['zip'] },
+  ]);
 
   if (!filePath) {
     return {
@@ -143,7 +150,7 @@ export async function importConfiguration(): Promise<ImportResult> {
       profiles_imported: 0,
       instances_imported: 0,
       configs_imported: false,
-      errors: ['操作已取消'],
+      errors: [i18n.t('common.dialog.cancelled')],
     };
   }
 

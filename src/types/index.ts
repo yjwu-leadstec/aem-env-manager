@@ -124,6 +124,7 @@ export interface UserPreferences {
   favoriteInstances: string[];
   defaultView: ViewType;
   sidebarCollapsed: boolean;
+  wizardCompleted: boolean;
 }
 
 // ============================================

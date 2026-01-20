@@ -26,15 +26,18 @@ export function ProfileSwitcher({ onSwitchStart, onSwitchComplete }: ProfileSwit
   const loadProfiles = useCallback(async () => {
     setIsLoading(true);
     try {
-      const apiProfiles = await profileApi.listProfiles();
+      const [apiProfiles, apiActive] = await Promise.all([
+        profileApi.listProfiles(),
+        profileApi.getActiveProfile(),
+      ]);
       const mappedProfiles = apiProfiles.map(mapApiProfileToFrontend);
-      setProfiles(mappedProfiles);
+      const mappedActive = apiActive ? mapApiProfileToFrontend(apiActive) : null;
 
-      // Set active profile
-      const active = apiProfiles.find((p) => p.is_active);
-      if (active) {
-        setActiveProfile(mapApiProfileToFrontend(active));
-        setSelectedProfileId(active.id);
+      setProfiles(mappedProfiles);
+      setActiveProfile(mappedActive);
+
+      if (mappedActive) {
+        setSelectedProfileId(mappedActive.id);
       }
     } catch {
       // Failed to load profiles
@@ -113,7 +116,7 @@ export function ProfileSwitcher({ onSwitchStart, onSwitchComplete }: ProfileSwit
           onClick={() => setIsOpen(!isOpen)}
           disabled={isSwitching || isLoading}
           className={`
-            flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-steel
+            flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-border
             bg-white dark:bg-charcoal text-slate-900 dark:text-gray-100
             hover:bg-slate-50 dark:hover:bg-viewport-light transition-colors shadow-soft dark:shadow-none
             ${isSwitching || isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
@@ -137,7 +140,7 @@ export function ProfileSwitcher({ onSwitchStart, onSwitchComplete }: ProfileSwit
         {isOpen && (
           <>
             <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
-            <div className="absolute top-full left-0 right-0 mt-2 z-20 bg-white dark:bg-charcoal rounded-xl shadow-panel dark:shadow-none border border-slate-200 dark:border-steel overflow-hidden">
+            <div className="absolute top-full left-0 right-0 mt-2 z-20 bg-white dark:bg-charcoal rounded-xl shadow-panel dark:shadow-none border border-slate-200 dark:border-border overflow-hidden">
               <div className="py-1 max-h-60 overflow-auto">
                 {profiles.length === 0 ? (
                   <div className="px-4 py-3 text-sm text-slate-500 dark:text-gray-400 text-center">
@@ -184,7 +187,7 @@ export function ProfileSwitcher({ onSwitchStart, onSwitchComplete }: ProfileSwit
         onClick={handleSwitch}
         disabled={isCurrentProfile || isSwitching || isLoading}
         className={`
-          btn-teal px-5 py-2.5 text-sm
+          btn-azure px-5 py-2.5 text-sm
           ${isCurrentProfile || isSwitching || isLoading ? 'opacity-50 cursor-not-allowed' : ''}
         `}
       >
