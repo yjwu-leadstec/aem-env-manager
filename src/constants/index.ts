@@ -34,9 +34,7 @@ export const TIMING = {
   /** Default status check interval in milliseconds (5 seconds) */
   STATUS_CHECK_INTERVAL: 5000,
   /** Minimum status check interval in seconds */
-  STATUS_CHECK_INTERVAL_MIN: 5,
-  /** Maximum status check interval in seconds */
-  STATUS_CHECK_INTERVAL_MAX: 60,
+  STATUS_CHECK_INTERVAL_MIN: 1,
 } as const;
 
 // ============================================

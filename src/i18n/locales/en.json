@@ -763,7 +763,7 @@
       "autoStatusCheck": "Auto Check Status",
       "autoStatusCheckDesc": "Automatically check running status of AEM instances in active profile",
       "statusCheckInterval": "Check Interval",
-      "statusCheckIntervalDesc": "Set status check interval ({{min}}-{{max}} seconds)",
+      "statusCheckIntervalDesc": "Set status check interval (minimum {{min}} seconds)",
       "seconds": "seconds"
     },
     "paths": {

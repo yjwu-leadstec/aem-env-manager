@@ -763,7 +763,7 @@
       "autoStatusCheck": "自動檢查狀態",
       "autoStatusCheckDesc": "自動檢查活動配置中 AEM 實例的運行狀態",
       "statusCheckInterval": "檢查間隔",
-      "statusCheckIntervalDesc": "設定狀態檢查間隔 ({{min}}-{{max}} 秒)",
+      "statusCheckIntervalDesc": "設定狀態檢查間隔 (最少 {{min}} 秒)",
       "seconds": "秒"
     },
     "paths": {

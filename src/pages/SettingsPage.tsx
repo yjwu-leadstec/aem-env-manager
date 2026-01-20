@@ -251,7 +251,6 @@ function GeneralSettings() {
                   <p className="text-sm text-slate-500 dark:text-slate-400">
                     {t('settings.general.statusCheckIntervalDesc', {
                       min: TIMING.STATUS_CHECK_INTERVAL_MIN,
-                      max: TIMING.STATUS_CHECK_INTERVAL_MAX,
                     })}
                   </p>
                 </div>
@@ -260,15 +259,10 @@ function GeneralSettings() {
                 <input
                   type="number"
                   min={TIMING.STATUS_CHECK_INTERVAL_MIN}
-                  max={TIMING.STATUS_CHECK_INTERVAL_MAX}
                   value={config.statusCheckInterval}
                   onChange={(e) => {
                     const value = parseInt(e.target.value, 10);
-                    if (
-                      !isNaN(value) &&
-                      value >= TIMING.STATUS_CHECK_INTERVAL_MIN &&
-                      value <= TIMING.STATUS_CHECK_INTERVAL_MAX
-                    ) {
+                    if (!isNaN(value) && value >= TIMING.STATUS_CHECK_INTERVAL_MIN) {
                       updateConfig({ statusCheckInterval: value });
                     }
                   }}

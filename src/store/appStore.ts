@@ -237,6 +237,23 @@ export const useAppStore = create<AppStore>()(
         config: state.config,
         preferences: state.preferences,
       }),
+      // Merge persisted state with default values to handle new config fields
+      merge: (persistedState, currentState) => {
+        const persisted = persistedState as Partial<AppStore> | undefined;
+        return {
+          ...currentState,
+          ...persisted,
+          // Ensure new config fields get default values if not in persisted state
+          config: {
+            ...currentState.config,
+            ...(persisted?.config || {}),
+          },
+          preferences: {
+            ...currentState.preferences,
+            ...(persisted?.preferences || {}),
+          },
+        };
+      },
     }
   )
 );

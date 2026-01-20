@@ -220,18 +220,30 @@ export function AemInstanceCards() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           {instances.slice(0, 4).map((instance) => {
             const statusResult = statusResults.get(instance.id);
+            // Check if instance is in active profile
+            const isActiveProfileInstance =
+              activeProfile &&
+              (instance.id === activeProfile.authorInstanceId ||
+                instance.id === activeProfile.publishInstanceId);
+            // When auto status check is disabled, show as stopped
+            // When not in active profile, also show as stopped
+            const displayInstance =
+              config.autoStatusCheck && isActiveProfileInstance
+                ? instance
+                : { ...instance, status: 'stopped' as const };
+            // Only show refresh-related UI when auto status check is enabled
+            const showStatusCheckUI = config.autoStatusCheck && isActiveProfileInstance;
+
             return (
               <InstanceCard
                 key={instance.id}
-                instance={instance}
+                instance={displayInstance}
                 onStart={() => handleStart(instance.id, instance.name)}
                 onOpenInBrowser={(path) => handleOpenInBrowser(instance.id, path)}
                 isStarting={startingInstanceId === instance.id}
-                conflictProcessName={
-                  config.autoStatusCheck ? statusResult?.process_name : undefined
-                }
+                conflictProcessName={showStatusCheckUI ? statusResult?.process_name : undefined}
                 lastChecked={
-                  config.autoStatusCheck ? statusResult?.checked_at || lastStatusCheck : undefined
+                  showStatusCheckUI ? statusResult?.checked_at || lastStatusCheck : undefined
                 }
               />
             );
