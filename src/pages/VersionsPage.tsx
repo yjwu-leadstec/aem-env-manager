@@ -900,9 +900,38 @@ function MavenConfigPanel({ mavenInfo, onRefresh }: MavenPanelProps) {
     try {
       const results = await versionApi.scanMavenSettingsInPath(searchDir.trim());
 
-      // Filter out already imported configurations
-      const existingPaths = new Set(mavenInfo?.configs?.map((c) => c.path) || []);
-      const filteredResults = results.filter((r) => !existingPaths.has(r.path));
+      // Filter out already imported configurations by checking if the source path is used as config name
+      // Since MavenConfig.path is the stored path (not source), we check if any config name contains part of the source path
+      const existingConfigs = mavenInfo?.configs || [];
+
+      // Create a set of normalized identifiers from existing configs
+      // Use both the config name and try to extract the original directory from the stored path
+      const existingIdentifiers = new Set<string>();
+      existingConfigs.forEach((c) => {
+        existingIdentifiers.add(c.name.toLowerCase());
+        // Also add the config ID which might match the source directory name
+        existingIdentifiers.add(c.id.toLowerCase());
+      });
+
+      // Filter results - mark as imported if the parent directory name or a derived name already exists
+      const filteredResults = results.filter((r) => {
+        // Get potential config name from the file path (parent directory)
+        const pathParts = r.path.split('/').filter(Boolean);
+        const parentDir = pathParts[pathParts.length - 2]?.toLowerCase() || '';
+        const cleanedName = r.name
+          .replace('.xml', '')
+          .replace(/settings/gi, '')
+          .replace(/^[-_.]+|[-_.]+$/g, '')
+          .trim()
+          .toLowerCase();
+
+        // Check if this would create a duplicate
+        const wouldDuplicate =
+          existingIdentifiers.has(parentDir) ||
+          (cleanedName && existingIdentifiers.has(cleanedName));
+
+        return !wouldDuplicate;
+      });
 
       setSearchResults(filteredResults);
 
@@ -1395,7 +1424,29 @@ function MavenConfigPanel({ mavenInfo, onRefresh }: MavenPanelProps) {
               <Button variant="outline" onClick={handleCloseImportDialog}>
                 {t('common.cancel')}
               </Button>
-              <Button onClick={handleImport}>{t('common.import')}</Button>
+              {/* Show batch import button when files are selected, otherwise show manual import button */}
+              {selectedFiles.size > 0 ? (
+                <Button
+                  onClick={handleBatchImport}
+                  disabled={isBatchImporting}
+                  icon={
+                    isBatchImporting ? (
+                      <RefreshCw size={16} className="animate-spin" />
+                    ) : (
+                      <Upload size={16} />
+                    )
+                  }
+                >
+                  {isBatchImporting
+                    ? t('maven.batch.importing', {
+                        current: batchImportProgress.current,
+                        total: batchImportProgress.total,
+                      })
+                    : t('maven.batch.import', { count: selectedFiles.size })}
+                </Button>
+              ) : (
+                <Button onClick={handleImport}>{t('common.import')}</Button>
+              )}
             </div>
           </div>
         </div>
