@@ -429,6 +429,20 @@
     },
     "viewDetail": "查看详情",
     "localRepo": "本地仓库",
+    "batch": {
+      "noSelection": "未选择文件",
+      "noSelectionMessage": "请选择要导入的文件",
+      "selectAll": "全选",
+      "deselectAll": "取消全选",
+      "import": "导入 ({{count}})",
+      "importing": "导入中 {{current}}/{{total}}",
+      "importSuccess": "批量导入成功",
+      "importSuccessMessage": "成功导入 {{count}} 个配置",
+      "importFailed": "批量导入失败",
+      "importFailedMessage": "导入 {{count}} 个配置失败",
+      "importPartial": "部分导入完成",
+      "importPartialMessage": "成功导入 {{success}} 个，失败 {{failed}} 个"
+    },
     "search": {
       "title": "搜索 Maven 配置",
       "description": "指定一个目录来搜索 .m2、settings.xml 等 Maven 配置文件",

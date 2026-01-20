@@ -755,6 +755,11 @@ function MavenConfigPanel({ mavenInfo, onRefresh }: MavenPanelProps) {
   const [searchResults, setSearchResults] = useState<versionApi.MavenSettingsFile[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
+  // Batch import state
+  const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
+  const [isBatchImporting, setIsBatchImporting] = useState(false);
+  const [batchImportProgress, setBatchImportProgress] = useState({ current: 0, total: 0 });
+
   const handleSwitch = async (configId: string) => {
     setSwitchingConfig(configId);
     try {
@@ -934,6 +939,98 @@ function MavenConfigPanel({ mavenInfo, onRefresh }: MavenPanelProps) {
     setSearchResults([]); // Clear search results after selection
   };
 
+  // Toggle file selection for batch import
+  const toggleFileSelection = (filePath: string) => {
+    const newSelection = new Set(selectedFiles);
+    if (newSelection.has(filePath)) {
+      newSelection.delete(filePath);
+    } else {
+      newSelection.add(filePath);
+    }
+    setSelectedFiles(newSelection);
+  };
+
+  // Select/deselect all files
+  const toggleSelectAll = () => {
+    if (selectedFiles.size === searchResults.length) {
+      setSelectedFiles(new Set());
+    } else {
+      setSelectedFiles(new Set(searchResults.map((f) => f.path)));
+    }
+  };
+
+  // Batch import selected files
+  const handleBatchImport = async () => {
+    if (selectedFiles.size === 0) {
+      addNotification({
+        type: 'warning',
+        title: t('maven.batch.noSelection'),
+        message: t('maven.batch.noSelectionMessage'),
+      });
+      return;
+    }
+
+    setIsBatchImporting(true);
+    setBatchImportProgress({ current: 0, total: selectedFiles.size });
+
+    const selectedFilesArray = searchResults.filter((f) => selectedFiles.has(f.path));
+    let successCount = 0;
+    let failCount = 0;
+
+    for (let i = 0; i < selectedFilesArray.length; i++) {
+      const file = selectedFilesArray[i];
+      setBatchImportProgress({ current: i + 1, total: selectedFiles.size });
+
+      try {
+        // Auto-generate name from file
+        const suggestedName =
+          file.name
+            .replace('.xml', '')
+            .replace('settings', '')
+            .replace(/^[-_.]/, '') ||
+          file.path.split('/').slice(-2, -1)[0] ||
+          `Maven Config ${i + 1}`;
+
+        await versionApi.importMavenConfig(suggestedName, file.path);
+        successCount++;
+      } catch (error) {
+        console.error(`Failed to import ${file.name}:`, error);
+        failCount++;
+      }
+    }
+
+    // Show result notification
+    if (failCount === 0) {
+      addNotification({
+        type: 'success',
+        title: t('maven.batch.importSuccess'),
+        message: t('maven.batch.importSuccessMessage', { count: successCount }),
+      });
+    } else if (successCount === 0) {
+      addNotification({
+        type: 'error',
+        title: t('maven.batch.importFailed'),
+        message: t('maven.batch.importFailedMessage', { count: failCount }),
+      });
+    } else {
+      addNotification({
+        type: 'warning',
+        title: t('maven.batch.importPartial'),
+        message: t('maven.batch.importPartialMessage', {
+          success: successCount,
+          failed: failCount,
+        }),
+      });
+    }
+
+    // Reset state
+    setIsBatchImporting(false);
+    setBatchImportProgress({ current: 0, total: 0 });
+    setSelectedFiles(new Set());
+    setSearchResults([]);
+    onRefresh();
+  };
+
   // Reset dialog state when closing
   const handleCloseImportDialog = () => {
     setShowImportDialog(false);
@@ -941,6 +1038,8 @@ function MavenConfigPanel({ mavenInfo, onRefresh }: MavenPanelProps) {
     setImportPath('');
     setSearchPath('');
     setSearchResults([]);
+    setSelectedFiles(new Set());
+    setBatchImportProgress({ current: 0, total: 0 });
   };
 
   return (
@@ -1143,28 +1242,72 @@ function MavenConfigPanel({ mavenInfo, onRefresh }: MavenPanelProps) {
                 {/* Search Results */}
                 {searchResults.length > 0 && (
                   <div className="mt-3 space-y-2">
-                    <p className="text-xs font-medium text-slate-600 dark:text-slate-300">
-                      {t('maven.search.resultsTitle', { count: searchResults.length })}
-                    </p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                        {t('maven.search.resultsTitle', { count: searchResults.length })}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={toggleSelectAll}
+                          className="text-xs text-azure-600 dark:text-azure-400 hover:underline"
+                        >
+                          {selectedFiles.size === searchResults.length
+                            ? t('maven.batch.deselectAll')
+                            : t('maven.batch.selectAll')}
+                        </button>
+                        {selectedFiles.size > 0 && (
+                          <Button
+                            size="sm"
+                            variant="primary"
+                            onClick={handleBatchImport}
+                            disabled={isBatchImporting}
+                            icon={
+                              isBatchImporting ? (
+                                <RefreshCw size={14} className="animate-spin" />
+                              ) : (
+                                <Upload size={14} />
+                              )
+                            }
+                          >
+                            {isBatchImporting
+                              ? t('maven.batch.importing', {
+                                  current: batchImportProgress.current,
+                                  total: batchImportProgress.total,
+                                })
+                              : t('maven.batch.import', { count: selectedFiles.size })}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
                     <div className="max-h-40 overflow-y-auto space-y-1">
                       {searchResults.map((file, index) => (
-                        <button
+                        <div
                           key={index}
-                          onClick={() => handleSelectFoundFile(file)}
-                          className="w-full text-left p-2 rounded-lg bg-white dark:bg-slate-600 hover:bg-azure-50 dark:hover:bg-azure-900/30 border border-slate-200 dark:border-slate-500 transition-colors"
+                          className="flex items-start gap-2 p-2 rounded-lg bg-white dark:bg-slate-600 border border-slate-200 dark:border-slate-500"
                         >
-                          <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
-                            {file.name}
-                          </p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                            {file.path}
-                          </p>
-                          {file.local_repository && (
-                            <p className="text-xs text-azure-600 dark:text-azure-400 truncate mt-0.5">
-                              📁 {file.local_repository}
+                          <input
+                            type="checkbox"
+                            checked={selectedFiles.has(file.path)}
+                            onChange={() => toggleFileSelection(file.path)}
+                            className="mt-1 h-4 w-4 rounded border-slate-300 text-azure-600 focus:ring-azure-500"
+                          />
+                          <button
+                            onClick={() => handleSelectFoundFile(file)}
+                            className="flex-1 text-left hover:bg-azure-50 dark:hover:bg-azure-900/30 rounded transition-colors p-1"
+                          >
+                            <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
+                              {file.name}
                             </p>
-                          )}
-                        </button>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                              {file.path}
+                            </p>
+                            {file.local_repository && (
+                              <p className="text-xs text-azure-600 dark:text-azure-400 truncate mt-0.5">
+                                📁 {file.local_repository}
+                              </p>
+                            )}
+                          </button>
+                        </div>
                       ))}
                     </div>
                   </div>

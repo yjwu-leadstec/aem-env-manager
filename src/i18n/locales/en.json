@@ -424,6 +424,20 @@
     },
     "viewDetail": "View Details",
     "localRepo": "Local Repository",
+    "batch": {
+      "noSelection": "No files selected",
+      "noSelectionMessage": "Please select files to import",
+      "selectAll": "Select All",
+      "deselectAll": "Deselect All",
+      "import": "Import ({{count}})",
+      "importing": "Importing {{current}}/{{total}}",
+      "importSuccess": "Batch Import Successful",
+      "importSuccessMessage": "Successfully imported {{count}} configuration(s)",
+      "importFailed": "Batch Import Failed",
+      "importFailedMessage": "Failed to import {{count}} configuration(s)",
+      "importPartial": "Partial Import Completed",
+      "importPartialMessage": "Successfully imported {{success}}, failed {{failed}}"
+    },
     "search": {
       "title": "Search Maven Configurations",
       "description": "Specify a directory to search for .m2, settings.xml and other Maven configuration files",
