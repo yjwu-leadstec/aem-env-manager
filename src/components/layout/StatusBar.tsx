@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Activity, Cpu, HardDrive, Clock } from 'lucide-react';
-import { useAemInstances, useActiveProfile } from '../../store';
+import { Cpu, HardDrive, Clock } from 'lucide-react';
+import { useActiveProfile } from '../../store';
 
 export function StatusBar() {
   const { t, i18n } = useTranslation();
-  const instances = useAemInstances();
   const activeProfile = useActiveProfile();
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -16,9 +15,6 @@ export function StatusBar() {
     }, 60000);
     return () => clearInterval(timer);
   }, []);
-
-  const runningCount = instances.filter((i) => i.status === 'running').length;
-  const totalCount = instances.length;
 
   const formatTime = (date: Date) => {
     const locale = i18n.language === 'en' ? 'en-US' : i18n.language === 'zh-TW' ? 'zh-TW' : 'zh-CN';
@@ -36,14 +32,6 @@ export function StatusBar() {
             <span className="font-medium">{activeProfile.name}</span>
           </div>
         )}
-
-        {/* AEM Instances */}
-        <div className="flex items-center gap-1.5">
-          <Activity size={12} className="text-azure-500 dark:text-tech-orange" />
-          <span>
-            {runningCount}/{totalCount} {t('statusBar.instances')}
-          </span>
-        </div>
       </div>
 
       {/* Center - Quick Stats */}
