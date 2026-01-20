@@ -31,6 +31,12 @@ export const TIMING = {
   HEALTH_CHECK_INTERVAL: 30000,
   /** Quick action feedback duration */
   QUICK_ACTION_FEEDBACK: 2000,
+  /** Default status check interval in milliseconds (5 seconds) */
+  STATUS_CHECK_INTERVAL: 5000,
+  /** Minimum status check interval in seconds */
+  STATUS_CHECK_INTERVAL_MIN: 5,
+  /** Maximum status check interval in seconds */
+  STATUS_CHECK_INTERVAL_MAX: 60,
 } as const;
 
 // ============================================

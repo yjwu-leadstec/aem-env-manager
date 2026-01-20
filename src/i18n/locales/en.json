@@ -757,7 +757,14 @@
       "autoSwitch": "Auto Switch Profile",
       "autoSwitchDesc": "Automatically switch environment when selecting a profile",
       "startMinimized": "Start Minimized",
-      "startMinimizedDesc": "Minimize to system tray when starting the application"
+      "startMinimizedDesc": "Minimize to system tray when starting the application",
+      "statusCheck": "Instance Status Check",
+      "statusCheckDesc": "Configure automatic AEM instance status checking",
+      "autoStatusCheck": "Auto Check Status",
+      "autoStatusCheckDesc": "Automatically check running status of AEM instances in active profile",
+      "statusCheckInterval": "Check Interval",
+      "statusCheckIntervalDesc": "Set status check interval ({{min}}-{{max}} seconds)",
+      "seconds": "seconds"
     },
     "paths": {
       "scanDirs": "Scan Directories",

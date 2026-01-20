@@ -1342,22 +1342,34 @@ pub async fn get_credentials(instance_id: String) -> Result<Option<(String, Stri
 
 /// Check if a TCP port is open using a connect timeout
 fn check_port_open(host: &str, port: u16, timeout_ms: u64) -> bool {
+    use std::net::ToSocketAddrs;
+
     let addr = format!("{}:{}", host, port);
-    match addr.parse::<std::net::SocketAddr>() {
-        Ok(socket_addr) => {
-            TcpStream::connect_timeout(&socket_addr, Duration::from_millis(timeout_ms)).is_ok()
+
+    // Use ToSocketAddrs to resolve hostname (e.g., "localhost" -> "127.0.0.1")
+    match addr.to_socket_addrs() {
+        Ok(mut addrs) => {
+            // Try each resolved address
+            for socket_addr in addrs.by_ref() {
+                if TcpStream::connect_timeout(&socket_addr, Duration::from_millis(timeout_ms)).is_ok() {
+                    return true;
+                }
+            }
+            false
         }
         Err(_) => false,
     }
 }
 
 /// Get process info by port: returns (pid, process_name) if found
+/// Only returns the process that is LISTENING on the port, not client connections
 fn get_process_info_by_port(port: u16) -> Option<(u32, String)> {
     #[cfg(target_os = "macos")]
     {
-        // Use lsof to get PID
+        // Use lsof with -sTCP:LISTEN to only get processes listening on the port
+        // This excludes client connections (ESTABLISHED state)
         let pid_output = Command::new("lsof")
-            .args(["-ti", &format!(":{}", port)])
+            .args(["-ti", &format!("TCP:{}", port), "-sTCP:LISTEN"])
             .output()
             .ok()?;
 

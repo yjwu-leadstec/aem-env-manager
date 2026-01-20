@@ -22,6 +22,10 @@ interface AppConfig {
   startMinimized: boolean;
   showNotifications: boolean;
   logLevel: 'debug' | 'info' | 'warn' | 'error';
+  /** Enable auto status check for AEM instances */
+  autoStatusCheck: boolean;
+  /** Status check interval in seconds (5-60) */
+  statusCheckInterval: number;
 }
 
 interface AppStore {
@@ -83,6 +87,8 @@ const defaultConfig: AppConfig = {
   startMinimized: false,
   showNotifications: true,
   logLevel: 'info',
+  autoStatusCheck: true,
+  statusCheckInterval: TIMING.STATUS_CHECK_INTERVAL / 1000, // Convert ms to seconds
 };
 
 const defaultPreferences: UserPreferences = {

@@ -761,7 +761,14 @@
       "autoSwitch": "自动切换配置",
       "autoSwitchDesc": "选择配置文件时自动切换环境",
       "startMinimized": "启动时最小化",
-      "startMinimizedDesc": "启动应用程序时最小化到系统托盘"
+      "startMinimizedDesc": "启动应用程序时最小化到系统托盘",
+      "statusCheck": "实例状态检查",
+      "statusCheckDesc": "配置 AEM 实例状态自动检查",
+      "autoStatusCheck": "自动检查状态",
+      "autoStatusCheckDesc": "自动检查活动配置中 AEM 实例的运行状态",
+      "statusCheckInterval": "检查间隔",
+      "statusCheckIntervalDesc": "设置状态检查间隔 ({{min}}-{{max}} 秒)",
+      "seconds": "秒"
     },
     "paths": {
       "scanDirs": "扫描目录",

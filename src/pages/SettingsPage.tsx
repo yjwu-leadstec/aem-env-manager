@@ -15,12 +15,15 @@ import {
   X,
   AlertTriangle,
   Check,
+  Activity,
+  Clock,
 } from 'lucide-react';
 import { Card, CardHeader, CardContent } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
 import { useConfig, useAppStore } from '@/store';
 import type { AppConfig } from '@/types';
 import * as settingsApi from '@/api/settings';
+import { TIMING } from '@/constants';
 
 type SettingsTab = 'general' | 'paths' | 'data';
 
@@ -218,6 +221,65 @@ function GeneralSettings() {
             enabled={config.startMinimized}
             onChange={(enabled) => updateConfig({ startMinimized: enabled })}
           />
+        </CardContent>
+      </Card>
+
+      {/* Instance Status Check */}
+      <Card>
+        <CardHeader
+          title={t('settings.general.statusCheck')}
+          subtitle={t('settings.general.statusCheckDesc')}
+        />
+        <CardContent className="space-y-4">
+          <ToggleSetting
+            icon={<Activity size={18} />}
+            title={t('settings.general.autoStatusCheck')}
+            description={t('settings.general.autoStatusCheckDesc')}
+            enabled={config.autoStatusCheck}
+            onChange={(enabled) => updateConfig({ autoStatusCheck: enabled })}
+          />
+          {config.autoStatusCheck && (
+            <div className="flex items-center justify-between">
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-black/5 dark:bg-white/5 text-slate-600 dark:text-slate-400">
+                  <Clock size={18} />
+                </div>
+                <div>
+                  <p className="font-medium text-slate-700 dark:text-slate-300">
+                    {t('settings.general.statusCheckInterval')}
+                  </p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {t('settings.general.statusCheckIntervalDesc', {
+                      min: TIMING.STATUS_CHECK_INTERVAL_MIN,
+                      max: TIMING.STATUS_CHECK_INTERVAL_MAX,
+                    })}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min={TIMING.STATUS_CHECK_INTERVAL_MIN}
+                  max={TIMING.STATUS_CHECK_INTERVAL_MAX}
+                  value={config.statusCheckInterval}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value, 10);
+                    if (
+                      !isNaN(value) &&
+                      value >= TIMING.STATUS_CHECK_INTERVAL_MIN &&
+                      value <= TIMING.STATUS_CHECK_INTERVAL_MAX
+                    ) {
+                      updateConfig({ statusCheckInterval: value });
+                    }
+                  }}
+                  className="input w-20 text-center"
+                />
+                <span className="text-sm text-slate-500 dark:text-slate-400">
+                  {t('settings.general.seconds')}
+                </span>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

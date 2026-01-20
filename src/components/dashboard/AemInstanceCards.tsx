@@ -10,7 +10,7 @@ import {
   ExternalLink,
   AlertTriangle,
 } from 'lucide-react';
-import { useAppStore, useAemInstances, useActiveProfile } from '../../store';
+import { useAppStore, useAemInstances, useActiveProfile, useConfig } from '../../store';
 import * as instanceApi from '../../api/instance';
 import { mapApiInstanceToFrontend } from '../../api/mappers';
 import type { AEMInstance, AEMInstanceStatus } from '../../types';
@@ -21,6 +21,7 @@ export function AemInstanceCards() {
   const navigate = useNavigate();
   const allInstances = useAemInstances();
   const activeProfile = useActiveProfile();
+  const config = useConfig();
   const setAemInstances = useAppStore((s) => s.setAemInstances);
   const updateAemInstance = useAppStore((s) => s.updateAemInstance);
   const addNotification = useAppStore((s) => s.addNotification);
@@ -58,17 +59,33 @@ export function AemInstanceCards() {
     loadInstances();
   }, [loadInstances]);
 
-  // Refresh status of all instances using fast detection (no auth required)
+  // Refresh status of active profile instances only (no auth required)
   const refreshAllStatuses = useCallback(async () => {
+    if (!activeProfile) return;
+
+    // Only detect status for instances associated with active profile
+    const instanceIds = [activeProfile.authorInstanceId, activeProfile.publishInstanceId].filter(
+      (id): id is string => id !== null && id !== undefined
+    );
+
+    if (instanceIds.length === 0) return;
+
     setIsRefreshingStatus(true);
     try {
-      const results = await instanceApi.detectAllInstancesStatus();
       const newMap = new Map<string, InstanceStatusResult>();
-      for (const result of results) {
-        newMap.set(result.instance_id, result);
-        // Update instance status in store
-        updateAemInstance(result.instance_id, { status: result.status as AEMInstanceStatus });
-      }
+      // Detect status for each active profile instance
+      await Promise.all(
+        instanceIds.map(async (id) => {
+          try {
+            const result = await instanceApi.detectInstanceStatus(id);
+            newMap.set(result.instance_id, result);
+            // Update instance status in store
+            updateAemInstance(result.instance_id, { status: result.status as AEMInstanceStatus });
+          } catch {
+            // Individual instance detection failed, continue with others
+          }
+        })
+      );
       setStatusResults(newMap);
       setLastStatusCheck(new Date().toISOString());
     } catch (error) {
@@ -80,7 +97,29 @@ export function AemInstanceCards() {
     } finally {
       setIsRefreshingStatus(false);
     }
-  }, [updateAemInstance, addNotification, t]);
+  }, [activeProfile, updateAemInstance, addNotification, t]);
+
+  // Auto-refresh status based on config
+  useEffect(() => {
+    // Initial status check on mount (always perform once)
+    refreshAllStatuses();
+
+    // Only set up interval if auto status check is enabled
+    if (!config.autoStatusCheck) {
+      return;
+    }
+
+    // Set up interval for periodic refresh (interval in seconds, convert to ms)
+    const intervalMs = config.statusCheckInterval * 1000;
+    const intervalId = setInterval(() => {
+      refreshAllStatuses();
+    }, intervalMs);
+
+    // Cleanup on unmount
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [refreshAllStatuses, config.autoStatusCheck, config.statusCheckInterval]);
 
   const handleStart = async (instanceId: string, instanceName: string) => {
     // 5-second debounce to prevent multiple terminal windows
@@ -140,15 +179,17 @@ export function AemInstanceCards() {
             <Plus size={16} />
             {t('instance.add')}
           </button>
-          <button
-            className="btn-ghost px-3 py-2 text-sm flex items-center gap-2"
-            onClick={refreshAllStatuses}
-            disabled={isRefreshingStatus}
-            title={t('instance.actions.refreshStatus', 'Refresh Status')}
-          >
-            <RefreshCw size={14} className={isRefreshingStatus ? 'animate-spin' : ''} />
-            {t('instance.actions.refreshStatus', 'Status')}
-          </button>
+          {config.autoStatusCheck && (
+            <button
+              className="btn-ghost px-3 py-2 text-sm flex items-center gap-2"
+              onClick={refreshAllStatuses}
+              disabled={isRefreshingStatus}
+              title={t('instance.actions.refreshStatus', 'Refresh Status')}
+            >
+              <RefreshCw size={14} className={isRefreshingStatus ? 'animate-spin' : ''} />
+              {t('instance.actions.refreshStatus', 'Status')}
+            </button>
+          )}
           <button
             className="btn-ghost px-3 py-2 text-sm flex items-center gap-2"
             onClick={loadInstances}
@@ -186,8 +227,12 @@ export function AemInstanceCards() {
                 onStart={() => handleStart(instance.id, instance.name)}
                 onOpenInBrowser={(path) => handleOpenInBrowser(instance.id, path)}
                 isStarting={startingInstanceId === instance.id}
-                conflictProcessName={statusResult?.process_name}
-                lastChecked={statusResult?.checked_at || lastStatusCheck}
+                conflictProcessName={
+                  config.autoStatusCheck ? statusResult?.process_name : undefined
+                }
+                lastChecked={
+                  config.autoStatusCheck ? statusResult?.checked_at || lastStatusCheck : undefined
+                }
               />
             );
           })}

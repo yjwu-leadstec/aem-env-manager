@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { Plus, RefreshCw, Terminal } from 'lucide-react';
@@ -6,13 +6,17 @@ import { Button } from '@/components/common/Button';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { InstanceCard, InstanceFormDialog, EmptyState } from '@/components/instances';
 import type { InstanceFormData } from '@/components/instances';
-import { useAppStore } from '@/store';
+import { useAppStore, useActiveProfile, useConfig } from '@/store';
 import { useInstanceManager } from '@/hooks';
-import type { AEMInstance } from '@/types';
+import * as instanceApi from '@/api/instance';
+import type { InstanceStatusResult } from '@/api/instance';
+import type { AEMInstance, AEMInstanceStatus } from '@/types';
 
 export function InstancesPage() {
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
+  const activeProfile = useActiveProfile();
+  const config = useConfig();
 
   // Use centralized instance manager hook - single source of truth
   const {
@@ -26,6 +30,9 @@ export function InstancesPage() {
 
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [startingInstanceId, setStartingInstanceId] = useState<string | null>(null);
+  const [isRefreshingStatus, setIsRefreshingStatus] = useState(false);
+  const [statusResults, setStatusResults] = useState<Map<string, InstanceStatusResult>>(new Map());
+  const [lastStatusCheck, setLastStatusCheck] = useState<string | null>(null);
   const addNotification = useAppStore((s) => s.addNotification);
   const updateInstance = useAppStore((s) => s.updateAemInstance);
 
@@ -44,6 +51,65 @@ export function InstancesPage() {
       setSearchParams({}, { replace: true });
     }
   }, [searchParams, setSearchParams]);
+
+  // Refresh status of active profile instances only (no auth required)
+  const refreshAllStatuses = useCallback(async () => {
+    if (!activeProfile) return;
+
+    // Only detect status for instances associated with active profile
+    const instanceIds = [activeProfile.authorInstanceId, activeProfile.publishInstanceId].filter(
+      (id): id is string => id !== null && id !== undefined
+    );
+
+    if (instanceIds.length === 0) return;
+
+    setIsRefreshingStatus(true);
+    try {
+      const newMap = new Map<string, InstanceStatusResult>();
+      // Detect status for each active profile instance
+      await Promise.all(
+        instanceIds.map(async (id) => {
+          try {
+            const result = await instanceApi.detectInstanceStatus(id);
+            newMap.set(result.instance_id, result);
+            // Update instance status in store
+            updateInstance(result.instance_id, { status: result.status as AEMInstanceStatus });
+          } catch {
+            // Individual instance detection failed, continue with others
+          }
+        })
+      );
+      setStatusResults(newMap);
+      setLastStatusCheck(new Date().toISOString());
+    } catch (error) {
+      // Silent fail for auto-refresh
+      console.error('Failed to refresh statuses:', error);
+    } finally {
+      setIsRefreshingStatus(false);
+    }
+  }, [activeProfile, updateInstance]);
+
+  // Auto-refresh status based on config
+  useEffect(() => {
+    // Initial status check on mount (always perform once)
+    refreshAllStatuses();
+
+    // Only set up interval if auto status check is enabled
+    if (!config.autoStatusCheck) {
+      return;
+    }
+
+    // Set up interval for periodic refresh (interval in seconds, convert to ms)
+    const intervalMs = config.statusCheckInterval * 1000;
+    const intervalId = setInterval(() => {
+      refreshAllStatuses();
+    }, intervalMs);
+
+    // Cleanup on unmount
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [refreshAllStatuses, config.autoStatusCheck, config.statusCheckInterval]);
 
   const handleRefreshAll = async () => {
     setIsRefreshing(true);
@@ -226,20 +292,42 @@ export function InstancesPage() {
         <EmptyState onAdd={() => setShowInstanceForm(true)} />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {instances.map((instance) => (
-            <InstanceCard
-              key={instance.id}
-              instance={instance}
-              onStart={() => handleStart(instance)}
-              onEdit={() => {
-                setEditingInstance(instance);
-                setShowInstanceForm(true);
-              }}
-              onDelete={() => setShowDeleteConfirm(instance.id)}
-              onOpenBrowser={(path) => handleOpenInBrowser(instance, path)}
-              isStarting={startingInstanceId === instance.id}
-            />
-          ))}
+          {instances.map((instance) => {
+            const statusResult = statusResults.get(instance.id);
+            // Check if instance is in active profile
+            const isActiveProfileInstance =
+              activeProfile &&
+              (instance.id === activeProfile.authorInstanceId ||
+                instance.id === activeProfile.publishInstanceId);
+            // For non-active profile instances, show as stopped
+            const displayInstance = isActiveProfileInstance
+              ? instance
+              : { ...instance, status: 'stopped' as const };
+
+            // Only show refresh-related UI when auto status check is enabled
+            const showStatusCheckUI = config.autoStatusCheck && isActiveProfileInstance;
+
+            return (
+              <InstanceCard
+                key={instance.id}
+                instance={displayInstance}
+                onStart={() => handleStart(instance)}
+                onEdit={() => {
+                  setEditingInstance(instance);
+                  setShowInstanceForm(true);
+                }}
+                onDelete={() => setShowDeleteConfirm(instance.id)}
+                onOpenBrowser={(path) => handleOpenInBrowser(instance, path)}
+                onRefreshStatus={showStatusCheckUI ? refreshAllStatuses : undefined}
+                isStarting={startingInstanceId === instance.id}
+                isRefreshing={showStatusCheckUI ? isRefreshingStatus : false}
+                conflictProcessName={showStatusCheckUI ? statusResult?.process_name : undefined}
+                lastChecked={
+                  showStatusCheckUI ? statusResult?.checked_at || lastStatusCheck : undefined
+                }
+              />
+            );
+          })}
         </div>
       )}
 
