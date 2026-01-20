@@ -385,6 +385,38 @@ pub async fn get_licenses_for_instance(instance_id: String) -> Result<Vec<AemLic
         .collect())
 }
 
+/// Import license from a license.properties file and associate with an instance
+/// This automatically parses the license file and creates a license record
+#[command]
+pub async fn import_license_from_file(
+    file_path: String,
+    instance_id: String,
+    instance_name: String,
+) -> Result<AemLicense, String> {
+    // Parse the license file
+    let parsed = parse_license_file(file_path.clone()).await?;
+
+    // Create a license record
+    let license = AemLicense {
+        id: uuid::Uuid::new_v4().to_string(),
+        name: format!("{} License", instance_name),
+        license_key: parsed.license_key,
+        license_file_path: Some(file_path),
+        product_name: parsed.product_name.unwrap_or_else(|| "AEM".to_string()),
+        product_version: parsed.product_version,
+        customer_name: parsed.customer_name,
+        expiry_date: parsed.expiry_date,
+        status: LicenseStatus::Unknown,
+        associated_instance_id: Some(instance_id),
+        notes: parsed.download_id.map(|id| format!("Download ID: {}", id)),
+        created_at: chrono::Utc::now().to_rfc3339(),
+        updated_at: chrono::Utc::now().to_rfc3339(),
+    };
+
+    // Add the license
+    add_aem_license(license).await
+}
+
 // ============================================
 // Helper Functions
 // ============================================

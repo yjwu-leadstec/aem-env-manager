@@ -118,7 +118,7 @@ export function InstancesPage() {
       } else {
         // Create new instance - use API directly then refresh
         const { addInstance } = await import('@/api/instance');
-        await addInstance({
+        const newInstance = await addInstance({
           name: data.name,
           instance_type: data.instanceType,
           host: data.host,
@@ -127,6 +127,28 @@ export function InstancesPage() {
           java_opts: data.javaOpts || null,
           run_modes: data.runModes,
         });
+
+        // Auto-import license if found during scanning
+        if (data.licenseFilePath) {
+          try {
+            const { importLicenseFromFile } = await import('@/api/license');
+            await importLicenseFromFile(data.licenseFilePath, newInstance.id, data.name);
+            addNotification({
+              type: 'success',
+              title: t('instance.notifications.licenseImported'),
+              message: t('instance.notifications.licenseImportedMessage'),
+            });
+          } catch (error) {
+            // License import failed, but instance was created successfully
+            console.warn('Failed to import license:', error);
+            addNotification({
+              type: 'warning',
+              title: t('instance.notifications.licenseImportFailed'),
+              message: t('instance.notifications.licenseImportFailedMessage'),
+            });
+          }
+        }
+
         addNotification({
           type: 'success',
           title: t('instance.notifications.added'),

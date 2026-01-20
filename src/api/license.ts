@@ -179,6 +179,25 @@ export async function getLicensesForInstance(instanceId: string): Promise<AemLic
   return invoke<AemLicense[]>('get_licenses_for_instance', { instanceId });
 }
 
+/**
+ * Import license from a license.properties file and associate with an instance
+ * This automatically parses the license file and creates a license record
+ * @param filePath - Path to the license.properties file
+ * @param instanceId - Instance ID to associate the license with
+ * @param instanceName - Instance name for naming the license
+ */
+export async function importLicenseFromFile(
+  filePath: string,
+  instanceId: string,
+  instanceName: string
+): Promise<AemLicense> {
+  return invoke<AemLicense>('import_license_from_file', {
+    filePath,
+    instanceId,
+    instanceName,
+  });
+}
+
 // ============================================
 // License Statistics
 // ============================================

@@ -20,8 +20,9 @@ use commands::{
     scan_directory_for_jars, start_instance, stop_instance, store_credentials, update_instance,
     // License commands
     add_aem_license, associate_license_with_instance, check_license_file, delete_aem_license,
-    get_aem_license, get_license_statistics, get_licenses_for_instance, list_aem_licenses,
-    parse_license_file, read_license_file, update_aem_license, validate_aem_license,
+    get_aem_license, get_license_statistics, get_licenses_for_instance, import_license_from_file,
+    list_aem_licenses, parse_license_file, read_license_file, update_aem_license,
+    validate_aem_license,
     // Settings commands
     export_all_config, import_all_config, load_scan_paths, reset_all_config, save_scan_paths,
     // Environment commands
@@ -106,6 +107,7 @@ pub fn run() {
             associate_license_with_instance,
             get_licenses_for_instance,
             get_license_statistics,
+            import_license_from_file,
             // Settings commands
             load_scan_paths,
             save_scan_paths,

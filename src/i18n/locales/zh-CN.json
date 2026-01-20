@@ -165,7 +165,11 @@
       "terminalOpened": "终端已打开",
       "runningInTerminal": "{{name}} 正在新的终端窗口中运行",
       "stopRequestSent": "停止请求已发送",
-      "stopRequestMessage": "已向 {{name}} 发送停止信号"
+      "stopRequestMessage": "已向 {{name}} 发送停止信号",
+      "licenseImported": "许可证已导入",
+      "licenseImportedMessage": "已自动导入 AEM 许可证文件",
+      "licenseImportFailed": "许可证导入失败",
+      "licenseImportFailedMessage": "实例已创建,但许可证导入失败"
     },
     "fields": {
       "name": "名称",

@@ -165,7 +165,11 @@
       "updateFailed": "Update Failed",
       "added": "Instance Added",
       "addedMessage": "{name} has been added",
-      "addFailed": "Add Failed"
+      "addFailed": "Add Failed",
+      "licenseImported": "License Imported",
+      "licenseImportedMessage": "AEM license file has been automatically imported",
+      "licenseImportFailed": "License Import Failed",
+      "licenseImportFailedMessage": "Instance created, but license import failed"
     },
     "fields": {
       "name": "Name",

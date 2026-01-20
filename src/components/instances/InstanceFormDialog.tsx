@@ -15,6 +15,7 @@ export interface InstanceFormData {
   path: string;
   javaOpts: string;
   runModes: string[];
+  licenseFilePath?: string | null; // License file path if found during scanning
 }
 
 interface InstanceFormDialogProps {
@@ -89,6 +90,8 @@ export function InstanceFormDialog({
       port: jar.port,
       // Use jar_path if available, otherwise fall back to directory path
       path: jar.jar_path || jar.path,
+      // Save license file path if found
+      licenseFilePath: jar.license_file_path,
     }));
     setShowJarModal(false);
     setFoundJars([]);

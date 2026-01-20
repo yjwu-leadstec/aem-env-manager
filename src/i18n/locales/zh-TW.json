@@ -162,7 +162,11 @@
       "terminalOpened": "終端機已開啟",
       "runningInTerminal": "{{name}} 正在新的終端機視窗中執行",
       "stopRequestSent": "停止請求已發送",
-      "stopRequestMessage": "已向 {{name}} 發送停止訊號"
+      "stopRequestMessage": "已向 {{name}} 發送停止訊號",
+      "licenseImported": "授權已匯入",
+      "licenseImportedMessage": "已自動匯入 AEM 授權檔案",
+      "licenseImportFailed": "授權匯入失敗",
+      "licenseImportFailedMessage": "實例已建立,但授權匯入失敗"
     },
     "fields": {
       "name": "名稱",
