@@ -294,23 +294,13 @@ export function InstancesPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {instances.map((instance) => {
             const statusResult = statusResults.get(instance.id);
-            // Check if instance is in active profile
-            const isActiveProfileInstance =
-              activeProfile &&
-              (instance.id === activeProfile.authorInstanceId ||
-                instance.id === activeProfile.publishInstanceId);
-            // For non-active profile instances, show as stopped
-            const displayInstance = isActiveProfileInstance
-              ? instance
-              : { ...instance, status: 'stopped' as const };
-
             // Only show refresh-related UI when auto status check is enabled
-            const showStatusCheckUI = config.autoStatusCheck && isActiveProfileInstance;
+            const showStatusCheckUI = config.autoStatusCheck;
 
             return (
               <InstanceCard
                 key={instance.id}
-                instance={displayInstance}
+                instance={instance}
                 onStart={() => handleStart(instance)}
                 onEdit={() => {
                   setEditingInstance(instance);
