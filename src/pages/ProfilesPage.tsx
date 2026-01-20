@@ -295,7 +295,7 @@ export function ProfilesPage() {
           <RefreshCw size={32} className="animate-spin text-azure" />
         </div>
       ) : profiles.length === 0 ? (
-        <EmptyState onCreateClick={() => setShowProfileForm(true)} />
+        <EmptyState />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {profiles.map((profile) => (
@@ -551,29 +551,16 @@ function ProfileMenu({
   );
 }
 
-interface EmptyStateProps {
-  onCreateClick: () => void;
-}
-
-function EmptyState({ onCreateClick }: EmptyStateProps) {
+function EmptyState() {
   const { t } = useTranslation();
   return (
     <Card className="p-12 text-center">
-      <div className="w-16 h-16 mx-auto rounded-full bg-azure-50 dark:bg-azure-900/30 flex items-center justify-center mb-4">
-        <Plus size={24} className="text-azure" />
-      </div>
-      <div className="w-16 h-16 mx-auto rounded-full bg-azure-50 dark:bg-azure-900/30 flex items-center justify-center mb-4">
-        <Plus size={24} className="text-azure" />
-      </div>
       <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-300">
         {t('profile.empty.title')}
       </h3>
-      <p className="text-slate-500 dark:text-slate-400 mt-2 mb-6 max-w-md mx-auto">
+      <p className="text-slate-500 dark:text-slate-400 mt-2 max-w-md mx-auto">
         {t('profile.empty.description')}
       </p>
-      <Button icon={<Plus size={16} />} onClick={onCreateClick}>
-        {t('profile.create')}
-      </Button>
     </Card>
   );
 }
