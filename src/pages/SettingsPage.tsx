@@ -700,12 +700,12 @@ function ToggleSetting({ icon, title, description, enabled, onChange }: ToggleSe
       </div>
       <button
         onClick={() => onChange(!enabled)}
-        className={`relative w-11 h-6 rounded-full transition-colors ${
-          enabled ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-600'
+        className={`relative inline-flex h-7 w-12 flex-shrink-0 items-center rounded-full transition-colors ${
+          enabled ? 'bg-azure-500 dark:bg-tech-orange-500' : 'bg-slate-300 dark:bg-slate-600'
         }`}
       >
-        <div
-          className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${
+        <span
+          className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-lg transition-transform ${
             enabled ? 'translate-x-6' : 'translate-x-1'
           }`}
         />
