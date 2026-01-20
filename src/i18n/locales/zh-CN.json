@@ -739,7 +739,45 @@
       "general": "通用",
       "paths": "路径",
       "data": "数据",
-      "licenses": "许可证"
+      "licenses": "许可证",
+      "updates": "更新"
+    },
+    "updates": {
+      "title": "软件更新",
+      "subtitle": "检查和管理应用程序更新",
+      "currentVersion": "当前版本",
+      "latestVersion": "最新版本",
+      "upToDate": "已是最新版本",
+      "updateAvailable": "有新版本可用",
+      "autoCheck": "自动检查更新",
+      "autoCheckDesc": "启动时自动检查新版本",
+      "autoUpdateTitle": "更新设置",
+      "autoUpdateDesc": "配置自动更新行为",
+      "frequency": "检查频率",
+      "frequencyDesc": "设置自动检查更新的频率",
+      "frequency.startup": "每次启动",
+      "frequency.daily": "每天一次",
+      "frequency.weekly": "每周一次",
+      "checkNow": "立即检查",
+      "checking": "检查中...",
+      "lastChecked": "上次检查",
+      "never": "从未",
+      "releaseNotes": "更新说明",
+      "viewReleaseNotes": "查看完整更新说明",
+      "viewChangelog": "查看更新日志",
+      "downloadSize": "下载大小",
+      "manualActions": "手动操作",
+      "manualActionsDesc": "手动检查更新或查看更新历史",
+      "clickBadgeToUpdate": "点击右上角的更新图标开始更新",
+      "notifications": {
+        "checking": "正在检查更新...",
+        "available": "发现新版本 {{version}}",
+        "upToDate": "当前已是最新版本",
+        "downloaded": "更新已下载完成",
+        "error": "检查更新失败",
+        "downloadError": "下载更新失败",
+        "installError": "安装更新失败"
+      }
     },
     "general": {
       "appearance": "外观",
@@ -826,5 +864,25 @@
   "statusBar": {
     "instances": "个实例",
     "notSet": "未设置"
+  },
+  "update": {
+    "badge": {
+      "tooltip": "有新版本可用"
+    },
+    "dialog": {
+      "title": "软件更新",
+      "newVersion": "新版本可用",
+      "currentVersion": "当前版本",
+      "newVersionLabel": "新版本",
+      "releaseNotes": "更新说明",
+      "downloading": "正在下载更新...",
+      "installing": "正在安装更新...",
+      "downloadProgress": "下载进度: {{progress}}%",
+      "later": "稍后提醒",
+      "installNow": "立即安装",
+      "download": "下载更新",
+      "restart": "重启应用",
+      "restartRequired": "需要重启应用以完成更新"
+    }
   }
 }

@@ -6,3 +6,5 @@ export { ThemeToggle, applyTheme, initializeTheme } from './ThemeToggle';
 export { ErrorBoundary } from './ErrorBoundary';
 export { ConfirmDialog } from './ConfirmDialog';
 export { RequireSetup } from './RequireSetup';
+export { UpdateBadge } from './UpdateBadge';
+export { UpdateDialog } from './UpdateDialog';

@@ -1,11 +1,34 @@
 import { RefreshCw } from 'lucide-react';
+import { useState } from 'react';
 import { useActiveProfile, useIsLoading } from '../../store';
 import { ThemeToggle } from '../common/ThemeToggle';
 import { LanguageSwitcher } from '../common/LanguageSwitcher';
+import { UpdateBadge, UpdateDialog } from '../common';
+import { useUpdate } from '@/hooks';
 
 export function Header() {
   const activeProfile = useActiveProfile();
   const isLoading = useIsLoading();
+  const [showUpdateDialog, setShowUpdateDialog] = useState(false);
+  const { available, updateInfo, downloading, installing, downloadProgress, installUpdate } =
+    useUpdate();
+
+  const handleOpenUpdateDialog = () => {
+    setShowUpdateDialog(true);
+  };
+
+  const handleCloseUpdateDialog = () => {
+    setShowUpdateDialog(false);
+  };
+
+  const handleLater = () => {
+    setShowUpdateDialog(false);
+    // Keep the badge visible - user can check later
+  };
+
+  const handleInstallNow = async () => {
+    await installUpdate();
+  };
 
   return (
     <header className="relative z-50 h-16 bg-white/70 dark:bg-viewport backdrop-blur-xl dark:backdrop-blur-none border-b border-white/50 dark:border-border flex items-center justify-between px-6">
@@ -29,12 +52,27 @@ export function Header() {
           <RefreshCw size={20} className="text-azure dark:text-tech-orange animate-spin" />
         )}
 
+        {/* Update Badge */}
+        <UpdateBadge hasUpdate={available} onClick={handleOpenUpdateDialog} />
+
         {/* Language Switcher */}
         <LanguageSwitcher />
 
         {/* Theme Toggle */}
         <ThemeToggle />
       </div>
+
+      {/* Update Dialog */}
+      <UpdateDialog
+        isOpen={showUpdateDialog}
+        onClose={handleCloseUpdateDialog}
+        updateInfo={updateInfo}
+        downloading={downloading}
+        installing={installing}
+        downloadProgress={downloadProgress}
+        onLater={handleLater}
+        onInstallNow={handleInstallNow}
+      />
     </header>
   );
 }

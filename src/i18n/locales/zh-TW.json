@@ -736,7 +736,45 @@
       "general": "一般",
       "paths": "路徑",
       "data": "資料",
-      "licenses": "許可證"
+      "licenses": "許可證",
+      "updates": "更新"
+    },
+    "updates": {
+      "title": "軟體更新",
+      "subtitle": "檢查和管理應用程式更新",
+      "currentVersion": "目前版本",
+      "latestVersion": "最新版本",
+      "upToDate": "已是最新版本",
+      "updateAvailable": "有新版本可用",
+      "autoCheck": "自動檢查更新",
+      "autoCheckDesc": "啟動時自動檢查新版本",
+      "autoUpdateTitle": "更新設定",
+      "autoUpdateDesc": "設定自動更新行為",
+      "frequency": "檢查頻率",
+      "frequencyDesc": "設定自動檢查更新的頻率",
+      "frequency.startup": "每次啟動",
+      "frequency.daily": "每天一次",
+      "frequency.weekly": "每週一次",
+      "checkNow": "立即檢查",
+      "checking": "檢查中...",
+      "lastChecked": "上次檢查",
+      "never": "從未",
+      "releaseNotes": "更新說明",
+      "viewReleaseNotes": "檢視完整更新說明",
+      "viewChangelog": "檢視更新日誌",
+      "downloadSize": "下載大小",
+      "manualActions": "手動操作",
+      "manualActionsDesc": "手動檢查更新或檢視更新歷史",
+      "clickBadgeToUpdate": "點擊右上角的更新圖示開始更新",
+      "notifications": {
+        "checking": "正在檢查更新...",
+        "available": "發現新版本 {{version}}",
+        "upToDate": "目前已是最新版本",
+        "downloaded": "更新已下載完成",
+        "error": "檢查更新失敗",
+        "downloadError": "下載更新失敗",
+        "installError": "安裝更新失敗"
+      }
     },
     "general": {
       "appearance": "外觀",
@@ -823,5 +861,25 @@
   "statusBar": {
     "instances": "個實例",
     "notSet": "未設定"
+  },
+  "update": {
+    "badge": {
+      "tooltip": "有新版本可用"
+    },
+    "dialog": {
+      "title": "軟體更新",
+      "newVersion": "新版本可用",
+      "currentVersion": "目前版本",
+      "newVersionLabel": "新版本",
+      "releaseNotes": "更新說明",
+      "downloading": "正在下載更新...",
+      "installing": "正在安裝更新...",
+      "downloadProgress": "下載進度: {{progress}}%",
+      "later": "稍後提醒",
+      "installNow": "立即安裝",
+      "download": "下載更新",
+      "restart": "重新啟動應用",
+      "restartRequired": "需要重新啟動應用以完成更新"
+    }
   }
 }

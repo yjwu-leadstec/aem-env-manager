@@ -7,6 +7,7 @@ export * from './profile';
 export * from './mappers';
 export * from './settings';
 export * from './environment';
+export * from './update';
 
 // Re-export API types (snake_case - direct from Rust backend)
 export type {
@@ -44,6 +45,8 @@ export type {
 export type { ScanPaths, ExportResult, ImportResult, ResetResult } from './settings';
 
 export type { EnvironmentStatus, InitResult, SymlinkResult } from './environment';
+
+export type { UpdateInfo, CheckUpdateResult, DownloadProgressCallback } from './update';
 
 // Re-export Frontend types (camelCase - for React components)
 export type {

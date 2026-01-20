@@ -736,7 +736,45 @@
       "general": "General",
       "paths": "Paths",
       "data": "Data",
-      "licenses": "Licenses"
+      "licenses": "Licenses",
+      "updates": "Updates"
+    },
+    "updates": {
+      "title": "Software Updates",
+      "subtitle": "Check and manage application updates",
+      "currentVersion": "Current Version",
+      "latestVersion": "Latest Version",
+      "upToDate": "You're up to date",
+      "updateAvailable": "Update available",
+      "autoCheck": "Automatic Updates",
+      "autoCheckDesc": "Automatically check for new versions on startup",
+      "autoUpdateTitle": "Update Settings",
+      "autoUpdateDesc": "Configure automatic update behavior",
+      "frequency": "Check Frequency",
+      "frequencyDesc": "Set how often to check for updates",
+      "frequency.startup": "Every startup",
+      "frequency.daily": "Once daily",
+      "frequency.weekly": "Once weekly",
+      "checkNow": "Check Now",
+      "checking": "Checking...",
+      "lastChecked": "Last checked",
+      "never": "Never",
+      "releaseNotes": "Release Notes",
+      "viewReleaseNotes": "View full release notes",
+      "viewChangelog": "View Changelog",
+      "downloadSize": "Download size",
+      "manualActions": "Manual Actions",
+      "manualActionsDesc": "Manually check for updates or view update history",
+      "clickBadgeToUpdate": "Click the update badge in the header to start updating",
+      "notifications": {
+        "checking": "Checking for updates...",
+        "available": "New version {{version}} available",
+        "upToDate": "You're already on the latest version",
+        "downloaded": "Update downloaded successfully",
+        "error": "Failed to check for updates",
+        "downloadError": "Failed to download update",
+        "installError": "Failed to install update"
+      }
     },
     "general": {
       "appearance": "Appearance",
@@ -823,5 +861,25 @@
   "statusBar": {
     "instances": "instances",
     "notSet": "Not set"
+  },
+  "update": {
+    "badge": {
+      "tooltip": "Update available"
+    },
+    "dialog": {
+      "title": "Software Update",
+      "newVersion": "New version available",
+      "currentVersion": "Current version",
+      "newVersionLabel": "New version",
+      "releaseNotes": "Release Notes",
+      "downloading": "Downloading update...",
+      "installing": "Installing update...",
+      "downloadProgress": "Download progress: {{progress}}%",
+      "later": "Remind Me Later",
+      "installNow": "Install Now",
+      "download": "Download Update",
+      "restart": "Restart App",
+      "restartRequired": "Restart required to complete update"
+    }
   }
 }

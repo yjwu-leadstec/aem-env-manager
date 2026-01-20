@@ -37,6 +37,18 @@
     ],
     "category": "DeveloperTool",
     "shortDescription": "AEM development environment manager",
-    "longDescription": "A desktop application for AEM developers to manage and switch between development environments with one click."
+    "longDescription": "A desktop application for AEM developers to manage and switch between development environments with one click.",
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "",
+      "endpoints": [
+        "https://github.com/anthropics/aem-env-manager/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "basicUi"
+      }
+    }
   }
 }

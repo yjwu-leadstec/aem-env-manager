@@ -26,6 +26,12 @@ interface AppConfig {
   autoStatusCheck: boolean;
   /** Status check interval in seconds (5-60) */
   statusCheckInterval: number;
+  /** Enable auto update check on startup */
+  autoCheckUpdate: boolean;
+  /** Update check frequency */
+  checkUpdateFrequency: 'startup' | 'daily' | 'weekly';
+  /** Last update check timestamp (ISO string) */
+  lastUpdateCheck: string | null;
 }
 
 interface AppStore {
@@ -89,6 +95,9 @@ const defaultConfig: AppConfig = {
   logLevel: 'info',
   autoStatusCheck: true,
   statusCheckInterval: TIMING.STATUS_CHECK_INTERVAL / 1000, // Convert ms to seconds
+  autoCheckUpdate: true,
+  checkUpdateFrequency: 'startup',
+  lastUpdateCheck: null,
 };
 
 const defaultPreferences: UserPreferences = {
