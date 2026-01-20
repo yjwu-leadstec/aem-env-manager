@@ -672,6 +672,7 @@
       "javaPaths": "Java Scan Paths",
       "nodePaths": "Node Scan Paths",
       "mavenHome": "Maven Home",
+      "mavenRepository": "Maven Local Repository",
       "aemDirs": "AEM Directories",
       "aemDirsDesc": "Default paths for AEM installations",
       "aemBaseDir": "AEM Base Directory",

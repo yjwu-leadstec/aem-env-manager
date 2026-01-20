@@ -13,6 +13,7 @@ export interface ScanPaths {
   java_paths: string[];
   node_paths: string[];
   maven_home: string;
+  maven_repository: string;
   aem_base_dir: string;
   logs_dir: string;
 }

@@ -677,6 +677,7 @@
       "javaPaths": "Java 扫描路径",
       "nodePaths": "Node 扫描路径",
       "mavenHome": "Maven 主目录",
+      "mavenRepository": "Maven 本地仓库",
       "aemDirs": "AEM 目录",
       "aemDirsDesc": "AEM 安装的默认路径",
       "aemBaseDir": "AEM 基础目录",

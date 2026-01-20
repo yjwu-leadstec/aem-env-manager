@@ -273,7 +273,7 @@ function PathsSettings() {
   }, [scanPaths, addNotification, t]);
 
   const handleBrowseFolder = async (
-    field: 'maven_home' | 'aem_base_dir' | 'logs_dir',
+    field: 'maven_home' | 'maven_repository' | 'aem_base_dir' | 'logs_dir',
     title: string
   ) => {
     const path = await settingsApi.selectFolder(title);
@@ -414,6 +414,18 @@ function PathsSettings() {
             placeholder="~/.m2"
             onChange={(value) => scanPaths && setScanPaths({ ...scanPaths, maven_home: value })}
             onBrowse={() => handleBrowseFolder('maven_home', t('maven.title'))}
+            browseLabel={t('common.browse')}
+          />
+          <PathInputSingle
+            label={t('settings.paths.mavenRepository')}
+            value={scanPaths?.maven_repository || ''}
+            placeholder="~/.m2/repository"
+            onChange={(value) =>
+              scanPaths && setScanPaths({ ...scanPaths, maven_repository: value })
+            }
+            onBrowse={() =>
+              handleBrowseFolder('maven_repository', t('settings.paths.mavenRepository'))
+            }
             browseLabel={t('common.browse')}
           />
         </CardContent>

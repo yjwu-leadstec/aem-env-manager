@@ -21,6 +21,7 @@ pub struct ScanPaths {
     pub java_paths: Vec<String>,
     pub node_paths: Vec<String>,
     pub maven_home: String,
+    pub maven_repository: String,
     pub aem_base_dir: String,
     pub logs_dir: String,
 }
@@ -40,8 +41,9 @@ impl Default for ScanPaths {
                 home.join(".fnm/node-versions").to_string_lossy().to_string(),
             ],
             maven_home: home.join(".m2").to_string_lossy().to_string(),
-            aem_base_dir: "/opt/aem".to_string(),
-            logs_dir: "/var/log/aem".to_string(),
+            maven_repository: home.join(".m2/repository").to_string_lossy().to_string(),
+            aem_base_dir: String::new(),
+            logs_dir: String::new(),
         }
     }
 }
