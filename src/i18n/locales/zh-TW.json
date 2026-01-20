@@ -102,7 +102,9 @@
       "stopped": "已停止",
       "starting": "啟動中",
       "stopping": "停止中",
-      "error": "錯誤"
+      "error": "錯誤",
+      "unknown": "未知",
+      "portConflict": "連接埠衝突"
     },
     "stats": {
       "running": "{count} 執行中",
@@ -122,7 +124,8 @@
       "logs": "日誌",
       "openBrowser": "在瀏覽器中開啟",
       "open": "開啟",
-      "healthCheck": "健康檢查"
+      "healthCheck": "健康檢查",
+      "refreshStatus": "重新整理狀態"
     },
     "notifications": {
       "loadFailed": "載入失敗",
@@ -166,7 +169,8 @@
       "licenseImported": "授權已匯入",
       "licenseImportedMessage": "已自動匯入 AEM 授權檔案",
       "licenseImportFailed": "授權匯入失敗",
-      "licenseImportFailedMessage": "實例已建立,但授權匯入失敗"
+      "licenseImportFailedMessage": "實例已建立,但授權匯入失敗",
+      "refreshStatusFailed": "重新整理狀態失敗"
     },
     "fields": {
       "name": "名稱",
@@ -217,7 +221,9 @@
       "runModes": "執行模式:",
       "path": "路徑:",
       "terminalControl": "AEM 將在終端機視窗中執行。使用終端機來監控和控制實例。",
-      "terminalControlShort": "在終端機視窗執行"
+      "terminalControlShort": "在終端機視窗執行",
+      "lastChecked": "最後檢查",
+      "portConflict": "連接埠 {{port}} 被 {{process}} 佔用"
     },
     "terminalInfo": "AEM 實例在終端機視窗中執行。點擊「在終端機中啟動」來啟動實例，然後使用終端機來監控和控制它。",
     "health": {

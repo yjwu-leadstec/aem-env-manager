@@ -105,7 +105,8 @@
       "starting": "启动中",
       "stopping": "停止中",
       "error": "错误",
-      "unknown": "未知"
+      "unknown": "未知",
+      "portConflict": "端口冲突"
     },
     "stats": {
       "running": "{{count}} 运行中",
@@ -125,7 +126,8 @@
       "logs": "日志",
       "openBrowser": "在浏览器中打开",
       "open": "打开",
-      "healthCheck": "健康检查"
+      "healthCheck": "健康检查",
+      "refreshStatus": "刷新状态"
     },
     "notifications": {
       "loadFailed": "加载失败",
@@ -169,7 +171,8 @@
       "licenseImported": "许可证已导入",
       "licenseImportedMessage": "已自动导入 AEM 许可证文件",
       "licenseImportFailed": "许可证导入失败",
-      "licenseImportFailedMessage": "实例已创建,但许可证导入失败"
+      "licenseImportFailedMessage": "实例已创建,但许可证导入失败",
+      "refreshStatusFailed": "刷新状态失败"
     },
     "fields": {
       "name": "名称",
@@ -220,7 +223,9 @@
       "runModes": "运行模式:",
       "path": "路径:",
       "terminalControl": "AEM 将在终端窗口中运行。使用终端来监控和控制实例。",
-      "terminalControlShort": "在终端窗口运行"
+      "terminalControlShort": "在终端窗口运行",
+      "lastChecked": "最后检查",
+      "portConflict": "端口 {{port}} 被 {{process}} 占用"
     },
     "terminalInfo": "AEM 实例在终端窗口中运行。点击\"在终端中启动\"来启动实例，然后使用终端来监控和控制它。",
     "health": {

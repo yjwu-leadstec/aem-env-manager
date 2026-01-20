@@ -16,9 +16,10 @@ use commands::{
     scan_maven_settings, scan_maven_settings_in_path, scan_node_in_path, scan_node_versions,
     switch_java_version, switch_maven_config, switch_node_version, validate_java_path, validate_node_path,
     // Instance commands
-    add_instance, check_instance_health, delete_instance, get_credentials, get_instance,
-    get_instance_urls, list_instances, open_in_browser, parse_jar_file, scan_aem_instances,
-    scan_directory_for_jars, start_instance, stop_instance, store_credentials, update_instance,
+    add_instance, check_instance_health, delete_instance, detect_all_instances_status,
+    detect_instance_status, get_credentials, get_instance, get_instance_urls, list_instances,
+    open_in_browser, parse_jar_file, scan_aem_instances, scan_directory_for_jars, start_instance,
+    stop_instance, store_credentials, update_instance,
     // License commands
     add_aem_license, associate_license_with_instance, check_license_file, delete_aem_license,
     get_aem_license, get_license_statistics, get_licenses_for_instance, import_license_from_file,
@@ -91,6 +92,8 @@ pub fn run() {
             start_instance,
             stop_instance,
             check_instance_health,
+            detect_instance_status,
+            detect_all_instances_status,
             scan_aem_instances,
             scan_directory_for_jars,
             parse_jar_file,

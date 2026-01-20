@@ -1,11 +1,20 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Server, Plus, RefreshCw, ArrowRight, Play, ExternalLink } from 'lucide-react';
+import {
+  Server,
+  Plus,
+  RefreshCw,
+  ArrowRight,
+  Play,
+  ExternalLink,
+  AlertTriangle,
+} from 'lucide-react';
 import { useAppStore, useAemInstances, useActiveProfile } from '../../store';
 import * as instanceApi from '../../api/instance';
 import { mapApiInstanceToFrontend } from '../../api/mappers';
 import type { AEMInstance, AEMInstanceStatus } from '../../types';
+import type { InstanceStatusResult } from '../../api/instance';
 
 export function AemInstanceCards() {
   const { t } = useTranslation();
@@ -18,6 +27,9 @@ export function AemInstanceCards() {
 
   const [isLoading, setIsLoading] = useState(true);
   const [startingInstanceId, setStartingInstanceId] = useState<string | null>(null);
+  const [isRefreshingStatus, setIsRefreshingStatus] = useState(false);
+  const [statusResults, setStatusResults] = useState<Map<string, InstanceStatusResult>>(new Map());
+  const [lastStatusCheck, setLastStatusCheck] = useState<string | null>(null);
 
   // Get Author and Publish instances from active profile
   const instances = activeProfile
@@ -45,6 +57,30 @@ export function AemInstanceCards() {
   useEffect(() => {
     loadInstances();
   }, [loadInstances]);
+
+  // Refresh status of all instances using fast detection (no auth required)
+  const refreshAllStatuses = useCallback(async () => {
+    setIsRefreshingStatus(true);
+    try {
+      const results = await instanceApi.detectAllInstancesStatus();
+      const newMap = new Map<string, InstanceStatusResult>();
+      for (const result of results) {
+        newMap.set(result.instance_id, result);
+        // Update instance status in store
+        updateAemInstance(result.instance_id, { status: result.status as AEMInstanceStatus });
+      }
+      setStatusResults(newMap);
+      setLastStatusCheck(new Date().toISOString());
+    } catch (error) {
+      addNotification({
+        type: 'error',
+        title: t('instance.notifications.refreshStatusFailed', 'Failed to refresh status'),
+        message: error instanceof Error ? error.message : undefined,
+      });
+    } finally {
+      setIsRefreshingStatus(false);
+    }
+  }, [updateAemInstance, addNotification, t]);
 
   const handleStart = async (instanceId: string, instanceName: string) => {
     // 5-second debounce to prevent multiple terminal windows
@@ -106,6 +142,15 @@ export function AemInstanceCards() {
           </button>
           <button
             className="btn-ghost px-3 py-2 text-sm flex items-center gap-2"
+            onClick={refreshAllStatuses}
+            disabled={isRefreshingStatus}
+            title={t('instance.actions.refreshStatus', 'Refresh Status')}
+          >
+            <RefreshCw size={14} className={isRefreshingStatus ? 'animate-spin' : ''} />
+            {t('instance.actions.refreshStatus', 'Status')}
+          </button>
+          <button
+            className="btn-ghost px-3 py-2 text-sm flex items-center gap-2"
             onClick={loadInstances}
             disabled={isLoading}
           >
@@ -132,15 +177,20 @@ export function AemInstanceCards() {
         />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          {instances.slice(0, 4).map((instance) => (
-            <InstanceCard
-              key={instance.id}
-              instance={instance}
-              onStart={() => handleStart(instance.id, instance.name)}
-              onOpenInBrowser={(path) => handleOpenInBrowser(instance.id, path)}
-              isStarting={startingInstanceId === instance.id}
-            />
-          ))}
+          {instances.slice(0, 4).map((instance) => {
+            const statusResult = statusResults.get(instance.id);
+            return (
+              <InstanceCard
+                key={instance.id}
+                instance={instance}
+                onStart={() => handleStart(instance.id, instance.name)}
+                onOpenInBrowser={(path) => handleOpenInBrowser(instance.id, path)}
+                isStarting={startingInstanceId === instance.id}
+                conflictProcessName={statusResult?.process_name}
+                lastChecked={statusResult?.checked_at || lastStatusCheck}
+              />
+            );
+          })}
         </div>
       )}
 
@@ -164,6 +214,10 @@ interface InstanceCardProps {
   onStart: () => void;
   onOpenInBrowser: (path?: string) => void;
   isStarting?: boolean;
+  /** Process name if port is conflicted */
+  conflictProcessName?: string | null;
+  /** Last status check timestamp */
+  lastChecked?: string | null;
 }
 
 function InstanceCard({
@@ -171,8 +225,17 @@ function InstanceCard({
   onStart,
   onOpenInBrowser,
   isStarting = false,
+  conflictProcessName,
+  lastChecked,
 }: InstanceCardProps) {
   const { t } = useTranslation();
+
+  // Format last checked time
+  const formatLastChecked = (isoDate: string | null | undefined) => {
+    if (!isoDate) return null;
+    const date = new Date(isoDate);
+    return date.toLocaleTimeString();
+  };
 
   // Get status indicator color
   const getStatusColor = (status: AEMInstanceStatus) => {
@@ -186,6 +249,8 @@ function InstanceCard({
         return 'bg-yellow-500 dark:bg-yellow-400';
       case 'error':
         return 'bg-red-500 dark:bg-red-400';
+      case 'port_conflict':
+        return 'bg-orange-500 dark:bg-orange-400';
       default:
         return 'bg-azure dark:bg-tech-orange';
     }
@@ -224,6 +289,12 @@ function InstanceCard({
             {t('instance.status.error', '错误')}
           </span>
         );
+      case 'port_conflict':
+        return (
+          <span className="text-xs px-2.5 py-1 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400">
+            {t('instance.status.portConflict', '端口冲突')}
+          </span>
+        );
       default:
         return (
           <span className="text-xs px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
@@ -250,12 +321,30 @@ function InstanceCard({
         {getStatusBadge(instance.status)}
       </div>
 
-      {/* Instance Type Badge */}
-      <div className="mb-4">
+      {/* Instance Type Badge and Last Checked */}
+      <div className="mb-4 flex items-center justify-between">
         <span className="text-xs px-2.5 py-1 rounded-lg font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
           {t(`instance.type.${instance.instanceType}`, instance.instanceType)}
         </span>
+        {lastChecked && (
+          <span
+            className="text-xs text-slate-400 dark:text-slate-500"
+            title={t('instance.card.lastChecked', 'Last checked')}
+          >
+            {formatLastChecked(lastChecked)}
+          </span>
+        )}
       </div>
+
+      {/* Port conflict warning */}
+      {instance.status === 'port_conflict' && conflictProcessName && (
+        <div className="mb-4 p-2.5 bg-orange-50 dark:bg-orange-900/20 rounded-lg text-xs flex items-center gap-2">
+          <AlertTriangle size={14} className="text-orange-500 flex-shrink-0" />
+          <span className="text-orange-700 dark:text-orange-300">
+            {t('instance.card.portConflict', { process: conflictProcessName })}
+          </span>
+        </div>
+      )}
 
       {/* Action Buttons */}
       <div className="flex gap-2">

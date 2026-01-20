@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Play, ExternalLink, MoreVertical, Server } from 'lucide-react';
+import { Play, ExternalLink, MoreVertical, Server, RefreshCw, AlertTriangle } from 'lucide-react';
 import { Card } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
+import { StatusBadge } from '@/components/common/StatusBadge';
 import { InstanceMenu } from './InstanceMenu';
 import type { AEMInstance } from '@/types';
 
@@ -12,7 +13,13 @@ interface InstanceCardProps {
   onEdit: () => void;
   onDelete: () => void;
   onOpenBrowser: (path?: string) => void;
+  onRefreshStatus?: () => void;
   isStarting?: boolean;
+  isRefreshing?: boolean;
+  /** Process name if port is conflicted */
+  conflictProcessName?: string | null;
+  /** Last status check timestamp */
+  lastChecked?: string | null;
 }
 
 export function InstanceCard({
@@ -21,7 +28,11 @@ export function InstanceCard({
   onEdit,
   onDelete,
   onOpenBrowser,
+  onRefreshStatus,
   isStarting = false,
+  isRefreshing = false,
+  conflictProcessName,
+  lastChecked,
 }: InstanceCardProps) {
   const { t } = useTranslation();
   const [showMenu, setShowMenu] = useState(false);
@@ -30,6 +41,13 @@ export function InstanceCard({
     author: 'bg-primary/10 text-primary',
     publish: 'badge-success',
     dispatcher: 'badge-warning',
+  };
+
+  // Format last checked time
+  const formatLastChecked = (isoDate: string | null | undefined) => {
+    if (!isoDate) return null;
+    const date = new Date(isoDate);
+    return date.toLocaleTimeString();
   };
 
   return (
@@ -71,6 +89,38 @@ export function InstanceCard({
           </div>
         </div>
       </div>
+
+      {/* Status display */}
+      <div className="mb-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <StatusBadge status={instance.status} showLabel />
+          {onRefreshStatus && (
+            <button
+              onClick={onRefreshStatus}
+              disabled={isRefreshing}
+              className="p-1 rounded hover:bg-black/5 dark:hover:bg-white/10 transition-colors disabled:opacity-50"
+              title={t('instance.actions.refreshStatus')}
+            >
+              <RefreshCw size={14} className={`opacity-50 ${isRefreshing ? 'animate-spin' : ''}`} />
+            </button>
+          )}
+        </div>
+        {lastChecked && (
+          <span className="text-xs opacity-50" title={t('instance.card.lastChecked')}>
+            {formatLastChecked(lastChecked)}
+          </span>
+        )}
+      </div>
+
+      {/* Port conflict warning */}
+      {instance.status === 'port_conflict' && conflictProcessName && (
+        <div className="mb-3 p-2 bg-orange-50 dark:bg-orange-900/20 rounded-lg text-sm flex items-center gap-2">
+          <AlertTriangle size={14} className="text-orange-500 flex-shrink-0" />
+          <span className="text-orange-700 dark:text-orange-300">
+            {t('instance.card.portConflict', { process: conflictProcessName })}
+          </span>
+        </div>
+      )}
 
       {/* Path display */}
       <div className="mb-3 text-sm">

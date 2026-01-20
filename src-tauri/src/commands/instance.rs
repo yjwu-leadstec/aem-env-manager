@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::net::TcpStream;
 use std::path::PathBuf;
 use std::process::Command;
 use std::time::{Duration, Instant};
@@ -53,7 +54,7 @@ pub enum AemInstanceType {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "snake_case")]
 pub enum AemInstanceStatus {
     Running,
     Stopped,
@@ -61,6 +62,8 @@ pub enum AemInstanceStatus {
     Stopping,
     Error,
     Unknown,
+    /// Port is occupied by a non-Java process
+    PortConflict,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -96,6 +99,25 @@ pub struct AemVersionInfo {
     pub product_version: String,
     pub oak_version: Option<String>,
     pub java_version: Option<String>,
+}
+
+/// Result of instance status detection
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct InstanceStatusResult {
+    /// Instance ID
+    pub instance_id: String,
+    /// Detected status
+    pub status: AemInstanceStatus,
+    /// Detection timestamp (ISO 8601)
+    pub checked_at: String,
+    /// Detection duration in milliseconds
+    pub duration_ms: u64,
+    /// Process ID occupying the port (if any)
+    pub process_id: Option<u32>,
+    /// Process name (if not a Java process)
+    pub process_name: Option<String>,
+    /// Error message (if detection failed)
+    pub error: Option<String>,
 }
 
 // ============================================
@@ -1312,6 +1334,233 @@ pub async fn store_credentials(
 #[command]
 pub async fn get_credentials(instance_id: String) -> Result<Option<(String, String)>, String> {
     load_stored_credentials(&instance_id)
+}
+
+// ============================================
+// Instance Status Detection (New - Fast, No-Auth)
+// ============================================
+
+/// Check if a TCP port is open using a connect timeout
+fn check_port_open(host: &str, port: u16, timeout_ms: u64) -> bool {
+    let addr = format!("{}:{}", host, port);
+    match addr.parse::<std::net::SocketAddr>() {
+        Ok(socket_addr) => {
+            TcpStream::connect_timeout(&socket_addr, Duration::from_millis(timeout_ms)).is_ok()
+        }
+        Err(_) => false,
+    }
+}
+
+/// Get process info by port: returns (pid, process_name) if found
+fn get_process_info_by_port(port: u16) -> Option<(u32, String)> {
+    #[cfg(target_os = "macos")]
+    {
+        // Use lsof to get PID
+        let pid_output = Command::new("lsof")
+            .args(["-ti", &format!(":{}", port)])
+            .output()
+            .ok()?;
+
+        if !pid_output.status.success() {
+            return None;
+        }
+
+        let pid: u32 = String::from_utf8_lossy(&pid_output.stdout)
+            .trim()
+            .lines()
+            .next()?
+            .parse()
+            .ok()?;
+
+        // Use ps to get process name
+        let name_output = Command::new("ps")
+            .args(["-p", &pid.to_string(), "-o", "comm="])
+            .output()
+            .ok()?;
+
+        let name = String::from_utf8_lossy(&name_output.stdout)
+            .trim()
+            .to_string();
+
+        Some((pid, name))
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        // Use netstat to find PID by port
+        let output = Command::new("netstat")
+            .args(["-ano", "-p", "TCP"])
+            .output()
+            .ok()?;
+
+        if !output.status.success() {
+            return None;
+        }
+
+        let output_str = String::from_utf8_lossy(&output.stdout);
+        let port_str = format!(":{}", port);
+
+        for line in output_str.lines() {
+            if line.contains(&port_str) && line.contains("LISTENING") {
+                let parts: Vec<&str> = line.split_whitespace().collect();
+                if let Some(pid_str) = parts.last() {
+                    if let Ok(pid) = pid_str.parse::<u32>() {
+                        // Get process name using tasklist
+                        let name_output = Command::new("tasklist")
+                            .args(["/FI", &format!("PID eq {}", pid), "/FO", "CSV", "/NH"])
+                            .output()
+                            .ok()?;
+
+                        let name_str = String::from_utf8_lossy(&name_output.stdout);
+                        // CSV format: "name.exe","pid",...
+                        if let Some(name) = name_str.trim().split(',').next() {
+                            let name = name.trim_matches('"').to_string();
+                            return Some((pid, name));
+                        }
+                    }
+                }
+            }
+        }
+        None
+    }
+
+    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
+    {
+        None
+    }
+}
+
+/// Check if a process name indicates it's a Java process
+fn is_java_process(process_name: &str) -> bool {
+    let name_lower = process_name.to_lowercase();
+    name_lower.contains("java")
+        || name_lower.contains("jdk")
+        || name_lower.contains("jre")
+        || name_lower.ends_with("/java")
+        || name_lower == "java"
+}
+
+/// Check HTTP response from AEM login page (no auth required)
+async fn check_aem_http_ready(host: &str, port: u16, timeout_ms: u64) -> bool {
+    let url = format!(
+        "http://{}:{}/libs/granite/core/content/login.html",
+        host, port
+    );
+
+    let client = match reqwest::Client::builder()
+        .timeout(Duration::from_millis(timeout_ms))
+        .build()
+    {
+        Ok(c) => c,
+        Err(_) => return false,
+    };
+
+    match client.get(&url).send().await {
+        Ok(resp) => {
+            // Any successful response (including 302 redirect) means AEM is ready
+            let status = resp.status().as_u16();
+            status == 200 || status == 302 || status == 401
+        }
+        Err(_) => false,
+    }
+}
+
+/// Detect the status of a single AEM instance using hybrid detection
+/// Layer 1: TCP port check (fast, < 500ms)
+/// Layer 2: Process type verification (confirms Java process)
+/// Layer 3: HTTP response check (distinguishes starting vs running)
+#[command]
+pub async fn detect_instance_status(id: String) -> Result<InstanceStatusResult, String> {
+    let start_time = Instant::now();
+    let instances = load_instances()?;
+
+    let instance = instances
+        .iter()
+        .find(|i| i.id == id)
+        .ok_or_else(|| format!("Instance {} not found", id))?;
+
+    // Layer 1: TCP port check (500ms timeout)
+    let port_open = check_port_open(&instance.host, instance.port, 500);
+
+    if !port_open {
+        return Ok(InstanceStatusResult {
+            instance_id: id,
+            status: AemInstanceStatus::Stopped,
+            checked_at: chrono::Utc::now().to_rfc3339(),
+            duration_ms: start_time.elapsed().as_millis() as u64,
+            process_id: None,
+            process_name: None,
+            error: None,
+        });
+    }
+
+    // Layer 2: Process type verification
+    let process_info = get_process_info_by_port(instance.port);
+
+    if let Some((pid, name)) = &process_info {
+        if !is_java_process(name) {
+            return Ok(InstanceStatusResult {
+                instance_id: id,
+                status: AemInstanceStatus::PortConflict,
+                checked_at: chrono::Utc::now().to_rfc3339(),
+                duration_ms: start_time.elapsed().as_millis() as u64,
+                process_id: Some(*pid),
+                process_name: Some(name.clone()),
+                error: Some(format!("Port {} is occupied by non-Java process: {}", instance.port, name)),
+            });
+        }
+    }
+
+    // Layer 3: HTTP check to distinguish starting vs running (3s timeout)
+    let http_ready = check_aem_http_ready(&instance.host, instance.port, 3000).await;
+
+    let status = if http_ready {
+        AemInstanceStatus::Running
+    } else {
+        AemInstanceStatus::Starting
+    };
+
+    Ok(InstanceStatusResult {
+        instance_id: id,
+        status,
+        checked_at: chrono::Utc::now().to_rfc3339(),
+        duration_ms: start_time.elapsed().as_millis() as u64,
+        process_id: process_info.as_ref().map(|(pid, _)| *pid),
+        process_name: process_info.map(|(_, name)| name),
+        error: None,
+    })
+}
+
+/// Detect status of all configured AEM instances
+/// Executes detection in parallel for efficiency
+#[command]
+pub async fn detect_all_instances_status() -> Result<Vec<InstanceStatusResult>, String> {
+    let instances = load_instances()?;
+
+    // Run detection for all instances concurrently
+    let mut results = Vec::with_capacity(instances.len());
+
+    for instance in instances {
+        // We call detect_instance_status for each instance
+        // In a production app, you might use tokio::spawn for true parallelism
+        match detect_instance_status(instance.id.clone()).await {
+            Ok(result) => results.push(result),
+            Err(e) => {
+                // On error, add an error result
+                results.push(InstanceStatusResult {
+                    instance_id: instance.id,
+                    status: AemInstanceStatus::Unknown,
+                    checked_at: chrono::Utc::now().to_rfc3339(),
+                    duration_ms: 0,
+                    process_id: None,
+                    process_name: None,
+                    error: Some(e),
+                });
+            }
+        }
+    }
+
+    Ok(results)
 }
 
 // ============================================

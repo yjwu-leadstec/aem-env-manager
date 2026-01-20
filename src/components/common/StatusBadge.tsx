@@ -13,6 +13,7 @@ const statusConfig: Record<AEMInstanceStatus, { color: string; label: string; pu
   stopping: { color: 'bg-warning', label: 'Stopping', pulse: true },
   error: { color: 'bg-error', label: 'Error' },
   unknown: { color: 'bg-slate-300', label: 'Unknown' },
+  port_conflict: { color: 'bg-orange-500', label: 'Port Conflict' },
 };
 
 const sizeClasses = {

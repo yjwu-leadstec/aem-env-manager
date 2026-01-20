@@ -15,7 +15,8 @@ export type AemInstanceStatus =
   | 'starting'
   | 'stopping'
   | 'unknown'
-  | 'error';
+  | 'error'
+  | 'port_conflict';
 
 export interface AemInstance {
   id: string;
@@ -181,6 +182,54 @@ export async function stopInstance(id: string): Promise<boolean> {
  */
 export async function checkInstanceHealth(id: string): Promise<HealthCheckResult> {
   return invoke<HealthCheckResult>('check_instance_health', { id });
+}
+
+// ============================================
+// Fast Status Detection (No Auth Required)
+// ============================================
+
+/**
+ * Result of fast instance status detection
+ */
+export interface InstanceStatusResult {
+  /** Instance ID */
+  instance_id: string;
+  /** Detected status */
+  status: AemInstanceStatus;
+  /** Detection timestamp (ISO 8601) */
+  checked_at: string;
+  /** Detection duration in milliseconds */
+  duration_ms: number;
+  /** Process ID occupying the port (if any) */
+  process_id: number | null;
+  /** Process name (if not a Java process) */
+  process_name: string | null;
+  /** Error message (if detection failed) */
+  error: string | null;
+}
+
+/**
+ * Detect the status of a single AEM instance using hybrid detection.
+ * Uses a 3-layer approach:
+ * 1. TCP port check (fast, < 500ms)
+ * 2. Process type verification (confirms Java process)
+ * 3. HTTP response check (distinguishes starting vs running)
+ *
+ * This method does NOT require AEM credentials.
+ * @param id - Instance ID
+ */
+export async function detectInstanceStatus(id: string): Promise<InstanceStatusResult> {
+  return invoke<InstanceStatusResult>('detect_instance_status', { id });
+}
+
+/**
+ * Detect status of all configured AEM instances.
+ * Executes detection in parallel for efficiency.
+ *
+ * This method does NOT require AEM credentials.
+ */
+export async function detectAllInstancesStatus(): Promise<InstanceStatusResult[]> {
+  return invoke<InstanceStatusResult[]>('detect_all_instances_status');
 }
 
 // ============================================

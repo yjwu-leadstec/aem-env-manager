@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAppStore, useAemInstances, useIsLoading } from '../store';
 import * as instanceApi from '../api/instance';
 import { mapApiInstanceToFrontend } from '../api/mappers';
 import type { AEMInstance, AEMInstanceStatus } from '../types';
+import type { InstanceStatusResult } from '../api/instance';
 
 /**
  * Hook for managing AEM instances
@@ -26,6 +27,11 @@ export function useInstanceManager() {
   const addNotification = useAppStore((s) => s.addNotification);
 
   const hasLoadedRef = useRef(false);
+
+  // Status detection state
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastStatusCheck, setLastStatusCheck] = useState<string | null>(null);
+  const [statusResults, setStatusResults] = useState<Map<string, InstanceStatusResult>>(new Map());
 
   // Load instances on mount
   const loadInstances = useCallback(async () => {
@@ -186,6 +192,71 @@ export function useInstanceManager() {
     [addNotification]
   );
 
+  // ============================================
+  // Fast Status Detection (No Auth Required)
+  // ============================================
+
+  /**
+   * Refresh status of a single instance using fast detection
+   * (TCP + process check, no authentication required)
+   */
+  const refreshInstanceStatus = useCallback(
+    async (instanceId: string) => {
+      try {
+        const result = await instanceApi.detectInstanceStatus(instanceId);
+
+        // Update status results map
+        setStatusResults((prev) => {
+          const next = new Map(prev);
+          next.set(instanceId, result);
+          return next;
+        });
+
+        // Update the instance status in the store
+        updateInstance(instanceId, { status: result.status as AEMInstanceStatus });
+
+        return result;
+      } catch (err) {
+        console.error('Failed to detect instance status:', err);
+        return null;
+      }
+    },
+    [updateInstance]
+  );
+
+  /**
+   * Refresh status of all instances using fast detection
+   * (TCP + process check, no authentication required)
+   */
+  const refreshAllStatuses = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      const results = await instanceApi.detectAllInstancesStatus();
+
+      // Update status results map
+      const newMap = new Map<string, InstanceStatusResult>();
+      for (const result of results) {
+        newMap.set(result.instance_id, result);
+        // Update the instance status in the store
+        updateInstance(result.instance_id, { status: result.status as AEMInstanceStatus });
+      }
+      setStatusResults(newMap);
+      setLastStatusCheck(new Date().toISOString());
+
+      return results;
+    } catch (err) {
+      console.error('Failed to detect all instance statuses:', err);
+      addNotification({
+        type: 'error',
+        title: 'Failed to refresh statuses',
+        message: err instanceof Error ? err.message : undefined,
+      });
+      return [];
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [updateInstance, addNotification]);
+
   // Load instances on mount (only once)
   useEffect(() => {
     if (!hasLoadedRef.current) {
@@ -204,9 +275,17 @@ export function useInstanceManager() {
     createInstance,
     deleteInstance,
     openInBrowser,
-    // Status counts - note that with terminal-based control, status is often 'unknown'
+    // Fast status detection (no auth required)
+    refreshInstanceStatus,
+    refreshAllStatuses,
+    isRefreshing,
+    lastStatusCheck,
+    statusResults,
+    // Status counts
     runningCount: instances.filter((i) => i.status === 'running').length,
     stoppedCount: instances.filter((i) => i.status === 'stopped').length,
+    startingCount: instances.filter((i) => i.status === 'starting').length,
+    portConflictCount: instances.filter((i) => i.status === 'port_conflict').length,
     unknownCount: instances.filter((i) => i.status === 'unknown').length,
   };
 }
