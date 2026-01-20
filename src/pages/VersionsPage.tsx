@@ -899,18 +899,34 @@ function MavenConfigPanel({ mavenInfo, onRefresh }: MavenPanelProps) {
     setSearchResults([]);
     try {
       const results = await versionApi.scanMavenSettingsInPath(searchDir.trim());
-      setSearchResults(results);
-      if (results.length === 0) {
-        addNotification({
-          type: 'info',
-          title: t('maven.search.noResults'),
-          message: t('maven.search.noResultsMessage'),
-        });
+
+      // Filter out already imported configurations
+      const existingPaths = new Set(mavenInfo?.configs?.map((c) => c.path) || []);
+      const filteredResults = results.filter((r) => !existingPaths.has(r.path));
+
+      setSearchResults(filteredResults);
+
+      if (filteredResults.length === 0) {
+        if (results.length > 0) {
+          // All found files were already imported
+          addNotification({
+            type: 'info',
+            title: t('maven.search.noResults'),
+            message: t('maven.batch.allAlreadyImported'),
+          });
+        } else {
+          // No files found at all
+          addNotification({
+            type: 'info',
+            title: t('maven.search.noResults'),
+            message: t('maven.search.noResultsMessage'),
+          });
+        }
       } else {
         addNotification({
           type: 'success',
           title: t('maven.search.found'),
-          message: t('maven.search.foundMessage', { count: results.length }),
+          message: t('maven.search.foundMessage', { count: filteredResults.length }),
         });
       }
     } catch (error) {
@@ -927,14 +943,25 @@ function MavenConfigPanel({ mavenInfo, onRefresh }: MavenPanelProps) {
   // Select a found file for import
   const handleSelectFoundFile = (file: versionApi.MavenSettingsFile) => {
     setImportPath(file.path);
-    // Auto-generate a name from the file name or path
-    const suggestedName =
-      file.name
-        .replace('.xml', '')
-        .replace('settings', '')
-        .replace(/^[-_.]/, '') ||
-      file.path.split('/').slice(-2, -1)[0] ||
-      'Maven Config';
+
+    // Auto-generate a name from the file name or path - ensure non-empty name
+    let suggestedName = file.name
+      .replace('.xml', '')
+      .replace(/settings/gi, '')
+      .replace(/^[-_.]+|[-_.]+$/g, '')
+      .trim();
+
+    // If name is empty after cleanup, try to use parent directory name
+    if (!suggestedName) {
+      const pathParts = file.path.split('/').filter(Boolean);
+      suggestedName = pathParts[pathParts.length - 2] || '';
+    }
+
+    // If still empty, use a default name
+    if (!suggestedName) {
+      suggestedName = 'Maven Config';
+    }
+
     setImportName(suggestedName);
     setSearchResults([]); // Clear search results after selection
   };
@@ -982,14 +1009,23 @@ function MavenConfigPanel({ mavenInfo, onRefresh }: MavenPanelProps) {
       setBatchImportProgress({ current: i + 1, total: selectedFiles.size });
 
       try {
-        // Auto-generate name from file
-        const suggestedName =
-          file.name
-            .replace('.xml', '')
-            .replace('settings', '')
-            .replace(/^[-_.]/, '') ||
-          file.path.split('/').slice(-2, -1)[0] ||
-          `Maven Config ${i + 1}`;
+        // Auto-generate name from file - ensure non-empty name
+        let suggestedName = file.name
+          .replace('.xml', '')
+          .replace(/settings/gi, '')
+          .replace(/^[-_.]+|[-_.]+$/g, '')
+          .trim();
+
+        // If name is empty after cleanup, try to use parent directory name
+        if (!suggestedName) {
+          const pathParts = file.path.split('/').filter(Boolean);
+          suggestedName = pathParts[pathParts.length - 2] || '';
+        }
+
+        // If still empty, use a numbered fallback
+        if (!suggestedName) {
+          suggestedName = `Maven Config ${Date.now()}-${i + 1}`;
+        }
 
         await versionApi.importMavenConfig(suggestedName, file.path);
         successCount++;

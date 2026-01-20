@@ -436,7 +436,8 @@
       "importFailed": "批量匯入失敗",
       "importFailedMessage": "匯入 {{count}} 個配置失敗",
       "importPartial": "部分匯入完成",
-      "importPartialMessage": "成功匯入 {{success}} 個，失敗 {{failed}} 個"
+      "importPartialMessage": "成功匯入 {{success}} 個，失敗 {{failed}} 個",
+      "allAlreadyImported": "找到的所有配置文件都已匯入"
     },
     "search": {
       "title": "搜尋 Maven 配置",

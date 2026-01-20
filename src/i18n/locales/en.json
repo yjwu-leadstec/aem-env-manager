@@ -436,7 +436,8 @@
       "importFailed": "Batch Import Failed",
       "importFailedMessage": "Failed to import {{count}} configuration(s)",
       "importPartial": "Partial Import Completed",
-      "importPartialMessage": "Successfully imported {{success}}, failed {{failed}}"
+      "importPartialMessage": "Successfully imported {{success}}, failed {{failed}}",
+      "allAlreadyImported": "All found configuration files have already been imported"
     },
     "search": {
       "title": "Search Maven Configurations",
