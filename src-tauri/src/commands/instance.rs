@@ -38,7 +38,7 @@ pub struct AemInstance {
 }
 
 fn default_status() -> AemInstanceStatus {
-    AemInstanceStatus::Unknown
+    AemInstanceStatus::Stopped
 }
 
 fn default_timestamp() -> String {
