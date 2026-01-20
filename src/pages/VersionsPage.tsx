@@ -900,22 +900,33 @@ function MavenConfigPanel({ mavenInfo, onRefresh }: MavenPanelProps) {
     try {
       const results = await versionApi.scanMavenSettingsInPath(searchDir.trim());
 
-      // Filter out already imported configurations by checking if the source path is used as config name
-      // Since MavenConfig.path is the stored path (not source), we check if any config name contains part of the source path
+      // Filter out already imported configurations and the current active config
       const existingConfigs = mavenInfo?.configs || [];
+      const currentConfig = mavenInfo?.current;
 
-      // Create a set of normalized identifiers from existing configs
-      // Use both the config name and try to extract the original directory from the stored path
+      // Create a set of paths that should be excluded
+      const excludedPaths = new Set<string>();
+
+      // Add current active config path (this is the actual ~/.m2/settings.xml path)
+      if (currentConfig?.path) {
+        excludedPaths.add(currentConfig.path);
+      }
+
+      // Create a set of normalized identifiers from existing saved configs
       const existingIdentifiers = new Set<string>();
       existingConfigs.forEach((c) => {
         existingIdentifiers.add(c.name.toLowerCase());
-        // Also add the config ID which might match the source directory name
         existingIdentifiers.add(c.id.toLowerCase());
       });
 
-      // Filter results - mark as imported if the parent directory name or a derived name already exists
+      // Filter results
       const filteredResults = results.filter((r) => {
-        // Get potential config name from the file path (parent directory)
+        // First check: exclude if this is the current active config path
+        if (excludedPaths.has(r.path)) {
+          return false;
+        }
+
+        // Second check: exclude if name/id would duplicate existing saved configs
         const pathParts = r.path.split('/').filter(Boolean);
         const parentDir = pathParts[pathParts.length - 2]?.toLowerCase() || '';
         const cleanedName = r.name
@@ -925,7 +936,6 @@ function MavenConfigPanel({ mavenInfo, onRefresh }: MavenPanelProps) {
           .trim()
           .toLowerCase();
 
-        // Check if this would create a duplicate
         const wouldDuplicate =
           existingIdentifiers.has(parentDir) ||
           (cleanedName && existingIdentifiers.has(cleanedName));
