@@ -15,7 +15,8 @@ import {
 } from 'lucide-react';
 import { Card, CardHeader, CardContent } from '@/components/common/Card';
 import { Button } from '@/components/common/Button';
-import { ProfileForm, ConfirmDialog } from '@/components/profiles';
+import { ProfileForm } from '@/components/profiles';
+import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import type { ProfileFormData } from '@/components/profiles';
 import { useProfiles, useActiveProfile, useAppStore } from '@/store';
 import type { EnvironmentProfile } from '@/types';

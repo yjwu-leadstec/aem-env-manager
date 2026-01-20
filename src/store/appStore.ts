@@ -81,7 +81,7 @@ interface AppStore {
 // ============================================
 
 const defaultConfig: AppConfig = {
-  theme: 'light',
+  theme: 'system',
   autoSwitchProfile: true,
   healthCheckInterval: TIMING.HEALTH_CHECK_INTERVAL,
   startMinimized: false,
