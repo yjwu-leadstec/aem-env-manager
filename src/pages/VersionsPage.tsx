@@ -1976,10 +1976,14 @@ function LicensesPanel() {
   const [filter, setFilter] = useState<'all' | LicenseStatus>('all');
   const addNotification = useAppStore((s) => s.addNotification);
 
-  // Scan state
+  // Scan state - extended type to track which instance each license came from
+  type ScannedLicenseWithInstance = licenseApi.ScannedLicenseFile & {
+    instance_id?: string;
+    instance_name?: string;
+  };
   const [showScanDialog, setShowScanDialog] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
-  const [scanResults, setScanResults] = useState<licenseApi.ScannedLicenseFile[]>([]);
+  const [scanResults, setScanResults] = useState<ScannedLicenseWithInstance[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
   const [isImporting, setIsImporting] = useState(false);
   const [importProgress, setImportProgress] = useState({ current: 0, total: 0 });
@@ -2035,7 +2039,7 @@ function LicensesPanel() {
     setSelectedFiles(new Set());
 
     try {
-      const allResults: licenseApi.ScannedLicenseFile[] = [];
+      const allResults: ScannedLicenseWithInstance[] = [];
       const existingPaths = new Set(
         licenses.filter((l) => l.license_file_path).map((l) => l.license_file_path)
       );
@@ -2047,8 +2051,14 @@ function LicensesPanel() {
             // e.g., "/path/to/author/aem-author-p4502.jar" -> "/path/to/author"
             const parentDir = instance.path.replace(/[/\\][^/\\]+$/, '');
             const results = await licenseApi.scanLicenseFiles(parentDir);
-            // Filter out already imported licenses
-            const newResults = results.filter((r) => !existingPaths.has(r.path));
+            // Filter out already imported licenses and add instance info
+            const newResults = results
+              .filter((r) => !existingPaths.has(r.path))
+              .map((r) => ({
+                ...r,
+                instance_id: instance.id,
+                instance_name: instance.name,
+              }));
             allResults.push(...newResults);
           } catch (error) {
             console.error(`Failed to scan ${instance.path}:`, error);
@@ -2056,7 +2066,7 @@ function LicensesPanel() {
         }
       }
 
-      // Deduplicate by path
+      // Deduplicate by path (keep first occurrence which has instance info)
       const uniqueResults = allResults.filter(
         (result, index, self) => self.findIndex((r) => r.path === result.path) === index
       );
@@ -2127,15 +2137,19 @@ function LicensesPanel() {
         // Parse the license file to get details
         const parsed = await licenseApi.parseLicenseFile(file.path);
 
-        // Create license entry
+        // Create license entry with automatic instance association
         await licenseApi.addAemLicense({
-          name: file.name || `License from ${file.parent_directory}`,
+          name: file.instance_name
+            ? `${file.instance_name} License`
+            : file.name || `License from ${file.parent_directory}`,
           license_file_path: file.path,
           product_name: parsed.product_name || 'Adobe Experience Manager',
           product_version: parsed.product_version || undefined,
           customer_name: parsed.customer_name || file.customer_name || undefined,
           license_key: parsed.license_key || undefined,
           expiry_date: parsed.expiry_date || undefined,
+          // Auto-associate with the instance from the same directory
+          associated_instance_id: file.instance_id,
         });
 
         successCount++;
@@ -2491,8 +2505,16 @@ function LicensesPanel() {
                           className="mt-1"
                         />
                         <div className="flex-1 min-w-0">
-                          <div className="font-medium text-slate-900 dark:text-slate-100 truncate">
-                            {file.name}
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-slate-900 dark:text-slate-100 truncate">
+                              {file.name}
+                            </span>
+                            {file.instance_name && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-primary/10 text-primary">
+                                <Link2 size={10} />
+                                {file.instance_name}
+                              </span>
+                            )}
                           </div>
                           <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                             <div className="flex items-center gap-1">
