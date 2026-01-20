@@ -72,6 +72,7 @@
     "viewAll": "查看全部",
     "noInstances": "暂无配置的 AEM 实例",
     "noActiveInstance": "请先激活一个 AEM 实例",
+    "instanceNotRunning": "AEM 实例未运行",
     "moreInstances": "还有 {{count}} 个实例...",
     "profileSwitcher": {
       "selectProfile": "选择配置",

@@ -17,6 +17,9 @@ export function QuickActionsPanel() {
       ? allInstances.find((inst) => inst.id === activeProfile.authorInstanceId)
       : null;
 
+  // Check if instance is running (only enable AEM actions when running)
+  const isInstanceRunning = activeInstance?.status === 'running';
+
   // Quick action definitions with lucide-react icons
   const quickActions = [
     {
@@ -58,11 +61,13 @@ export function QuickActionsPanel() {
   ];
 
   const handleQuickLink = async (path: string) => {
-    if (!activeInstance) {
+    if (!activeInstance || !isInstanceRunning) {
       addNotification({
         type: 'warning',
         title: t('dashboard.quickActions'),
-        message: t('dashboard.noActiveInstance', '请先激活一个 AEM 实例'),
+        message: !activeInstance
+          ? t('dashboard.noActiveInstance', '请先激活一个 AEM 实例')
+          : t('dashboard.instanceNotRunning', 'AEM 实例未运行'),
       });
       return;
     }
@@ -87,7 +92,7 @@ export function QuickActionsPanel() {
         {quickActions.map((item, index) => {
           const Icon = item.icon;
           const isAemAction = item.type === 'aem';
-          const isDisabled = isAemAction && !activeInstance;
+          const isDisabled = isAemAction && !isInstanceRunning;
 
           return (
             <button

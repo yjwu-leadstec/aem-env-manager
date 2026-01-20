@@ -70,7 +70,9 @@
     "aemInstances": "AEM Instances",
     "viewAll": "View All",
     "noInstances": "No AEM instances configured",
-    "moreInstances": "{count} more instances...",
+    "noActiveInstance": "Please activate an AEM instance first",
+    "instanceNotRunning": "AEM instance is not running",
+    "moreInstances": "{{count}} more instances...",
     "profileSwitcher": {
       "selectProfile": "Select Profile",
       "current": "Current",
