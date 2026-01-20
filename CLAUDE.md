@@ -65,7 +65,9 @@ src/
 │   ├── mappers.ts    # Type mappers: API (snake_case) ↔ Frontend (camelCase)
 │   ├── instance.ts   # AEM instance API
 │   ├── profile.ts    # Profile management API
-│   └── version.ts    # Version manager API
+│   ├── version.ts    # Version manager API
+│   ├── license.ts    # AEM license management API
+│   └── maven.ts      # Maven configuration API
 ├── store/            # Zustand state management
 │   └── appStore.ts   # Central app store with persistence
 ├── hooks/            # React hooks wrapping API + store
@@ -97,7 +99,9 @@ src-tauri/src/
 │   ├── profile.rs    # Profile CRUD, switching, import/export
 │   ├── version.rs    # Java/Node/Maven version management
 │   ├── instance.rs   # AEM instance lifecycle (start/stop/health)
-│   └── settings.rs   # Scan paths, config export/import/reset
+│   ├── settings.rs   # Scan paths, config export/import/reset
+│   ├── license.rs    # AEM license file management
+│   └── maven.rs      # Maven settings.xml management
 ├── platform/         # Cross-platform adapters
 │   ├── macos.rs      # macOS-specific (#[cfg(target_os = "macos")])
 │   ├── windows.rs    # Windows-specific
@@ -137,6 +141,27 @@ Platform-specific Implementation
 - Use selectors: `useProfiles()`, `useActiveProfile()`, `useAemInstances()`
 - Actions available via `useAppStore((s) => s.actionName)`
 
+### Cross-Component State Updates
+
+For state that needs to sync between page-level and panel components, use callback props:
+```typescript
+// Page level
+const [count, setCount] = useState(0);
+const loadCount = useCallback(async () => {
+  const stats = await api.getStatistics();
+  setCount(stats.total);
+}, []);
+
+// Pass callback to panel
+<Panel onDataChange={loadCount} />
+
+// Panel calls callback after mutations
+const handleImport = async () => {
+  await api.importData(data);
+  onDataChange?.();  // Notify parent to refresh
+};
+```
+
 ### Path Aliases
 
 `@/` maps to `src/` (configured in vite.config.ts and tsconfig.json)
@@ -151,6 +176,23 @@ import { useProfiles } from '@/store';
 - **Profile**: A saved configuration combining Java version, Node version, Maven settings, and AEM instances
 - **AEM Instance**: Author or Publish instance with host, port, and status
 - **Version Manager**: Tools like SDKMAN, nvm, fnm that manage runtime versions
+- **AEM License**: License file associated with an AEM instance, stored in same directory as JAR
+
+### AEM Instance Path Handling
+
+**IMPORTANT**: `AemInstance.path` stores the **JAR file path**, not the directory path:
+```typescript
+// instance.path = "/path/to/author/aem-author-p4502.jar"
+
+// To get the directory (e.g., for scanning license files):
+const parentDir = instance.path.replace(/[/\\][^/\\]+$/, '');
+// parentDir = "/path/to/author"
+```
+
+This is relevant when:
+- Scanning for license files in the instance directory
+- Looking for configuration files alongside the JAR
+- Any file operations relative to the AEM instance location
 
 ## Constants & Configuration
 
@@ -184,6 +226,22 @@ Usage in components:
 import { useTranslation } from 'react-i18next';
 const { t } = useTranslation();
 // t('key.nested.path')
+```
+
+### i18n Interpolation Syntax
+
+**IMPORTANT**: react-i18next uses **double curly braces** for variable interpolation:
+```json
+// ✅ Correct
+"message": "Found {{count}} items"
+
+// ❌ Wrong - will show literal {count}
+"message": "Found {count} items"
+```
+
+With count for pluralization:
+```typescript
+t('items.found', { count: 5 })  // "Found 5 items"
 ```
 
 ## Theming
