@@ -2043,7 +2043,10 @@ function LicensesPanel() {
       for (const instance of instances) {
         if (instance.path) {
           try {
-            const results = await licenseApi.scanLicenseFiles(instance.path);
+            // instance.path is the JAR file path, we need the parent directory
+            // e.g., "/path/to/author/aem-author-p4502.jar" -> "/path/to/author"
+            const parentDir = instance.path.replace(/[/\\][^/\\]+$/, '');
+            const results = await licenseApi.scanLicenseFiles(parentDir);
             // Filter out already imported licenses
             const newResults = results.filter((r) => !existingPaths.has(r.path));
             allResults.push(...newResults);
