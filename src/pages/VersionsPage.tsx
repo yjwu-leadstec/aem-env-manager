@@ -53,6 +53,7 @@ export function VersionsPage() {
   const [activeTab, setActiveTab] = useState<TabType>(initialTab);
   const [isScanning, setIsScanning] = useState(false);
   const [versionInfo, setVersionInfo] = useState<versionApi.VersionInfo | null>(null);
+  const [licenseCount, setLicenseCount] = useState<number>(0);
   const addNotification = useAppStore((s) => s.addNotification);
 
   const loadVersionInfo = useCallback(async () => {
@@ -71,9 +72,20 @@ export function VersionsPage() {
     }
   }, [addNotification, t]);
 
+  // Load license count for tab badge
+  const loadLicenseCount = useCallback(async () => {
+    try {
+      const stats = await licenseApi.getLicenseStatistics();
+      setLicenseCount(stats.total);
+    } catch (error) {
+      console.error('Failed to load license count:', error);
+    }
+  }, []);
+
   useEffect(() => {
     loadVersionInfo();
-  }, [loadVersionInfo]);
+    loadLicenseCount();
+  }, [loadVersionInfo, loadLicenseCount]);
 
   // Sync URL with active tab
   useEffect(() => {
@@ -139,6 +151,7 @@ export function VersionsPage() {
           onClick={() => handleTabChange('licenses')}
           icon={<Key size={18} />}
           label={t('nav.licenses')}
+          badge={licenseCount || undefined}
         />
       </div>
 
@@ -154,7 +167,7 @@ export function VersionsPage() {
       ) : activeTab === 'maven' ? (
         <MavenConfigPanel mavenInfo={versionInfo?.maven} onRefresh={loadVersionInfo} />
       ) : (
-        <LicensesPanel />
+        <LicensesPanel onLicensesChange={loadLicenseCount} />
       )}
     </div>
   );
@@ -1964,7 +1977,11 @@ function LicenseStatusBadge({ status }: { status: LicenseStatus }) {
   );
 }
 
-function LicensesPanel() {
+interface LicensesPanelProps {
+  onLicensesChange?: () => void;
+}
+
+function LicensesPanel({ onLicensesChange }: LicensesPanelProps) {
   const { t } = useTranslation();
   const [licenses, setLicenses] = useState<AemLicense[]>([]);
   const [statistics, setStatistics] = useState<LicenseStatistics | null>(null);
@@ -2168,6 +2185,7 @@ function LicensesPanel() {
     });
 
     loadLicenses();
+    onLicensesChange?.();
   };
 
   const handleSave = async (data: licenseApi.CreateLicenseInput) => {
@@ -2193,6 +2211,7 @@ function LicensesPanel() {
       setShowForm(false);
       setEditingLicense(null);
       loadLicenses();
+      onLicensesChange?.();
     } catch (error) {
       addNotification({
         type: 'error',
@@ -2219,6 +2238,7 @@ function LicensesPanel() {
       });
       setDeleteConfirmLicense(null);
       loadLicenses();
+      onLicensesChange?.();
     } catch (error) {
       addNotification({
         type: 'error',
