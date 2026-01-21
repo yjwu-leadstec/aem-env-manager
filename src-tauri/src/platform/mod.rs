@@ -21,6 +21,7 @@ pub use common::*;
 pub use macos::{get_platform, MacOSPlatform};
 
 #[cfg(target_os = "windows")]
+#[allow(unused_imports)]
 pub use windows::{get_platform, WindowsPlatform};
 
 #[cfg(target_os = "linux")]

@@ -3,9 +3,11 @@
 
 use serde::{Deserialize, Serialize};
 use std::fs;
-use std::os::unix::fs::symlink;
 use std::path::PathBuf;
 use tauri::command;
+
+#[cfg(unix)]
+use std::os::unix::fs::symlink;
 
 use crate::platform::common::ensure_dir_exists;
 
