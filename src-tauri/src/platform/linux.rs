@@ -345,3 +345,253 @@ impl ShellExecutor for LinuxShellExecutor {
 pub fn get_platform() -> LinuxPlatform {
     LinuxPlatform::new()
 }
+
+// ============================================
+// Version Manager Implementations for Linux
+// ============================================
+
+/// SDKMAN version manager for Linux
+pub struct SdkmanManager {
+    executor: LinuxShellExecutor,
+    sdkman_dir: PathBuf,
+}
+
+impl SdkmanManager {
+    pub fn new() -> Self {
+        let sdkman_dir = dirs::home_dir()
+            .map(|h| h.join(".sdkman"))
+            .unwrap_or_else(|| PathBuf::from("~/.sdkman"));
+
+        Self {
+            executor: LinuxShellExecutor::default(),
+            sdkman_dir,
+        }
+    }
+}
+
+impl Default for SdkmanManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl super::common::VersionManagerOps for SdkmanManager {
+    fn is_installed(&self) -> bool {
+        self.sdkman_dir.exists() && self.sdkman_dir.join("bin/sdkman-init.sh").exists()
+    }
+
+    fn list_versions(&self) -> Result<Vec<String>, String> {
+        if !self.is_installed() {
+            return Err("SDKMAN is not installed".to_string());
+        }
+
+        let command = format!(
+            "source {}/bin/sdkman-init.sh && sdk list java | grep -E '^ \\*|^   ' | awk '{{print $NF}}'",
+            self.sdkman_dir.display()
+        );
+
+        let output = self.executor.execute(&command)?;
+        Ok(output
+            .lines()
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty())
+            .collect())
+    }
+
+    fn switch_version(&self, version: &str) -> Result<(), String> {
+        if !self.is_installed() {
+            return Err("SDKMAN is not installed".to_string());
+        }
+
+        let command = format!(
+            "source {}/bin/sdkman-init.sh && sdk use java {}",
+            self.sdkman_dir.display(),
+            version
+        );
+
+        self.executor.execute(&command)?;
+        Ok(())
+    }
+
+    fn current_version(&self) -> Result<Option<String>, String> {
+        if !self.is_installed() {
+            return Err("SDKMAN is not installed".to_string());
+        }
+
+        let command = format!(
+            "source {}/bin/sdkman-init.sh && sdk current java | grep -oE '[0-9]+\\.[0-9]+\\.[0-9]+'",
+            self.sdkman_dir.display()
+        );
+
+        match self.executor.execute(&command) {
+            Ok(output) => {
+                let version = output.trim().to_string();
+                if version.is_empty() {
+                    Ok(None)
+                } else {
+                    Ok(Some(version))
+                }
+            }
+            Err(_) => Ok(None),
+        }
+    }
+}
+
+/// NVM version manager for Linux
+pub struct NvmManager {
+    executor: LinuxShellExecutor,
+    nvm_dir: PathBuf,
+}
+
+impl NvmManager {
+    pub fn new() -> Self {
+        let nvm_dir = std::env::var("NVM_DIR").map(PathBuf::from).unwrap_or_else(|_| {
+            dirs::home_dir()
+                .map(|h| h.join(".nvm"))
+                .unwrap_or_else(|| PathBuf::from("~/.nvm"))
+        });
+
+        Self {
+            executor: LinuxShellExecutor::default(),
+            nvm_dir,
+        }
+    }
+}
+
+impl Default for NvmManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl super::common::VersionManagerOps for NvmManager {
+    fn is_installed(&self) -> bool {
+        self.nvm_dir.exists() && self.nvm_dir.join("nvm.sh").exists()
+    }
+
+    fn list_versions(&self) -> Result<Vec<String>, String> {
+        if !self.is_installed() {
+            return Err("NVM is not installed".to_string());
+        }
+
+        let command = format!(
+            "source {}/nvm.sh && nvm ls --no-colors | grep -oE 'v[0-9]+\\.[0-9]+\\.[0-9]+'",
+            self.nvm_dir.display()
+        );
+
+        let output = self.executor.execute(&command)?;
+        Ok(output
+            .lines()
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty())
+            .collect())
+    }
+
+    fn switch_version(&self, version: &str) -> Result<(), String> {
+        if !self.is_installed() {
+            return Err("NVM is not installed".to_string());
+        }
+
+        let command = format!("source {}/nvm.sh && nvm use {}", self.nvm_dir.display(), version);
+
+        self.executor.execute(&command)?;
+        Ok(())
+    }
+
+    fn current_version(&self) -> Result<Option<String>, String> {
+        if !self.is_installed() {
+            return Err("NVM is not installed".to_string());
+        }
+
+        let command = format!("source {}/nvm.sh && nvm current", self.nvm_dir.display());
+
+        match self.executor.execute(&command) {
+            Ok(output) => {
+                let version = output.trim().to_string();
+                if version.is_empty() || version == "none" || version == "system" {
+                    Ok(None)
+                } else {
+                    Ok(Some(version))
+                }
+            }
+            Err(_) => Ok(None),
+        }
+    }
+}
+
+/// jEnv version manager for Linux
+pub struct JenvManager {
+    executor: LinuxShellExecutor,
+    jenv_dir: PathBuf,
+}
+
+impl JenvManager {
+    pub fn new() -> Self {
+        let jenv_dir = dirs::home_dir()
+            .map(|h| h.join(".jenv"))
+            .unwrap_or_else(|| PathBuf::from("~/.jenv"));
+
+        Self {
+            executor: LinuxShellExecutor::default(),
+            jenv_dir,
+        }
+    }
+}
+
+impl Default for JenvManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl super::common::VersionManagerOps for JenvManager {
+    fn is_installed(&self) -> bool {
+        self.jenv_dir.exists() && self.jenv_dir.join("bin/jenv").exists()
+    }
+
+    fn list_versions(&self) -> Result<Vec<String>, String> {
+        if !self.is_installed() {
+            return Err("jEnv is not installed".to_string());
+        }
+
+        let command = format!("{}/bin/jenv versions --bare", self.jenv_dir.display());
+
+        let output = self.executor.execute(&command)?;
+        Ok(output
+            .lines()
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty() && !s.starts_with('*'))
+            .collect())
+    }
+
+    fn switch_version(&self, version: &str) -> Result<(), String> {
+        if !self.is_installed() {
+            return Err("jEnv is not installed".to_string());
+        }
+
+        let command = format!("{}/bin/jenv global {}", self.jenv_dir.display(), version);
+
+        self.executor.execute(&command)?;
+        Ok(())
+    }
+
+    fn current_version(&self) -> Result<Option<String>, String> {
+        if !self.is_installed() {
+            return Err("jEnv is not installed".to_string());
+        }
+
+        let command = format!("{}/bin/jenv version-name", self.jenv_dir.display());
+
+        match self.executor.execute(&command) {
+            Ok(output) => {
+                let version = output.trim().to_string();
+                if version.is_empty() || version == "system" {
+                    Ok(None)
+                } else {
+                    Ok(Some(version))
+                }
+            }
+            Err(_) => Ok(None),
+        }
+    }
+}

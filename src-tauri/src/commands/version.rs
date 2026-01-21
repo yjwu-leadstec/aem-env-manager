@@ -9,6 +9,9 @@ use crate::platform::macos::{JenvManager, NvmManager, SdkmanManager};
 #[cfg(target_os = "windows")]
 use crate::platform::windows::{FnmManager, JabbaManager, NvmWindowsManager, VoltaManager};
 
+#[cfg(target_os = "linux")]
+use crate::platform::linux::{JenvManager, NvmManager, SdkmanManager};
+
 use crate::platform::common::VersionManagerOps;
 use crate::platform::PlatformOps;
 
