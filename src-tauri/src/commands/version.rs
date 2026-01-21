@@ -725,6 +725,43 @@ pub async fn detect_version_managers() -> Result<Vec<VersionManager>, String> {
         });
     }
 
+    #[cfg(target_os = "linux")]
+    {
+        // Linux uses the same managers as macOS (sdkman, jenv, nvm)
+        // SDKMAN
+        let sdkman = SdkmanManager::new();
+        managers.push(VersionManager {
+            id: "sdkman".to_string(),
+            name: "SDKMAN".to_string(),
+            manager_type: VersionManagerType::Sdkman,
+            is_installed: sdkman.is_installed(),
+            is_active: sdkman.is_installed(),
+            path: dirs::home_dir().map(|h| h.join(".sdkman").to_string_lossy().to_string()),
+        });
+
+        // jEnv
+        let jenv = JenvManager::new();
+        managers.push(VersionManager {
+            id: "jenv".to_string(),
+            name: "jEnv".to_string(),
+            manager_type: VersionManagerType::Jenv,
+            is_installed: jenv.is_installed(),
+            is_active: jenv.is_installed(),
+            path: dirs::home_dir().map(|h| h.join(".jenv").to_string_lossy().to_string()),
+        });
+
+        // NVM
+        let nvm = NvmManager::new();
+        managers.push(VersionManager {
+            id: "nvm".to_string(),
+            name: "NVM".to_string(),
+            manager_type: VersionManagerType::Nvm,
+            is_installed: nvm.is_installed(),
+            is_active: nvm.is_installed(),
+            path: dirs::home_dir().map(|h| h.join(".nvm").to_string_lossy().to_string()),
+        });
+    }
+
     Ok(managers)
 }
 
@@ -772,6 +809,26 @@ pub async fn get_managed_versions(
             }
             ("nvm-windows", "node") => {
                 let nvm = NvmWindowsManager::new();
+                nvm.list_versions()?
+            }
+            _ => return Err(format!("Unknown manager or tool type: {} / {}", manager_id, tool_type)),
+        };
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        // Linux uses the same managers as macOS (sdkman, jenv, nvm)
+        versions = match (manager_id.as_str(), tool_type.as_str()) {
+            ("sdkman", "java") => {
+                let sdkman = SdkmanManager::new();
+                sdkman.list_versions()?
+            }
+            ("jenv", "java") => {
+                let jenv = JenvManager::new();
+                jenv.list_versions()?
+            }
+            ("nvm", "node") => {
+                let nvm = NvmManager::new();
                 nvm.list_versions()?
             }
             _ => return Err(format!("Unknown manager or tool type: {} / {}", manager_id, tool_type)),

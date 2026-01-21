@@ -1436,8 +1436,72 @@ fn get_process_info_by_port(port: u16) -> Option<(u32, String)> {
         None
     }
 
-    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
+    #[cfg(target_os = "linux")]
     {
+        // Use lsof to find PID by port (same approach as macOS)
+        let pid_output = Command::new("lsof")
+            .args(["-ti", &format!("TCP:{}", port), "-sTCP:LISTEN"])
+            .output()
+            .ok()?;
+
+        if pid_output.status.success() {
+            let pid: u32 = String::from_utf8_lossy(&pid_output.stdout)
+                .trim()
+                .lines()
+                .next()?
+                .parse()
+                .ok()?;
+
+            // Use ps to get process name
+            let name_output = Command::new("ps")
+                .args(["-p", &pid.to_string(), "-o", "comm="])
+                .output()
+                .ok()?;
+
+            let name = String::from_utf8_lossy(&name_output.stdout)
+                .trim()
+                .to_string();
+
+            return Some((pid, name));
+        }
+
+        // Fallback to ss command if lsof is not available
+        let ss_output = Command::new("ss")
+            .args(["-tlnp", &format!("sport = :{}", port)])
+            .output()
+            .ok()?;
+
+        if ss_output.status.success() {
+            let output_str = String::from_utf8_lossy(&ss_output.stdout);
+            // Parse pid from ss output like "pid=1234"
+            for line in output_str.lines() {
+                if let Some(pid_start) = line.find("pid=") {
+                    let pid_part = &line[pid_start + 4..];
+                    if let Some(end) = pid_part.find(|c: char| !c.is_ascii_digit()) {
+                        if let Ok(pid) = pid_part[..end].parse::<u32>() {
+                            // Get process name using ps
+                            let name_output = Command::new("ps")
+                                .args(["-p", &pid.to_string(), "-o", "comm="])
+                                .output()
+                                .ok()?;
+
+                            let name = String::from_utf8_lossy(&name_output.stdout)
+                                .trim()
+                                .to_string();
+
+                            return Some((pid, name));
+                        }
+                    }
+                }
+            }
+        }
+
+        None
+    }
+
+    #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
+    {
+        let _ = port; // Suppress unused variable warning on unsupported platforms
         None
     }
 }
