@@ -53,7 +53,7 @@ export default [
 
       // General
       'no-unused-vars': 'off',
-      'no-console': 'warn',
+      'no-console': ['warn', { allow: ['warn', 'error'] }],
     },
     settings: {
       react: {

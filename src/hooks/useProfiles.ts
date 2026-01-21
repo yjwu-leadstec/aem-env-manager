@@ -1,4 +1,5 @@
 import { useCallback, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAppStore, useProfiles, useActiveProfile, useIsLoading } from '../store';
 import * as profileApi from '../api/profile';
 import { mapApiProfileToFrontend } from '../api/mappers';
@@ -8,6 +9,7 @@ import type { EnvironmentProfile } from '../types';
  * Hook for managing environment profiles
  */
 export function useProfileManager() {
+  const { t } = useTranslation();
   const profiles = useProfiles();
   const activeProfile = useActiveProfile();
   const isLoading = useIsLoading();
@@ -34,16 +36,18 @@ export function useProfileManager() {
       setProfiles(frontendProfiles);
       setActiveProfile(frontendActive);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load profiles');
+      const errorMessage =
+        err instanceof Error ? err.message : t('profile.notifications.loadFailed');
+      setError(errorMessage);
       addNotification({
         type: 'error',
-        title: 'Failed to load profiles',
+        title: t('profile.notifications.loadFailed'),
         message: err instanceof Error ? err.message : undefined,
       });
     } finally {
       setLoading(false);
     }
-  }, [setProfiles, setActiveProfile, setLoading, setError, addNotification]);
+  }, [t, setProfiles, setActiveProfile, setLoading, setError, addNotification]);
 
   // Switch to a profile
   const switchProfile = useCallback(
@@ -59,24 +63,26 @@ export function useProfileManager() {
           }
           addNotification({
             type: 'success',
-            title: 'Profile switched',
-            message: `Now using ${profile?.name || profileId}`,
+            title: t('profile.notifications.switched'),
+            message: t('profile.notifications.switchedTo', { name: profile?.name || profileId }),
           });
         } else {
-          throw new Error(result.errors?.join(', ') || 'Failed to switch profile');
+          throw new Error(result.errors?.join(', ') || t('profile.notifications.switchFailed'));
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to switch profile');
+        const errorMessage =
+          err instanceof Error ? err.message : t('profile.notifications.switchFailed');
+        setError(errorMessage);
         addNotification({
           type: 'error',
-          title: 'Profile switch failed',
+          title: t('profile.notifications.switchFailed'),
           message: err instanceof Error ? err.message : undefined,
         });
       } finally {
         setLoading(false);
       }
     },
-    [profiles, setActiveProfile, updateProfile, setLoading, setError, addNotification]
+    [t, profiles, setActiveProfile, updateProfile, setLoading, setError, addNotification]
   );
 
   // Create a new profile
@@ -99,15 +105,16 @@ export function useProfileManager() {
         addProfile(frontendProfile);
         addNotification({
           type: 'success',
-          title: 'Profile created',
-          message: `${frontendProfile.name} has been created`,
+          title: t('profile.notifications.created'),
+          message: t('profile.notifications.createdMessage', { name: frontendProfile.name }),
         });
         return frontendProfile;
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to create profile');
+        const errorMessage = err instanceof Error ? err.message : t('profile.form.saveFailed');
+        setError(errorMessage);
         addNotification({
           type: 'error',
-          title: 'Failed to create profile',
+          title: t('profile.form.saveFailed'),
           message: err instanceof Error ? err.message : undefined,
         });
         throw err;
@@ -115,7 +122,7 @@ export function useProfileManager() {
         setLoading(false);
       }
     },
-    [addProfile, setLoading, setError, addNotification]
+    [t, addProfile, setLoading, setError, addNotification]
   );
 
   // Remove a profile
@@ -127,20 +134,22 @@ export function useProfileManager() {
         deleteProfile(profileId);
         addNotification({
           type: 'success',
-          title: 'Profile deleted',
+          title: t('profile.notifications.deleted'),
         });
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to delete profile');
+        const errorMessage =
+          err instanceof Error ? err.message : t('profile.notifications.deleteFailed');
+        setError(errorMessage);
         addNotification({
           type: 'error',
-          title: 'Failed to delete profile',
+          title: t('profile.notifications.deleteFailed'),
           message: err instanceof Error ? err.message : undefined,
         });
       } finally {
         setLoading(false);
       }
     },
-    [deleteProfile, setLoading, setError, addNotification]
+    [t, deleteProfile, setLoading, setError, addNotification]
   );
 
   useEffect(() => {

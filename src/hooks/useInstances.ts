@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAppStore, useAemInstances, useIsLoading } from '../store';
 import * as instanceApi from '../api/instance';
 import { mapApiInstanceToFrontend } from '../api/mappers';
@@ -14,6 +15,7 @@ import type { InstanceStatusResult } from '../api/instance';
  * Status tracking is simplified - we don't poll for status.
  */
 export function useInstanceManager() {
+  const { t } = useTranslation();
   const instances = useAemInstances();
   const isLoading = useIsLoading();
 
@@ -41,16 +43,18 @@ export function useInstanceManager() {
       const frontendInstances = apiInstances.map(mapApiInstanceToFrontend);
       setInstances(frontendInstances);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load instances');
+      const errorMessage =
+        err instanceof Error ? err.message : t('instance.notifications.loadFailed');
+      setError(errorMessage);
       addNotification({
         type: 'error',
-        title: 'Failed to load instances',
+        title: t('instance.notifications.loadFailed'),
         message: err instanceof Error ? err.message : undefined,
       });
     } finally {
       setLoading(false);
     }
-  }, [setInstances, setLoading, setError, addNotification]);
+  }, [t, setInstances, setLoading, setError, addNotification]);
 
   // Start an instance - opens in Terminal window
   const startInstance = useCallback(
@@ -65,21 +69,21 @@ export function useInstanceManager() {
           updateInstance(instanceId, { status: 'unknown' as AEMInstanceStatus });
           addNotification({
             type: 'success',
-            title: 'Terminal opened',
-            message: `${instance.name} is running in a new Terminal window`,
+            title: t('instance.notifications.terminalOpened'),
+            message: t('instance.notifications.runningInTerminal', { name: instance.name }),
           });
         } else {
-          throw new Error('Failed to open terminal');
+          throw new Error(t('instance.notifications.startFailed'));
         }
       } catch (err) {
         addNotification({
           type: 'error',
-          title: 'Failed to start instance',
+          title: t('instance.notifications.startFailed'),
           message: err instanceof Error ? err.message : undefined,
         });
       }
     },
-    [instances, updateInstance, addNotification]
+    [t, instances, updateInstance, addNotification]
   );
 
   // Stop an instance - sends stop request
@@ -95,21 +99,21 @@ export function useInstanceManager() {
           updateInstance(instanceId, { status: 'unknown' as AEMInstanceStatus });
           addNotification({
             type: 'success',
-            title: 'Stop request sent',
-            message: `${instance.name} stop request has been sent`,
+            title: t('instance.notifications.stopRequestSent'),
+            message: t('instance.notifications.stopRequestMessage', { name: instance.name }),
           });
         } else {
-          throw new Error('Failed to stop instance');
+          throw new Error(t('instance.notifications.stopFailed'));
         }
       } catch (err) {
         addNotification({
           type: 'error',
-          title: 'Failed to stop instance',
+          title: t('instance.notifications.stopFailed'),
           message: err instanceof Error ? err.message : undefined,
         });
       }
     },
-    [instances, updateInstance, addNotification]
+    [t, instances, updateInstance, addNotification]
   );
 
   // Create a new instance
@@ -132,15 +136,17 @@ export function useInstanceManager() {
         addInstance(frontendInstance);
         addNotification({
           type: 'success',
-          title: 'Instance added',
-          message: `${frontendInstance.name} has been configured`,
+          title: t('instance.notifications.added'),
+          message: t('instance.notifications.addedMessage', { name: frontendInstance.name }),
         });
         return frontendInstance;
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to add instance');
+        const errorMessage =
+          err instanceof Error ? err.message : t('instance.notifications.addFailed');
+        setError(errorMessage);
         addNotification({
           type: 'error',
-          title: 'Failed to add instance',
+          title: t('instance.notifications.addFailed'),
           message: err instanceof Error ? err.message : undefined,
         });
         throw err;
@@ -148,7 +154,7 @@ export function useInstanceManager() {
         setLoading(false);
       }
     },
-    [addInstance, setLoading, setError, addNotification]
+    [t, addInstance, setLoading, setError, addNotification]
   );
 
   // Delete an instance
@@ -160,20 +166,22 @@ export function useInstanceManager() {
         removeInstance(instanceId);
         addNotification({
           type: 'success',
-          title: 'Instance removed',
+          title: t('instance.notifications.deleted'),
         });
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to remove instance');
+        const errorMessage =
+          err instanceof Error ? err.message : t('instance.notifications.deleteFailed');
+        setError(errorMessage);
         addNotification({
           type: 'error',
-          title: 'Failed to remove instance',
+          title: t('instance.notifications.deleteFailed'),
           message: err instanceof Error ? err.message : undefined,
         });
       } finally {
         setLoading(false);
       }
     },
-    [removeInstance, setLoading, setError, addNotification]
+    [t, removeInstance, setLoading, setError, addNotification]
   );
 
   // Open instance in browser
@@ -184,12 +192,12 @@ export function useInstanceManager() {
       } catch (err) {
         addNotification({
           type: 'error',
-          title: 'Failed to open browser',
+          title: t('instance.notifications.openBrowserFailed'),
           message: err instanceof Error ? err.message : undefined,
         });
       }
     },
-    [addNotification]
+    [t, addNotification]
   );
 
   // ============================================
@@ -248,14 +256,14 @@ export function useInstanceManager() {
       console.error('Failed to detect all instance statuses:', err);
       addNotification({
         type: 'error',
-        title: 'Failed to refresh statuses',
+        title: t('instance.notifications.refreshStatusFailed'),
         message: err instanceof Error ? err.message : undefined,
       });
       return [];
     } finally {
       setIsRefreshing(false);
     }
-  }, [updateInstance, addNotification]);
+  }, [t, updateInstance, addNotification]);
 
   // Load instances on mount (only once)
   useEffect(() => {

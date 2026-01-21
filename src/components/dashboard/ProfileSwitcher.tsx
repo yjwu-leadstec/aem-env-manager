@@ -120,13 +120,16 @@ export function ProfileSwitcher({ onSwitchStart, onSwitchComplete }: ProfileSwit
             bg-white dark:bg-charcoal text-slate-900 dark:text-gray-100
             hover:bg-slate-50 dark:hover:bg-viewport-light transition-colors shadow-soft dark:shadow-none
             ${isSwitching || isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-            min-w-[200px]
+            min-w-[200px] max-w-[280px]
           `}
         >
           {isSwitching || isLoading ? (
             <RefreshCw size={16} className="animate-spin text-azure dark:text-tech-orange" />
           ) : null}
-          <span className="flex-1 text-left font-medium truncate">
+          <span
+            className="flex-1 text-left font-medium truncate"
+            title={selectedProfile?.name || activeProfile?.name || ''}
+          >
             {selectedProfile?.name ||
               activeProfile?.name ||
               t('dashboard.profileSwitcher.selectProfile')}
@@ -140,7 +143,7 @@ export function ProfileSwitcher({ onSwitchStart, onSwitchComplete }: ProfileSwit
         {isOpen && (
           <>
             <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
-            <div className="absolute top-full left-0 right-0 mt-2 z-20 bg-white dark:bg-charcoal rounded-xl shadow-panel dark:shadow-none border border-slate-200 dark:border-border overflow-hidden">
+            <div className="absolute top-full left-0 mt-2 z-20 w-[280px] bg-white dark:bg-charcoal rounded-xl shadow-panel dark:shadow-none border border-slate-200 dark:border-border overflow-hidden">
               <div className="py-1 max-h-60 overflow-auto">
                 {profiles.length === 0 ? (
                   <div className="px-4 py-3 text-sm text-slate-500 dark:text-gray-400 text-center">
@@ -157,11 +160,13 @@ export function ProfileSwitcher({ onSwitchStart, onSwitchComplete }: ProfileSwit
                         ${profile.id === selectedProfileId ? 'bg-azure-50 dark:bg-tech-orange-500/20' : ''}
                       `}
                     >
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <div className="font-medium text-slate-900 dark:text-gray-100 flex items-center gap-2">
-                          {profile.name}
+                          <span className="truncate max-w-[150px]" title={profile.name}>
+                            {profile.name}
+                          </span>
                           {profile.id === activeProfile?.id && (
-                            <span className="badge-azure text-xs px-2 py-0.5 rounded-full">
+                            <span className="badge-azure text-xs px-2 py-0.5 rounded-full flex-shrink-0">
                               {t('dashboard.profileSwitcher.current')}
                             </span>
                           )}

@@ -48,11 +48,6 @@ export interface AEMInstanceRef {
   name: string;
 }
 
-export interface AEMCredentials {
-  username: string;
-  passwordKey: string;
-}
-
 // ============================================
 // Application State Types
 // ============================================
@@ -97,25 +92,6 @@ export interface ModalState {
 }
 
 // ============================================
-// API Response Types
-// ============================================
-
-export interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  timestamp: string;
-}
-
-export interface PaginatedResponse<T> {
-  items: T[];
-  total: number;
-  page: number;
-  pageSize: number;
-  hasMore: boolean;
-}
-
-// ============================================
 // User Preferences Types
 // ============================================
 
@@ -130,9 +106,6 @@ export interface UserPreferences {
 // ============================================
 // Convenience Type Aliases
 // ============================================
-
-// For backward compatibility with existing code
-export type { FrontendInstance, FrontendProfile, FrontendHealthCheck } from '../api/mappers';
 
 // API types (snake_case) for direct backend communication
 export type {
