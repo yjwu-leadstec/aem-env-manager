@@ -44,3 +44,31 @@ coverage/
 *.tmp
 *.temp
 .claude/
+
+# Serena memories (local development)
+.serena/
+
+# OpenSpec drafts and local specs
+openspec/changes/
+openspec/specs/
+
+# UI demo cache
+ui-demo/.vite/
+
+# Tauri signing keys (NEVER commit these!)
+*.key
+*.key.pub
+.tauri-keys/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Build outputs
+*.dmg
+*.exe
+*.msi
+*.deb
+*.AppImage
+*.sig
