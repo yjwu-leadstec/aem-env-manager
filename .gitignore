@@ -41,7 +41,14 @@ coverage/
 # Temp files
 *.tmp
 *.temp
+
+# Claude/AI configuration
 .claude/
+CLAUDE.md
+AGENT.md
+
+# Package lock (use npm ci for reproducible builds)
+package-lock.json
 
 # Serena memories (local development)
 .serena/
