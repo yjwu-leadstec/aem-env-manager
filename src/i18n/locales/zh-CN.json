@@ -103,8 +103,8 @@
     "status": {
       "running": "运行中",
       "stopped": "已停止",
-      "starting": "启动中",
-      "stopping": "停止中",
+      "starting": "启动中/关闭中",
+      "stopping": "启动中/关闭中",
       "error": "错误",
       "unknown": "未知",
       "portConflict": "端口冲突"

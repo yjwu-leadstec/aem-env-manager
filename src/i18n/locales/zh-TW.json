@@ -102,8 +102,8 @@
     "status": {
       "running": "執行中",
       "stopped": "已停止",
-      "starting": "啟動中",
-      "stopping": "停止中",
+      "starting": "啟動中/關閉中",
+      "stopping": "啟動中/關閉中",
       "error": "錯誤",
       "unknown": "未知",
       "portConflict": "連接埠衝突"
