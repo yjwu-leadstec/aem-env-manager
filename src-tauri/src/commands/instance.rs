@@ -1454,13 +1454,19 @@ fn is_java_process(process_name: &str) -> bool {
 
 /// Check HTTP response from AEM login page (no auth required)
 async fn check_aem_http_ready(host: &str, port: u16, timeout_ms: u64) -> bool {
+    // Force IPv4 by replacing localhost with 127.0.0.1
+    // This avoids issues where reqwest resolves localhost to IPv6 (::1)
+    // but AEM only listens on IPv4
+    let resolved_host = if host == "localhost" { "127.0.0.1" } else { host };
+
     let url = format!(
         "http://{}:{}/libs/granite/core/content/login.html",
-        host, port
+        resolved_host, port
     );
 
     let client = match reqwest::Client::builder()
         .timeout(Duration::from_millis(timeout_ms))
+        .no_proxy() // Disable system proxy for local connections
         .build()
     {
         Ok(c) => c,
