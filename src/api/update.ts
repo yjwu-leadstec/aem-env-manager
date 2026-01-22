@@ -120,7 +120,7 @@ export async function getCurrentVersion(): Promise<string> {
     const { getVersion } = await import('@tauri-apps/api/app');
     return await getVersion();
   } catch {
-    // Fallback to package.json version if Tauri API fails
-    return '0.1.0';
+    // Return unknown if Tauri API fails (e.g., in web dev mode)
+    return 'dev';
   }
 }

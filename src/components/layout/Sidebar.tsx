@@ -2,6 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAppStore, usePreferences } from '../../store';
+import { useAppVersion } from '../../hooks';
 
 interface NavItem {
   path: string;
@@ -22,6 +23,7 @@ export function Sidebar() {
   const location = useLocation();
   const preferences = usePreferences();
   const updatePreferences = useAppStore((s) => s.updatePreferences);
+  const appVersion = useAppVersion();
 
   const collapsed = preferences.sidebarCollapsed;
 
@@ -47,7 +49,7 @@ export function Sidebar() {
               <span className="font-semibold text-slate-800 dark:text-gray-200 whitespace-nowrap">
                 {t('app.title').replace('AEM ', '')}
               </span>
-              <span className="text-xs text-slate-400 dark:text-gray-500">{t('app.version')}</span>
+              <span className="text-xs text-slate-400 dark:text-gray-500">v{appVersion}</span>
             </div>
           )}
         </div>

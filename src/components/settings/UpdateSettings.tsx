@@ -22,7 +22,7 @@ export function UpdateSettings() {
   const config = useConfig();
   const updateConfig = useAppStore((s) => s.updateConfig);
   const { checking, available, updateInfo, error, checkUpdate } = useUpdate();
-  const [currentVersion, setCurrentVersion] = useState('0.1.0');
+  const [currentVersion, setCurrentVersion] = useState('...');
 
   // Get current version on mount
   useEffect(() => {

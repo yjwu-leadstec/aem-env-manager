@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Cpu, HardDrive, Clock } from 'lucide-react';
 import { useActiveProfile } from '../../store';
+import { useAppVersion } from '../../hooks';
 
 export function StatusBar() {
   const { t, i18n } = useTranslation();
   const activeProfile = useActiveProfile();
+  const appVersion = useAppVersion();
   const [currentTime, setCurrentTime] = useState(new Date());
 
   // Update time every minute
@@ -52,7 +54,7 @@ export function StatusBar() {
           <Clock size={12} />
           <span>{formatTime(currentTime)}</span>
         </div>
-        <span className="text-slate-400 dark:text-gray-500 font-medium">v0.1.0</span>
+        <span className="text-slate-400 dark:text-gray-500 font-medium">v{appVersion}</span>
       </div>
     </footer>
   );
