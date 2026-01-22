@@ -65,8 +65,10 @@ pub fn run() {
                 .build()?;
 
             // Load tray icon (monochrome template icon for menu bar)
-            let icon = Image::from_path("icons/tray-icon.png")
-                .unwrap_or_else(|_| Image::from_bytes(include_bytes!("../icons/tray-icon.png")).unwrap());
+            // Try file path first (for development), fallback to embedded bytes (for production)
+            let icon = Image::from_path("icons/tray-icon.png").or_else(|_| {
+                Image::from_bytes(include_bytes!("../icons/tray-icon.png"))
+            })?;
 
             // Build tray icon
             let _tray = TrayIconBuilder::new()

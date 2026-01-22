@@ -59,7 +59,8 @@ export function useInstanceManager() {
   // Start an instance - opens in Terminal window
   const startInstance = useCallback(
     async (instanceId: string) => {
-      const instance = instances.find((i) => i.id === instanceId);
+      // Get instance from store directly to avoid dependency on instances array
+      const instance = useAppStore.getState().aemInstances.find((i) => i.id === instanceId);
       if (!instance) return;
 
       try {
@@ -83,13 +84,14 @@ export function useInstanceManager() {
         });
       }
     },
-    [t, instances, updateInstance, addNotification]
+    [t, updateInstance, addNotification]
   );
 
   // Stop an instance - sends stop request
   const stopInstance = useCallback(
     async (instanceId: string) => {
-      const instance = instances.find((i) => i.id === instanceId);
+      // Get instance from store directly to avoid dependency on instances array
+      const instance = useAppStore.getState().aemInstances.find((i) => i.id === instanceId);
       if (!instance) return;
 
       try {
@@ -113,7 +115,7 @@ export function useInstanceManager() {
         });
       }
     },
-    [t, instances, updateInstance, addNotification]
+    [t, updateInstance, addNotification]
   );
 
   // Create a new instance
