@@ -880,6 +880,11 @@
       "download": "下載更新",
       "restart": "重新啟動應用",
       "restartRequired": "需要重新啟動應用以完成更新"
+    },
+    "notification": {
+      "available": "發現新版本",
+      "downloaded": "更新下載完成",
+      "error": "檢查更新失敗"
     }
   }
 }

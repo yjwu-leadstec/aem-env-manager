@@ -12,6 +12,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { useAppStore, useConfig } from '@/store';
 import * as updateApi from '@/api/update';
 import type { UpdateInfo } from '@/api/update';
+import i18n from '@/i18n';
 
 /**
  * Update state interface
@@ -82,14 +83,14 @@ export function useUpdate() {
         if (result.available && result.update) {
           addNotification({
             type: 'info',
-            title: 'update.notification.available',
+            title: i18n.t('update.notification.available'),
             message: `v${result.update.version}`,
           });
         } else if (!silent) {
           // Only show "up to date" notification in manual check
           addNotification({
             type: 'success',
-            title: 'settings.updates.upToDate',
+            title: i18n.t('settings.updates.upToDate'),
           });
         }
 
@@ -101,7 +102,7 @@ export function useUpdate() {
         if (!silent) {
           addNotification({
             type: 'error',
-            title: 'update.notification.error',
+            title: i18n.t('update.notification.error'),
             message,
           });
         }
@@ -139,7 +140,7 @@ export function useUpdate() {
 
       addNotification({
         type: 'success',
-        title: 'update.notification.downloaded',
+        title: i18n.t('update.notification.downloaded'),
         duration: 2000,
       });
 
@@ -158,7 +159,7 @@ export function useUpdate() {
 
       addNotification({
         type: 'error',
-        title: 'update.notification.error',
+        title: i18n.t('update.notification.error'),
         message,
       });
     }

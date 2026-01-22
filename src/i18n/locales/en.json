@@ -880,6 +880,11 @@
       "download": "Download Update",
       "restart": "Restart App",
       "restartRequired": "Restart required to complete update"
+    },
+    "notification": {
+      "available": "New Version Available",
+      "downloaded": "Update Downloaded",
+      "error": "Update Check Failed"
     }
   }
 }
