@@ -143,7 +143,7 @@ export function UpdateSettings() {
               <select
                 value={config.checkUpdateFrequency}
                 onChange={(e) => handleFrequencyChange(e.target.value as CheckFrequency)}
-                className="input w-36"
+                className="select w-36"
               >
                 <option value="startup">{t('settings.updates.frequency.startup')}</option>
                 <option value="daily">{t('settings.updates.frequency.daily')}</option>
