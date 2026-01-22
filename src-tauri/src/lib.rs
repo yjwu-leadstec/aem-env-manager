@@ -64,13 +64,14 @@ pub fn run() {
                 .item(&quit_i)
                 .build()?;
 
-            // Load tray icon
-            let icon = Image::from_path("icons/32x32.png")
-                .unwrap_or_else(|_| Image::from_bytes(include_bytes!("../icons/32x32.png")).unwrap());
+            // Load tray icon (monochrome template icon for menu bar)
+            let icon = Image::from_path("icons/tray-icon.png")
+                .unwrap_or_else(|_| Image::from_bytes(include_bytes!("../icons/tray-icon.png")).unwrap());
 
             // Build tray icon
             let _tray = TrayIconBuilder::new()
                 .icon(icon)
+                .icon_as_template(true) // macOS: use as template for automatic light/dark adaptation
                 .menu(&menu)
                 .tooltip("AEM Environment Manager")
                 .on_menu_event(|app, event| match event.id().as_ref() {
