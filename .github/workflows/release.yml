@@ -101,8 +101,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Get tag name
+        id: get-tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "tag=v${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Publish release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v${{ github.event.inputs.version || github.ref_name }}
+          tag_name: ${{ steps.get-tag.outputs.tag }}
           draft: false
