@@ -101,17 +101,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Get tag name
-        id: get-tag
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "tag=v${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
-          else
-            echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
-          fi
-
       - name: Publish release
-        uses: softprops/action-gh-release@v1
+        uses: actions/github-script@v7
         with:
-          tag_name: ${{ steps.get-tag.outputs.tag }}
-          draft: false
+          script: |
+            await github.rest.repos.updateRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: ${{ needs.create-release.outputs.release_id }},
+              draft: false
+            });
+            console.log('Release published successfully!')
