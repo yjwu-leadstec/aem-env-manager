@@ -3,6 +3,13 @@
 mod commands;
 mod platform;
 
+use tauri::{
+    image::Image,
+    menu::{MenuBuilder, MenuItemBuilder},
+    tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
+    Manager, RunEvent,
+};
+
 use commands::{
     // Profile commands
     create_profile, delete_profile, duplicate_profile, export_profile, get_active_profile,
@@ -31,6 +38,8 @@ use commands::{
     check_environment_status, get_current_symlinks, get_profile_environment,
     initialize_environment, remove_java_symlink, remove_node_symlink, remove_shell_config,
     set_java_symlink, set_node_symlink,
+    // Window commands
+    hide_to_tray, show_from_tray,
 };
 
 /// Initialize and run the Tauri application
@@ -41,6 +50,82 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
+        .setup(|app| {
+            // Create tray menu items
+            let show_i = MenuItemBuilder::with_id("show", "显示窗口 / Show").build(app)?;
+            let hide_i = MenuItemBuilder::with_id("hide", "隐藏窗口 / Hide").build(app)?;
+            let quit_i = MenuItemBuilder::with_id("quit", "退出 / Quit").build(app)?;
+
+            // Build tray menu
+            let menu = MenuBuilder::new(app)
+                .item(&show_i)
+                .item(&hide_i)
+                .separator()
+                .item(&quit_i)
+                .build()?;
+
+            // Load tray icon
+            let icon = Image::from_path("icons/32x32.png")
+                .unwrap_or_else(|_| Image::from_bytes(include_bytes!("../icons/32x32.png")).unwrap());
+
+            // Build tray icon
+            let _tray = TrayIconBuilder::new()
+                .icon(icon)
+                .menu(&menu)
+                .tooltip("AEM Environment Manager")
+                .on_menu_event(|app, event| match event.id().as_ref() {
+                    "show" => {
+                        // Show window and restore to Dock (macOS)
+                        #[cfg(target_os = "macos")]
+                        {
+                            let _ = app.set_activation_policy(tauri::ActivationPolicy::Regular);
+                        }
+                        if let Some(window) = app.get_webview_window("main") {
+                            let _ = window.show();
+                            let _ = window.unminimize();
+                            let _ = window.set_focus();
+                        }
+                    }
+                    "hide" => {
+                        // Hide window and remove from Dock (macOS)
+                        if let Some(window) = app.get_webview_window("main") {
+                            let _ = window.hide();
+                        }
+                        #[cfg(target_os = "macos")]
+                        {
+                            let _ = app.set_activation_policy(tauri::ActivationPolicy::Accessory);
+                        }
+                    }
+                    "quit" => {
+                        app.exit(0);
+                    }
+                    _ => {}
+                })
+                .on_tray_icon_event(|tray, event| {
+                    // Left click on tray icon shows the window
+                    if let TrayIconEvent::Click {
+                        button: MouseButton::Left,
+                        button_state: MouseButtonState::Up,
+                        ..
+                    } = event
+                    {
+                        let app = tray.app_handle();
+                        // Show window and restore to Dock (macOS)
+                        #[cfg(target_os = "macos")]
+                        {
+                            let _ = app.set_activation_policy(tauri::ActivationPolicy::Regular);
+                        }
+                        if let Some(window) = app.get_webview_window("main") {
+                            let _ = window.show();
+                            let _ = window.unminimize();
+                            let _ = window.set_focus();
+                        }
+                    }
+                })
+                .build(app)?;
+
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             // Profile commands
             list_profiles,
@@ -135,7 +220,16 @@ pub fn run() {
             remove_node_symlink,
             get_profile_environment,
             get_current_symlinks,
+            // Window commands
+            hide_to_tray,
+            show_from_tray,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|_app_handle, event| {
+            // Prevent the app from exiting when all windows are closed
+            if let RunEvent::ExitRequested { api, .. } = event {
+                api.prevent_exit();
+            }
+        });
 }

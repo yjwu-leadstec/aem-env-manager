@@ -1,13 +1,13 @@
-import React, { useEffect } from 'react';
-import ReactDOM from 'react-dom/client';
+import { useEffect } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { invoke } from '@tauri-apps/api/core';
-import { AppRouter } from './router';
-import './i18n';
-import './index.css';
 
-// Root component that handles window close event globally
-function App() {
+/**
+ * Hook to handle window close event - hide window to tray instead of closing
+ * On macOS, this also removes the app from the Dock
+ * Note: This is currently handled in main.tsx, but exposed here for potential reuse
+ */
+export function useWindowClose() {
   useEffect(() => {
     let unlisten: (() => void) | undefined;
 
@@ -30,12 +30,4 @@ function App() {
       }
     };
   }, []);
-
-  return <AppRouter />;
 }
-
-ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);

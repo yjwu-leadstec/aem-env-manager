@@ -7,6 +7,7 @@ pub mod license;
 pub mod profile;
 pub mod settings;
 pub mod version;
+pub mod window;
 
 pub use environment::*;
 pub use instance::*;
@@ -14,3 +15,4 @@ pub use license::*;
 pub use profile::*;
 pub use settings::*;
 pub use version::*;
+pub use window::*;
