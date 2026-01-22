@@ -53,6 +53,7 @@ AGENT.md
 # AI/Editor agent files
 .cursor/
 .agent/
+.gemini-clipboard/
 
 # OpenSpec (local development workflow)
 openspec/
