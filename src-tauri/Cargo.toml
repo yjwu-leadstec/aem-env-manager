@@ -1,6 +1,6 @@
 [package]
 name = "aem-env-manager"
-version = "0.2.8"
+version = "0.2.9"
 description = "AEM Environment Manager - One-click development environment switching for AEM developers"
 authors = ["AEM Dev Team"]
 edition = "2021"
