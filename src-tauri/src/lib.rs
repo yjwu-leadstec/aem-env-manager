@@ -98,7 +98,8 @@ pub fn run() {
                         }
                     }
                     "quit" => {
-                        app.exit(0);
+                        // Use std::process::exit to bypass the ExitRequested event handler
+                        std::process::exit(0);
                     }
                     _ => {}
                 })
