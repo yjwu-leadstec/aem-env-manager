@@ -55,12 +55,12 @@ export function UpdateDialog({
     : null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto py-8">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50" onClick={!isProcessing ? onClose : undefined} />
+      <div className="fixed inset-0 bg-black/50" onClick={!isProcessing ? onClose : undefined} />
 
       {/* Dialog */}
-      <div className="relative w-full max-w-lg panel m-4 p-0 overflow-hidden">
+      <div className="relative w-full max-w-lg panel mx-4 p-0 overflow-hidden">
         {/* Close button */}
         {!isProcessing && (
           <button
