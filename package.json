@@ -1,7 +1,7 @@
 {
   "name": "aem-env-manager",
   "private": true,
-  "version": "0.2.7",
+  "version": "0.2.8",
   "type": "module",
   "description": "AEM Environment Manager - One-click development environment switching for AEM developers",
   "author": "AEM Dev Team",
