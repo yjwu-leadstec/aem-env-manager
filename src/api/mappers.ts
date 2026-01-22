@@ -62,9 +62,10 @@ export interface FrontendHealthCheck {
 
 export interface FrontendAppConfig {
   theme: 'light' | 'dark' | 'system';
-  autoStartInstances: boolean;
-  healthCheckIntervalSecs: number;
-  defaultProfileId: string | null;
+  autoSwitchProfile: boolean;
+  healthCheckInterval: number; // milliseconds
+  activeProfileId: string | null;
+  startMinimized: boolean;
   showNotifications: boolean;
   logLevel: 'debug' | 'info' | 'warn' | 'error';
 }
@@ -190,9 +191,10 @@ export function mapFrontendProfileToApi(
 export function mapApiConfigToFrontend(api: AppConfig): FrontendAppConfig {
   return {
     theme: api.theme as FrontendAppConfig['theme'],
-    autoStartInstances: api.auto_start_instances,
-    healthCheckIntervalSecs: api.health_check_interval_secs,
-    defaultProfileId: api.default_profile_id,
+    autoSwitchProfile: api.auto_switch_profile,
+    healthCheckInterval: api.health_check_interval * 1000, // Convert s to ms
+    activeProfileId: api.active_profile_id,
+    startMinimized: api.start_minimized,
     showNotifications: api.show_notifications,
     logLevel: api.log_level as FrontendAppConfig['logLevel'],
   };
@@ -202,12 +204,12 @@ export function mapFrontendConfigToApi(frontend: Partial<FrontendAppConfig>): Pa
   const result: Partial<AppConfig> = {};
 
   if (frontend.theme !== undefined) result.theme = frontend.theme;
-  if (frontend.autoStartInstances !== undefined)
-    result.auto_start_instances = frontend.autoStartInstances;
-  if (frontend.healthCheckIntervalSecs !== undefined)
-    result.health_check_interval_secs = frontend.healthCheckIntervalSecs;
-  if (frontend.defaultProfileId !== undefined)
-    result.default_profile_id = frontend.defaultProfileId;
+  if (frontend.autoSwitchProfile !== undefined)
+    result.auto_switch_profile = frontend.autoSwitchProfile;
+  if (frontend.healthCheckInterval !== undefined)
+    result.health_check_interval = Math.round(frontend.healthCheckInterval / 1000); // Convert ms to s
+  if (frontend.activeProfileId !== undefined) result.active_profile_id = frontend.activeProfileId;
+  if (frontend.startMinimized !== undefined) result.start_minimized = frontend.startMinimized;
   if (frontend.showNotifications !== undefined)
     result.show_notifications = frontend.showNotifications;
   if (frontend.logLevel !== undefined) result.log_level = frontend.logLevel;

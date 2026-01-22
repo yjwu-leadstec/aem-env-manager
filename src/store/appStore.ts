@@ -9,6 +9,9 @@ import type {
   Notification,
   UserPreferences,
 } from '../types';
+import { saveAppConfig } from '../api/profile';
+import { mapFrontendConfigToApi } from '../api/mappers';
+import type { AppConfig as ApiAppConfig } from '../api/profile';
 
 // ============================================
 // App Store Interface
@@ -227,9 +230,27 @@ export const useAppStore = create<AppStore>()(
 
       // Config Actions
       updateConfig: (updates) =>
-        set((state) => ({
-          config: { ...state.config, ...updates },
-        })),
+        set((state) => {
+          const newConfig = { ...state.config, ...updates };
+
+          // Sync to backend
+          const apiPayload = {
+            theme: newConfig.theme,
+            autoSwitchProfile: newConfig.autoSwitchProfile,
+            healthCheckInterval: newConfig.healthCheckInterval,
+            startMinimized: newConfig.startMinimized,
+            showNotifications: newConfig.showNotifications,
+            logLevel: newConfig.logLevel,
+            activeProfileId: state.activeProfile?.id || null,
+          };
+
+          const apiConfig = mapFrontendConfigToApi(apiPayload);
+          saveAppConfig(apiConfig as ApiAppConfig).catch((e) =>
+            console.error('Failed to save config to backend:', e)
+          );
+
+          return { config: newConfig };
+        }),
 
       updatePreferences: (updates) =>
         set((state) => ({

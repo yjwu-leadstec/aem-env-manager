@@ -43,9 +43,10 @@ export interface ProfileValidationResult {
 
 export interface AppConfig {
   theme: string;
-  auto_start_instances: boolean;
-  health_check_interval_secs: number;
-  default_profile_id: string | null;
+  auto_switch_profile: boolean;
+  health_check_interval: number;
+  active_profile_id: string | null;
+  start_minimized: boolean;
   show_notifications: boolean;
   log_level: string;
 }
