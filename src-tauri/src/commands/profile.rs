@@ -559,6 +559,12 @@ pub async fn save_app_config(config: AppConfig) -> Result<(), String> {
     save_config(&config)
 }
 
+/// Get startup configuration (sync version for app initialization)
+/// This is used by the Tauri setup hook to check start_minimized setting
+pub fn get_startup_config() -> AppConfig {
+    load_config().unwrap_or_default()
+}
+
 /// Export profile to JSON
 #[command]
 pub async fn export_profile(profile_id: String) -> Result<String, String> {

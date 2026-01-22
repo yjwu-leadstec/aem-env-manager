@@ -13,8 +13,8 @@ use tauri::{
 use commands::{
     // Profile commands
     create_profile, delete_profile, duplicate_profile, export_profile, get_active_profile,
-    get_profile, import_profile, list_profiles, load_app_config, save_app_config, switch_profile,
-    update_profile, validate_profile,
+    get_profile, get_startup_config, import_profile, list_profiles, load_app_config, save_app_config,
+    switch_profile, update_profile, validate_profile,
     // Version commands
     create_maven_config, delete_maven_config, detect_version_managers, get_current_java_version,
     get_current_maven_config, get_current_node_version, get_managed_versions, get_maven_config_path,
@@ -127,6 +127,20 @@ pub fn run() {
                     }
                 })
                 .build(app)?;
+
+            // Check if app should start minimized
+            let config = get_startup_config();
+            if config.start_minimized {
+                // Hide window on startup
+                if let Some(window) = app.get_webview_window("main") {
+                    let _ = window.hide();
+                }
+                // On macOS, set activation policy to Accessory (removes from Dock)
+                #[cfg(target_os = "macos")]
+                {
+                    let _ = app.set_activation_policy(tauri::ActivationPolicy::Accessory);
+                }
+            }
 
             Ok(())
         })
