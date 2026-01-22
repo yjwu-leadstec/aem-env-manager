@@ -74,12 +74,12 @@ export function UpdateSettings() {
                   <Download size={14} />
                   {t('settings.updates.updateAvailable')}
                 </span>
-              ) : (
+              ) : !error ? (
                 <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-success-50 dark:bg-success-900/30 text-success-600 dark:text-success-400 text-sm font-medium">
                   <CheckCircle size={14} />
                   {t('settings.updates.upToDate')}
                 </span>
-              )}
+              ) : null}
             </div>
           </div>
 

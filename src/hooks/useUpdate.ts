@@ -75,6 +75,7 @@ export function useUpdate() {
           checking: false,
           available: result.available,
           updateInfo: result.update,
+          error: null, // Clear any previous error on successful check
         }));
 
         // Show notification for available update (even in silent mode)
