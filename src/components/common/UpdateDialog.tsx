@@ -57,10 +57,7 @@ export function UpdateDialog({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={!isProcessing ? onClose : undefined}
-      />
+      <div className="absolute inset-0 bg-black/50" onClick={!isProcessing ? onClose : undefined} />
 
       {/* Dialog */}
       <div className="relative w-full max-w-lg panel m-4 p-0 overflow-hidden">

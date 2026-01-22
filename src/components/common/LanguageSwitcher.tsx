@@ -37,8 +37,8 @@ export function LanguageSwitcher() {
 
       {isOpen && (
         <>
-          <div className="fixed inset-0 z-50" onClick={() => setIsOpen(false)} />
-          <div className="absolute right-0 top-full mt-2 z-[100] w-40 bg-white dark:bg-charcoal rounded-xl shadow-panel dark:shadow-none border border-slate-200 dark:border-steel overflow-hidden">
+          <div className="fixed inset-0 z-[9998]" onClick={() => setIsOpen(false)} />
+          <div className="absolute right-0 top-full mt-2 z-[9999] w-40 bg-white dark:bg-charcoal rounded-xl shadow-lg border border-slate-200 dark:border-steel overflow-hidden">
             {languages.map((lang) => (
               <button
                 key={lang.code}

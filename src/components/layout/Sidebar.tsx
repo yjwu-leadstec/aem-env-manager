@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAppStore, usePreferences } from '../../store';
 import { useAppVersion } from '../../hooks';
+import appIcon from '../../assets/app-icon.png';
 
 interface NavItem {
   path: string;
@@ -41,8 +42,12 @@ export function Sidebar() {
       {/* Logo */}
       <div className="flex items-center h-16 px-4 border-b border-white/10">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-azure to-teal dark:from-tech-orange dark:to-tech-orange-600 flex items-center justify-center shadow-lg">
-            <span className="text-white font-bold text-sm">AEM</span>
+          <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg">
+            <img
+              src={appIcon}
+              alt="AEM Environment Manager"
+              className="w-full h-full object-contain"
+            />
           </div>
           {!collapsed && (
             <div className="flex flex-col">

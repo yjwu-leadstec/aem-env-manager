@@ -126,7 +126,7 @@ export function ProfileForm({ initialData, isOpen, onClose, onSubmit, title }: P
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
 
       {/* Dialog */}
       <div className="relative w-full max-w-lg max-h-[90vh] overflow-auto panel m-4 p-0">

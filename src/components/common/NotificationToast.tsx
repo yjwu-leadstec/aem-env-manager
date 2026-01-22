@@ -10,10 +10,10 @@ const icons = {
 };
 
 const bgColors = {
-  success: 'bg-success-50 dark:bg-success-500/20 border-success-200 dark:border-success-500/30',
-  error: 'bg-error-50 dark:bg-error-500/20 border-error-200 dark:border-error-500/30',
-  warning: 'bg-warning-50 dark:bg-warning-500/20 border-warning-200 dark:border-warning-500/30',
-  info: 'bg-azure-50 dark:bg-tech-orange-500/20 border-azure-200 dark:border-tech-orange-500/30',
+  success: 'bg-success-50 dark:bg-charcoal border-success-200 dark:border-success-500/50',
+  error: 'bg-error-50 dark:bg-charcoal border-error-200 dark:border-error-500/50',
+  warning: 'bg-warning-50 dark:bg-charcoal border-warning-200 dark:border-warning-500/50',
+  info: 'bg-azure-50 dark:bg-charcoal border-azure-200 dark:border-tech-orange-500/50',
 };
 
 interface NotificationItemProps {

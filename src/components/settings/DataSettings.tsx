@@ -177,7 +177,7 @@ export function DataSettings() {
 
       {/* Reset Confirmation Modal */}
       {showResetConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="panel max-w-md w-full mx-4 overflow-hidden p-0">
             <div className="p-6">
               <div className="flex items-center gap-4 mb-4">
