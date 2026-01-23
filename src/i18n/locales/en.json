@@ -868,6 +868,7 @@
     },
     "dialog": {
       "title": "Software Update",
+      "version": "v{{version}} Available",
       "newVersion": "New version available",
       "currentVersion": "Current version",
       "newVersionLabel": "New version",

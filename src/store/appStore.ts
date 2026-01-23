@@ -12,6 +12,28 @@ import type {
 import { saveAppConfig } from '../api/profile';
 import { mapFrontendConfigToApi } from '../api/mappers';
 import type { AppConfig as ApiAppConfig } from '../api/profile';
+import type { UpdateInfo } from '../api/update';
+
+// ============================================
+// Update State Interface
+// ============================================
+
+interface UpdateState {
+  /** Currently checking for updates */
+  updateChecking: boolean;
+  /** Currently downloading update */
+  updateDownloading: boolean;
+  /** Currently installing update */
+  updateInstalling: boolean;
+  /** Download progress (0-100) */
+  updateDownloadProgress: number;
+  /** Update available */
+  updateAvailable: boolean;
+  /** Update information if available */
+  updateInfo: UpdateInfo | null;
+  /** Error message if any */
+  updateError: string | null;
+}
 
 // ============================================
 // App Store Interface
@@ -37,7 +59,7 @@ interface AppConfig {
   lastUpdateCheck: string | null;
 }
 
-interface AppStore {
+interface AppStore extends UpdateState {
   // State
   activeProfile: EnvironmentProfile | null;
   profiles: EnvironmentProfile[];
@@ -81,6 +103,11 @@ interface AppStore {
   updateConfig: (updates: Partial<AppConfig>) => void;
   updatePreferences: (updates: Partial<UserPreferences>) => void;
 
+  // Update Actions
+  setUpdateState: (updates: Partial<UpdateState>) => void;
+  clearUpdateError: () => void;
+  dismissUpdate: () => void;
+
   // Reset
   reset: () => void;
 }
@@ -111,6 +138,16 @@ const defaultPreferences: UserPreferences = {
   wizardCompleted: false,
 };
 
+const defaultUpdateState: UpdateState = {
+  updateChecking: false,
+  updateDownloading: false,
+  updateInstalling: false,
+  updateDownloadProgress: 0,
+  updateAvailable: false,
+  updateInfo: null,
+  updateError: null,
+};
+
 const initialState = {
   activeProfile: null,
   profiles: [],
@@ -122,6 +159,7 @@ const initialState = {
   error: null,
   config: defaultConfig,
   preferences: defaultPreferences,
+  ...defaultUpdateState,
 };
 
 // ============================================
@@ -257,6 +295,21 @@ export const useAppStore = create<AppStore>()(
           preferences: { ...state.preferences, ...updates },
         })),
 
+      // Update Actions
+      setUpdateState: (updates) =>
+        set((state) => ({
+          ...state,
+          ...updates,
+        })),
+
+      clearUpdateError: () => set({ updateError: null }),
+
+      dismissUpdate: () =>
+        set({
+          updateAvailable: false,
+          updateInfo: null,
+        }),
+
       // Reset
       reset: () => set(initialState),
     }),
@@ -312,4 +365,23 @@ export const useDashboardStats = () =>
     totalInstances: state.aemInstances.length,
     javaVersion: state.activeProfile?.javaVersion || null,
     nodeVersion: state.activeProfile?.nodeVersion || null,
+  }));
+
+// Update State Selectors
+export const useUpdateState = () =>
+  useAppStore((state) => ({
+    checking: state.updateChecking,
+    downloading: state.updateDownloading,
+    installing: state.updateInstalling,
+    downloadProgress: state.updateDownloadProgress,
+    available: state.updateAvailable,
+    info: state.updateInfo,
+    error: state.updateError,
+  }));
+
+export const useUpdateActions = () =>
+  useAppStore((state) => ({
+    setUpdateState: state.setUpdateState,
+    clearUpdateError: state.clearUpdateError,
+    dismissUpdate: state.dismissUpdate,
   }));

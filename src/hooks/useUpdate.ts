@@ -6,10 +6,13 @@
  * - Downloading and installing updates
  * - Progress tracking
  * - Error handling
+ *
+ * Uses global Zustand store for state to enable sharing between components
+ * (e.g., Header badge and Settings page both show update status)
  */
 
-import { useState, useCallback, useEffect, useRef } from 'react';
-import { useAppStore, useConfig } from '@/store';
+import { useCallback, useEffect, useRef } from 'react';
+import { useAppStore, useConfig, useUpdateState, useUpdateActions } from '@/store';
 import * as updateApi from '@/api/update';
 import type { UpdateInfo } from '@/api/update';
 import i18n from '@/i18n';
@@ -34,23 +37,20 @@ export interface UpdateState {
   error: string | null;
 }
 
-const initialState: UpdateState = {
-  checking: false,
-  downloading: false,
-  installing: false,
-  downloadProgress: 0,
-  available: false,
-  updateInfo: null,
-  error: null,
-};
-
 /**
  * Hook for managing application updates
  *
  * @returns Update state and control functions
  */
 export function useUpdate() {
-  const [state, setState] = useState<UpdateState>(initialState);
+  // Use global store state instead of local useState
+  const state = useUpdateState();
+  const {
+    setUpdateState,
+    clearUpdateError,
+    dismissUpdate: storeDismissUpdate,
+  } = useUpdateActions();
+
   const config = useConfig();
   const updateConfig = useAppStore((s) => s.updateConfig);
   const addNotification = useAppStore((s) => s.addNotification);
@@ -63,7 +63,7 @@ export function useUpdate() {
    */
   const checkUpdate = useCallback(
     async (silent = false) => {
-      setState((s) => ({ ...s, checking: true, error: null }));
+      setUpdateState({ updateChecking: true, updateError: null });
 
       try {
         const result = await updateApi.checkForUpdate();
@@ -71,13 +71,12 @@ export function useUpdate() {
         // Update last check timestamp
         updateConfig({ lastUpdateCheck: new Date().toISOString() });
 
-        setState((s) => ({
-          ...s,
-          checking: false,
-          available: result.available,
+        setUpdateState({
+          updateChecking: false,
+          updateAvailable: result.available,
           updateInfo: result.update,
-          error: null, // Clear any previous error on successful check
-        }));
+          updateError: null, // Clear any previous error on successful check
+        });
 
         // Show notification for available update (even in silent mode)
         if (result.available && result.update) {
@@ -97,7 +96,7 @@ export function useUpdate() {
         return result;
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error';
-        setState((s) => ({ ...s, checking: false, error: message }));
+        setUpdateState({ updateChecking: false, updateError: message });
 
         if (!silent) {
           addNotification({
@@ -110,7 +109,7 @@ export function useUpdate() {
         return null;
       }
     },
-    [addNotification, updateConfig]
+    [addNotification, updateConfig, setUpdateState]
   );
 
   /**
@@ -123,20 +122,19 @@ export function useUpdate() {
       return;
     }
 
-    setState((s) => ({
-      ...s,
-      downloading: true,
-      downloadProgress: 0,
-      error: null,
-    }));
+    setUpdateState({
+      updateDownloading: true,
+      updateDownloadProgress: 0,
+      updateError: null,
+    });
 
     try {
       await updateApi.downloadAndInstallUpdate((downloaded, total) => {
         const progress = Math.round((downloaded / total) * 100);
-        setState((s) => ({ ...s, downloadProgress: progress }));
+        setUpdateState({ updateDownloadProgress: progress });
       });
 
-      setState((s) => ({ ...s, downloading: false, installing: true }));
+      setUpdateState({ updateDownloading: false, updateInstalling: true });
 
       addNotification({
         type: 'success',
@@ -150,12 +148,11 @@ export function useUpdate() {
       }, 1500);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Download failed';
-      setState((s) => ({
-        ...s,
-        downloading: false,
-        installing: false,
-        error: message,
-      }));
+      setUpdateState({
+        updateDownloading: false,
+        updateInstalling: false,
+        updateError: message,
+      });
 
       addNotification({
         type: 'error',
@@ -163,7 +160,7 @@ export function useUpdate() {
         message,
       });
     }
-  }, [state.available, addNotification]);
+  }, [state.available, addNotification, setUpdateState]);
 
   /**
    * Dismiss the update notification
@@ -172,15 +169,15 @@ export function useUpdate() {
    * User can check again from Settings.
    */
   const dismissUpdate = useCallback(() => {
-    setState((s) => ({ ...s, available: false, updateInfo: null }));
-  }, []);
+    storeDismissUpdate();
+  }, [storeDismissUpdate]);
 
   /**
    * Clear error state
    */
   const clearError = useCallback(() => {
-    setState((s) => ({ ...s, error: null }));
-  }, []);
+    clearUpdateError();
+  }, [clearUpdateError]);
 
   /**
    * Auto-check on startup based on configuration
@@ -232,8 +229,14 @@ export function useUpdate() {
   }, [config.autoCheckUpdate, config.checkUpdateFrequency, config.lastUpdateCheck, checkUpdate]);
 
   return {
-    // State
-    ...state,
+    // State (mapped from global store)
+    checking: state.checking,
+    downloading: state.downloading,
+    installing: state.installing,
+    downloadProgress: state.downloadProgress,
+    available: state.available,
+    updateInfo: state.info,
+    error: state.error,
 
     // Actions
     checkUpdate,

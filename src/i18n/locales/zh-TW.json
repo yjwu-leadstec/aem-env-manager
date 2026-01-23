@@ -868,6 +868,7 @@
     },
     "dialog": {
       "title": "軟體更新",
+      "version": "v{{version}} 可用",
       "newVersion": "新版本可用",
       "currentVersion": "目前版本",
       "newVersionLabel": "新版本",

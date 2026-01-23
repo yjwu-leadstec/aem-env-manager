@@ -11,4 +11,6 @@ export {
   useConfig,
   usePreferences,
   useDashboardStats,
+  useUpdateState,
+  useUpdateActions,
 } from './appStore';
