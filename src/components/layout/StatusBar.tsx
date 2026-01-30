@@ -1,14 +1,33 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Cpu, HardDrive, Clock } from 'lucide-react';
 import { useActiveProfile } from '../../store';
 import { useAppVersion } from '../../hooks';
+import * as versionApi from '../../api/version';
 
 export function StatusBar() {
   const { t, i18n } = useTranslation();
   const activeProfile = useActiveProfile();
   const appVersion = useAppVersion();
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [javaVersion, setJavaVersion] = useState<string | null>(null);
+  const [nodeVersion, setNodeVersion] = useState<string | null>(null);
+
+  // Fetch actual system versions
+  const loadVersionInfo = useCallback(async () => {
+    try {
+      const info = await versionApi.getAllVersionInfo();
+      setJavaVersion(info.java.current ? info.java.current.split('.')[0] : null);
+      setNodeVersion(info.node.current || null);
+    } catch {
+      // Failed to load, keep null
+    }
+  }, []);
+
+  // Load versions on mount and when profile changes
+  useEffect(() => {
+    loadVersionInfo();
+  }, [loadVersionInfo, activeProfile?.id]);
 
   // Update time every minute
   useEffect(() => {
@@ -36,15 +55,15 @@ export function StatusBar() {
         )}
       </div>
 
-      {/* Center - Quick Stats */}
+      {/* Center - Quick Stats (shows actual system versions) */}
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-1.5">
           <Cpu size={12} className="text-warning-500" />
-          <span>Java: {activeProfile?.javaVersion || t('statusBar.notSet')}</span>
+          <span>Java: {javaVersion || t('statusBar.notSet')}</span>
         </div>
         <div className="flex items-center gap-1.5">
           <HardDrive size={12} className="text-teal-500 dark:text-tech-orange-400" />
-          <span>Node: {activeProfile?.nodeVersion || t('statusBar.notSet')}</span>
+          <span>Node: {nodeVersion || t('statusBar.notSet')}</span>
         </div>
       </div>
 

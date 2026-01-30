@@ -55,12 +55,12 @@ export function UpdateDialog({
     : null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto py-8">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4">
       {/* Backdrop */}
       <div className="fixed inset-0 bg-black/50" onClick={!isProcessing ? onClose : undefined} />
 
       {/* Dialog */}
-      <div className="relative w-full max-w-lg panel mx-4 p-0 overflow-hidden">
+      <div className="relative w-full max-w-xl panel mx-4 p-0 overflow-hidden my-auto">
         {/* Close button */}
         {!isProcessing && (
           <button
@@ -106,7 +106,7 @@ export function UpdateDialog({
             <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
               {t('update.dialog.releaseNotes')}
             </h3>
-            <div className="max-h-48 overflow-y-auto rounded-lg bg-slate-50 dark:bg-slate-800/50 p-4 text-sm text-slate-600 dark:text-slate-400">
+            <div className="max-h-64 overflow-y-auto rounded-lg bg-slate-50 dark:bg-slate-800/50 p-4 text-sm text-slate-600 dark:text-slate-400">
               <div className="prose prose-sm dark:prose-invert prose-slate max-w-none">
                 {/* Simple markdown-like rendering */}
                 {updateInfo.body.split('\n').map((line, i) => {
