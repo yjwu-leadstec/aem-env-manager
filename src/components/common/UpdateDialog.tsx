@@ -43,6 +43,9 @@ export function UpdateDialog({
 }: UpdateDialogProps) {
   const { t } = useTranslation();
 
+  // Get or create the modal root element
+  const modalRoot = document.getElementById('modal-root') || document.body;
+
   if (!isOpen || !updateInfo) return null;
 
   const isProcessing = downloading || installing;
@@ -56,11 +59,33 @@ export function UpdateDialog({
       })
     : null;
 
-  // Use Portal to render dialog at document body level, escaping parent overflow/transform constraints
+  // Use Portal to render dialog at modal-root level with explicit viewport dimensions
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto p-4">
+    <div
+      className="flex items-center justify-center overflow-y-auto p-4"
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100vw',
+        height: '100vh',
+        zIndex: 99999,
+      }}
+    >
       {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/50" onClick={!isProcessing ? onClose : undefined} />
+      <div
+        className="bg-black/50"
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+        }}
+        onClick={!isProcessing ? onClose : undefined}
+      />
 
       {/* Dialog */}
       <div className="relative w-full max-w-xl panel mx-4 p-0 overflow-hidden my-auto">
@@ -206,6 +231,6 @@ export function UpdateDialog({
         </div>
       </div>
     </div>,
-    document.body
+    modalRoot
   );
 }

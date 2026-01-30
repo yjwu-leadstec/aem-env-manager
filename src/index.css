@@ -70,6 +70,21 @@
   html.dark body {
     background-color: rgb(var(--color-surface));
   }
+
+  /* Modal portal root - ensure it can overlay everything */
+  #modal-root {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 0;
+    z-index: 99998;
+    pointer-events: none;
+  }
+
+  #modal-root > * {
+    pointer-events: auto;
+  }
 }
 
 /* Component matches from aem-env-manager-ui-material.html */
