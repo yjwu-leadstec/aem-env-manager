@@ -3,10 +3,12 @@
  *
  * Modal dialog for displaying update information and controlling the update process.
  * Shows version info, release notes, download progress, and action buttons.
+ * Uses React Portal to render outside of parent hierarchy for proper z-index stacking.
  */
 
 import { X, Download, Clock, Sparkles } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { createPortal } from 'react-dom';
 import { Button } from './Button';
 import type { UpdateInfo } from '@/api/update';
 
@@ -54,8 +56,9 @@ export function UpdateDialog({
       })
     : null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4">
+  // Use Portal to render dialog at document body level, escaping parent overflow/transform constraints
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto p-4">
       {/* Backdrop */}
       <div className="fixed inset-0 bg-black/50" onClick={!isProcessing ? onClose : undefined} />
 
@@ -202,6 +205,7 @@ export function UpdateDialog({
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
