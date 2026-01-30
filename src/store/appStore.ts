@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { useShallow } from 'zustand/react/shallow';
 import { TIMING, UI } from '../constants';
 import type {
   EnvironmentProfile,
@@ -368,20 +369,25 @@ export const useDashboardStats = () =>
   }));
 
 // Update State Selectors
+// IMPORTANT: Use useShallow to prevent infinite re-renders from new object references
 export const useUpdateState = () =>
-  useAppStore((state) => ({
-    checking: state.updateChecking,
-    downloading: state.updateDownloading,
-    installing: state.updateInstalling,
-    downloadProgress: state.updateDownloadProgress,
-    available: state.updateAvailable,
-    info: state.updateInfo,
-    error: state.updateError,
-  }));
+  useAppStore(
+    useShallow((state) => ({
+      checking: state.updateChecking,
+      downloading: state.updateDownloading,
+      installing: state.updateInstalling,
+      downloadProgress: state.updateDownloadProgress,
+      available: state.updateAvailable,
+      info: state.updateInfo,
+      error: state.updateError,
+    }))
+  );
 
 export const useUpdateActions = () =>
-  useAppStore((state) => ({
-    setUpdateState: state.setUpdateState,
-    clearUpdateError: state.clearUpdateError,
-    dismissUpdate: state.dismissUpdate,
-  }));
+  useAppStore(
+    useShallow((state) => ({
+      setUpdateState: state.setUpdateState,
+      clearUpdateError: state.clearUpdateError,
+      dismissUpdate: state.dismissUpdate,
+    }))
+  );
