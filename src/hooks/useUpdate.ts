@@ -14,6 +14,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useAppStore, useConfig, useUpdateState, useUpdateActions } from '@/store';
 import * as updateApi from '@/api/update';
+import { clearUpdateCache } from '@/api/update';
 import type { UpdateInfo } from '@/api/update';
 import i18n from '@/i18n';
 
@@ -169,6 +170,7 @@ export function useUpdate() {
    * User can check again from Settings.
    */
   const dismissUpdate = useCallback(() => {
+    clearUpdateCache();
     storeDismissUpdate();
   }, [storeDismissUpdate]);
 

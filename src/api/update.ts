@@ -35,6 +35,12 @@ export interface CheckUpdateResult {
 export type DownloadProgressCallback = (downloaded: number, total: number) => void;
 
 /**
+ * Cached Update object from the last check.
+ * This is reused for download to avoid multiple check() calls which can cause issues.
+ */
+let cachedUpdate: Update | null = null;
+
+/**
  * Check for available updates
  *
  * @returns Promise with update availability and info
@@ -42,6 +48,9 @@ export type DownloadProgressCallback = (downloaded: number, total: number) => vo
 export async function checkForUpdate(): Promise<CheckUpdateResult> {
   try {
     const update = await check();
+
+    // Cache the update object for later use
+    cachedUpdate = update;
 
     if (!update) {
       return { available: false, update: null };
@@ -57,6 +66,8 @@ export async function checkForUpdate(): Promise<CheckUpdateResult> {
       },
     };
   } catch (error) {
+    // Clear cache on error
+    cachedUpdate = null;
     // Re-throw with more context
     const message = error instanceof Error ? error.message : 'Unknown error checking for updates';
     throw new Error(`Failed to check for updates: ${message}`);
@@ -69,12 +80,21 @@ export async function checkForUpdate(): Promise<CheckUpdateResult> {
  * This will download the update, install it, and the app will need to be restarted.
  * Use `relaunchApp()` after this completes to restart.
  *
+ * IMPORTANT: This function uses the cached Update object from checkForUpdate().
+ * Always call checkForUpdate() before calling this function.
+ *
  * @param onProgress - Optional callback for download progress
  */
 export async function downloadAndInstallUpdate(
   onProgress?: DownloadProgressCallback
 ): Promise<void> {
-  const update = await check();
+  // Use cached update object, or fetch a new one if not available
+  let update = cachedUpdate;
+
+  if (!update) {
+    console.warn('[Update] No cached update object, fetching new one...');
+    update = await check();
+  }
 
   if (!update) {
     throw new Error('No update available');
@@ -83,24 +103,45 @@ export async function downloadAndInstallUpdate(
   let downloaded = 0;
   let contentLength = 0;
 
-  await update.downloadAndInstall((event) => {
-    switch (event.event) {
-      case 'Started':
-        contentLength = event.data.contentLength || 0;
-        break;
-      case 'Progress':
-        downloaded += event.data.chunkLength || 0;
-        if (onProgress && contentLength > 0) {
-          onProgress(downloaded, contentLength);
-        }
-        break;
-      case 'Finished':
-        if (onProgress && contentLength > 0) {
-          onProgress(contentLength, contentLength);
-        }
-        break;
-    }
-  });
+  try {
+    await update.downloadAndInstall((event) => {
+      switch (event.event) {
+        case 'Started':
+          contentLength = event.data.contentLength || 0;
+          console.log(`[Update] Download started, size: ${contentLength} bytes`);
+          break;
+        case 'Progress':
+          downloaded += event.data.chunkLength || 0;
+          if (onProgress && contentLength > 0) {
+            onProgress(downloaded, contentLength);
+          }
+          break;
+        case 'Finished':
+          console.log('[Update] Download finished');
+          if (onProgress && contentLength > 0) {
+            onProgress(contentLength, contentLength);
+          }
+          break;
+      }
+    });
+
+    console.log('[Update] Installation prepared successfully');
+    // Clear cache after successful install preparation
+    cachedUpdate = null;
+  } catch (error) {
+    console.error('[Update] Download/Install failed:', error);
+    // Clear cache on error
+    cachedUpdate = null;
+    throw error;
+  }
+}
+
+/**
+ * Clear the cached update object.
+ * Call this when the user dismisses the update or when needed to force a fresh check.
+ */
+export function clearUpdateCache(): void {
+  cachedUpdate = null;
 }
 
 /**
