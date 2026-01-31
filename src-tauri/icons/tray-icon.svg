@@ -1,7 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 22">
-  <!-- Simple gear outline -->
-  <circle cx="11" cy="11" r="9" fill="#0EA5E9" stroke="#0284C7" stroke-width="1"/>
-
-  <!-- Simplified A -->
-  <text x="11" y="15" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#F97316" text-anchor="middle">A</text>
+  <!-- Simplified tray icon - Synthwave A -->
+  <defs>
+    <linearGradient id="trayGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF00FF"/>
+      <stop offset="100%" style="stop-color:#00FFFF"/>
+    </linearGradient>
+  </defs>
+  <rect width="22" height="22" fill="#1A1A2E" rx="4"/>
+  <text x="11" y="16" font-family="Arial Black, sans-serif" font-size="14" font-weight="900"
+        fill="url(#trayGrad)" text-anchor="middle">A</text>
 </svg>
