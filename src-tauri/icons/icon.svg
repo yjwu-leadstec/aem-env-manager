@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <!-- Main gradient for the gear -->
+    <linearGradient id="gearGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0EA5E9"/>
+      <stop offset="100%" style="stop-color:#0284C7"/>
+    </linearGradient>
+    <!-- Accent gradient for the A letter -->
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#F97316"/>
+      <stop offset="100%" style="stop-color:#EA580C"/>
+    </linearGradient>
+    <!-- Shadow -->
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="240" fill="url(#gearGrad)" filter="url(#shadow)"/>
+
+  <!-- Gear teeth (8 teeth) -->
+  <g fill="#0369A1">
+    <!-- Top -->
+    <rect x="226" y="32" width="60" height="50" rx="8"/>
+    <!-- Top-right -->
+    <rect x="374" y="98" width="50" height="60" rx="8" transform="rotate(45 399 128)"/>
+    <!-- Right -->
+    <rect x="430" y="226" width="50" height="60" rx="8"/>
+    <!-- Bottom-right -->
+    <rect x="374" y="354" width="50" height="60" rx="8" transform="rotate(-45 399 384)"/>
+    <!-- Bottom -->
+    <rect x="226" y="430" width="60" height="50" rx="8"/>
+    <!-- Bottom-left -->
+    <rect x="88" y="354" width="50" height="60" rx="8" transform="rotate(45 113 384)"/>
+    <!-- Left -->
+    <rect x="32" y="226" width="50" height="60" rx="8"/>
+    <!-- Top-left -->
+    <rect x="88" y="98" width="50" height="60" rx="8" transform="rotate(-45 113 128)"/>
+  </g>
+
+  <!-- Inner circle (gear hole) -->
+  <circle cx="256" cy="256" r="140" fill="#0284C7"/>
+
+  <!-- AEM "A" letter stylized -->
+  <g transform="translate(256,256)">
+    <!-- A shape -->
+    <path d="M0,-80 L60,80 L36,80 L24,44 L-24,44 L-36,80 L-60,80 Z M0,-32 L-12,20 L12,20 Z"
+          fill="url(#accentGrad)"
+          fill-rule="evenodd"/>
+  </g>
+
+  <!-- Environment dots (representing multiple environments) -->
+  <circle cx="160" cy="380" r="18" fill="#FCD34D" opacity="0.9"/>
+  <circle cx="256" cy="400" r="18" fill="#4ADE80" opacity="0.9"/>
+  <circle cx="352" cy="380" r="18" fill="#F87171" opacity="0.9"/>
+</svg>
