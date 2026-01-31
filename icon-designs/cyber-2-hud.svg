@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Cyber Design 2: HUD Style - Technical minimal -->
+  <defs>
+    <filter id="glow2" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Dark background -->
+  <rect width="512" height="512" fill="#0A0A0F"/>
+
+  <!-- HUD corner brackets -->
+  <path d="M48 48 L48 128 M48 48 L128 48" stroke="#00FFFF" stroke-width="2" fill="none" filter="url(#glow2)"/>
+  <path d="M464 48 L464 128 M464 48 L384 48" stroke="#00FFFF" stroke-width="2" fill="none" filter="url(#glow2)"/>
+  <path d="M48 464 L48 384 M48 464 L128 464" stroke="#00FFFF" stroke-width="2" fill="none" filter="url(#glow2)"/>
+  <path d="M464 464 L464 384 M464 464 L384 464" stroke="#00FFFF" stroke-width="2" fill="none" filter="url(#glow2)"/>
+
+  <!-- Central hexagon -->
+  <polygon points="256,96 376,176 376,336 256,416 136,336 136,176"
+           stroke="#00FFFF" stroke-width="1.5" fill="none" opacity="0.6"/>
+
+  <!-- Inner A -->
+  <text x="256" y="290" font-family="SF Mono, Consolas, monospace" font-size="140" font-weight="300"
+        fill="#00FFFF" text-anchor="middle" filter="url(#glow2)">A</text>
+
+  <!-- Small tech details -->
+  <circle cx="256" cy="380" r="4" fill="#FF00FF" filter="url(#glow2)"/>
+  <line x1="220" y1="380" x2="244" y2="380" stroke="#FF00FF" stroke-width="1" filter="url(#glow2)"/>
+  <line x1="268" y1="380" x2="292" y2="380" stroke="#FF00FF" stroke-width="1" filter="url(#glow2)"/>
+</svg>

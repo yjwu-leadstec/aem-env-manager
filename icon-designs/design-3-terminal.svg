@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Design 3: Terminal/Developer - Code terminal with environment indicator -->
+  <defs>
+    <linearGradient id="bg3" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#1E293B"/>
+      <stop offset="100%" style="stop-color:#0F172A"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Terminal window -->
+  <rect x="32" y="64" width="448" height="384" rx="24" fill="url(#bg3)"/>
+
+  <!-- Title bar -->
+  <rect x="32" y="64" width="448" height="48" rx="24" fill="#334155"/>
+  <rect x="32" y="88" width="448" height="24" fill="#334155"/>
+
+  <!-- Window buttons -->
+  <circle cx="72" cy="88" r="12" fill="#EF4444"/>
+  <circle cx="112" cy="88" r="12" fill="#F59E0B"/>
+  <circle cx="152" cy="88" r="12" fill="#22C55E"/>
+
+  <!-- Terminal prompt -->
+  <text x="72" y="200" font-family="SF Mono, Monaco, monospace" font-size="36" fill="#22C55E">$</text>
+  <text x="112" y="200" font-family="SF Mono, Monaco, monospace" font-size="36" fill="#E2E8F0">aem-env</text>
+
+  <!-- Command output - environment boxes -->
+  <rect x="72" y="240" width="160" height="48" rx="8" fill="#3B82F6"/>
+  <text x="96" y="274" font-family="SF Mono, Monaco, monospace" font-size="24" fill="white">DEV</text>
+
+  <rect x="250" y="240" width="160" height="48" rx="8" fill="#F97316"/>
+  <text x="274" y="274" font-family="SF Mono, Monaco, monospace" font-size="24" fill="white">STAGE</text>
+
+  <rect x="72" y="304" width="160" height="48" rx="8" fill="#22C55E"/>
+  <text x="96" y="338" font-family="SF Mono, Monaco, monospace" font-size="24" fill="white">PROD</text>
+
+  <!-- Cursor -->
+  <rect x="72" y="370" width="16" height="32" fill="#22C55E">
+    <animate attributeName="opacity" values="1;0;1" dur="1s" repeatCount="indefinite"/>
+  </rect>
+</svg>

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Pro Design 6: Modern Gradient - Premium feel -->
+  <!-- Based on: Modern app icon style (Apple-like) -->
+
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3B82F6"/>
+      <stop offset="50%" style="stop-color:#1E40AF"/>
+      <stop offset="100%" style="stop-color:#1E293B"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background with subtle gradient -->
+  <rect width="512" height="512" fill="url(#bgGrad)" rx="96"/>
+
+  <!-- Stylized A with bar -->
+  <path d="M256 80 L380 400 L316 400 L292 328 L220 328 L196 400 L132 400 L256 80 Z" fill="#F8FAFC"/>
+  <rect x="200" y="260" width="112" height="24" fill="#3B82F6"/>
+
+  <!-- Horizontal bar inside A (representing environments) -->
+  <rect x="208" y="260" width="32" height="24" fill="#22C55E"/>
+  <rect x="244" y="260" width="32" height="24" fill="#F97316"/>
+  <rect x="280" y="260" width="32" height="24" fill="#EF4444"/>
+</svg>

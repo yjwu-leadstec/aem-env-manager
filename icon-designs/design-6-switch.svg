@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Design 6: Environment Switch - Toggle/Switch concept -->
+  <defs>
+    <linearGradient id="bg6" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1E293B"/>
+      <stop offset="100%" style="stop-color:#0F172A"/>
+    </linearGradient>
+    <linearGradient id="switch6" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#3B82F6"/>
+      <stop offset="100%" style="stop-color:#0EA5E9"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="240" fill="url(#bg6)"/>
+
+  <!-- Toggle track -->
+  <rect x="96" y="196" width="320" height="120" rx="60" fill="#334155"/>
+
+  <!-- Toggle knob (active state) -->
+  <circle cx="356" cy="256" r="48" fill="url(#switch6)"/>
+
+  <!-- Environment indicators -->
+  <circle cx="156" cy="256" r="12" fill="#64748B"/>
+  <circle cx="206" cy="256" r="12" fill="#64748B"/>
+  <circle cx="256" cy="256" r="12" fill="#3B82F6"/>
+
+  <!-- AEM text above -->
+  <text x="256" y="140" font-family="SF Pro Display, -apple-system, Arial" font-size="64" font-weight="700" fill="white" text-anchor="middle">AEM</text>
+
+  <!-- ENV text below -->
+  <text x="256" y="400" font-family="SF Pro Display, -apple-system, Arial" font-size="40" font-weight="500" fill="#64748B" text-anchor="middle">ENVIRONMENT</text>
+</svg>

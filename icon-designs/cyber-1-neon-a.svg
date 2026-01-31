@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Cyber Design 1: Neon Outline A - Minimal cyberpunk -->
+  <defs>
+    <filter id="glow1" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Deep dark background -->
+  <rect width="512" height="512" fill="#0D0D0D" rx="64"/>
+
+  <!-- Neon A outline -->
+  <path d="M256 72 L400 440 L344 440 L312 360 L200 360 L168 440 L112 440 L256 72 Z M256 168 L216 312 L296 312 L256 168 Z"
+        stroke="#00FFFF" stroke-width="3" fill="none" filter="url(#glow1)"/>
+
+  <!-- Inner glow line -->
+  <line x1="192" y1="296" x2="320" y2="296" stroke="#FF00FF" stroke-width="2" filter="url(#glow1)"/>
+</svg>
