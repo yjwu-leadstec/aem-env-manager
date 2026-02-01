@@ -1,12 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 22">
-  <!-- Simplified tray icon - Synthwave A -->
-  <defs>
-    <linearGradient id="trayGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#FF00FF"/>
-      <stop offset="100%" style="stop-color:#00FFFF"/>
-    </linearGradient>
-  </defs>
-  <rect width="22" height="22" fill="#1A1A2E" rx="4"/>
-  <text x="11" y="16" font-family="Arial Black, sans-serif" font-size="14" font-weight="900"
-        fill="url(#trayGrad)" text-anchor="middle">A</text>
+  <!-- macOS Template Icon - White A on transparent background -->
+  <!-- System will automatically invert for light/dark mode -->
+  <text x="11" y="17" font-family="Arial Black, sans-serif" font-size="16" font-weight="900"
+        fill="white" text-anchor="middle">A</text>
 </svg>
