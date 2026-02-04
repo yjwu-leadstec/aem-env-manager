@@ -1,4 +1,3 @@
-import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ProfileSwitcher } from './ProfileSwitcher';
 import { StatusCards } from './StatusCards';
@@ -7,13 +6,6 @@ import { AemInstanceCards } from './AemInstanceCards';
 
 export function DashboardView() {
   const { t } = useTranslation();
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-
-  const handleSwitchComplete = useCallback((success: boolean) => {
-    if (success) {
-      setRefreshTrigger((prev) => prev + 1);
-    }
-  }, []);
 
   return (
     <div className="space-y-6">
@@ -25,14 +17,14 @@ export function DashboardView() {
           </h1>
           <p className="text-slate-500 dark:text-gray-400 text-sm mt-1">{t('dashboard.welcome')}</p>
         </div>
-        <ProfileSwitcher onSwitchComplete={handleSwitchComplete} />
+        <ProfileSwitcher />
       </div>
 
       {/* Quick Actions - Horizontal */}
       <QuickActionsPanel />
 
       {/* Status Cards - 3 columns */}
-      <StatusCards refreshTrigger={refreshTrigger} />
+      <StatusCards />
 
       {/* AEM Instances Section */}
       <AemInstanceCards />
