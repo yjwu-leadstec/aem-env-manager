@@ -72,7 +72,11 @@ function StatusCard({
   );
 }
 
-export function StatusCards() {
+interface StatusCardsContainerProps {
+  refreshTrigger?: number;
+}
+
+export function StatusCards({ refreshTrigger }: StatusCardsContainerProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const activeProfile = useActiveProfile();
@@ -93,7 +97,7 @@ export function StatusCards() {
 
   useEffect(() => {
     loadVersionInfo();
-  }, [loadVersionInfo]);
+  }, [loadVersionInfo, refreshTrigger]);
 
   // Extract Java major version number
   const javaVersion = versionInfo?.java.current;
