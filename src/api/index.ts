@@ -29,7 +29,6 @@ export type {
   HealthCheckResult,
   BundleStatus,
   MemoryStatus,
-  HealthSummary,
   ScannedAemInstance,
 } from './instance';
 
