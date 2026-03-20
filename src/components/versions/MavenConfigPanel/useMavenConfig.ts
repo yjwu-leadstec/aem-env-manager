@@ -113,7 +113,7 @@ export function useMavenConfig(mavenInfo: MavenPanelProps['mavenInfo'], onRefres
         return t('maven.create.nameReserved');
       }
       // Check if name already exists
-      if (mavenInfo?.configs.some((c) => c.id === name || c.name === name)) {
+      if (mavenInfo?.configs.some((c) => c.id === name || c.name === `.m2.${name}`)) {
         return t('maven.create.nameExists');
       }
       return null;
@@ -145,7 +145,7 @@ export function useMavenConfig(mavenInfo: MavenPanelProps['mavenInfo'], onRefres
       addNotification({
         type: 'success',
         title: t('maven.create.success'),
-        message: t('maven.create.successMessage', { name: createName }),
+        message: t('maven.create.successMessage', { name: `.m2.${createName}` }),
       });
       setShowCreateDialog(false);
       setCreateName('');

@@ -494,7 +494,8 @@
       "button": "Create",
       "success": "Configuration Created",
       "successMessage": "Maven configuration \"{{name}}\" has been created",
-      "failed": "Create Failed"
+      "failed": "Create Failed",
+      "autoPrefix": "The system will automatically create a ~/.m2.<name> directory as an isolated Maven config space"
     },
     "edit": {
       "button": "Edit in Editor",

@@ -481,6 +481,9 @@ export function MavenConfigPanel({ mavenInfo, onRefresh }: MavenPanelProps) {
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                   {t('maven.create.nameHint')}
                 </p>
+                <p className="text-xs text-azure-600 dark:text-azure-400 mt-1">
+                  {t('maven.create.autoPrefix')}
+                </p>
               </div>
               {config.createName && !config.createNameError && (
                 <div className="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">

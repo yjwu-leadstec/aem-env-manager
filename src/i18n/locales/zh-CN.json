@@ -497,7 +497,8 @@
       "button": "创建",
       "success": "配置已创建",
       "successMessage": "Maven 配置 \"{{name}}\" 已创建",
-      "failed": "创建失败"
+      "failed": "创建失败",
+      "autoPrefix": "系统将自动创建 ~/.m2.<名称> 目录作为独立的 Maven 配置空间"
     },
     "edit": {
       "button": "在编辑器中打开",

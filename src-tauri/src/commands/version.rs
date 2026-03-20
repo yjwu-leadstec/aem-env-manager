@@ -870,10 +870,22 @@ pub async fn list_maven_configs() -> Result<Vec<MavenConfig>, String> {
         for entry in entries.flatten() {
             let path = entry.path();
             if path.extension().map(|e| e == "xml").unwrap_or(false) {
-                let name = path
+                let stem = path
                     .file_stem()
                     .map(|s| s.to_string_lossy().to_string())
                     .unwrap_or_default();
+
+                // Derive display name: if ~/.m2.<stem>/ directory exists, show as ".m2.<stem>"
+                let name = {
+                    let m2_dir_name = format!(".m2.{}", stem);
+                    let m2_dir = dirs::home_dir()
+                        .map(|h| h.join(&m2_dir_name));
+                    if m2_dir.as_ref().map(|d| d.exists()).unwrap_or(false) {
+                        m2_dir_name
+                    } else {
+                        stem.clone()
+                    }
+                };
 
                 let is_active = current_settings
                     .as_ref()
@@ -882,7 +894,7 @@ pub async fn list_maven_configs() -> Result<Vec<MavenConfig>, String> {
 
                 let local_repo = parse_maven_local_repository(&path);
                 configs.push(MavenConfig {
-                    id: name.clone(),
+                    id: stem,
                     name,
                     path: path.to_string_lossy().to_string(),
                     is_active,
@@ -1328,7 +1340,7 @@ pub async fn create_maven_config(name: String) -> Result<MavenConfig, String> {
 
     Ok(MavenConfig {
         id: name.clone(),
-        name: name.clone(),
+        name: format!(".m2.{}", name),
         path: settings_path.to_string_lossy().to_string(),
         is_active: false,
         description: Some(format!("Created configuration: ~/.m2.{}/", name)),

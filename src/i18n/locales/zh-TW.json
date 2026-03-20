@@ -494,7 +494,8 @@
       "button": "建立",
       "success": "配置已建立",
       "successMessage": "Maven 配置 \"{{name}}\" 已建立",
-      "failed": "建立失敗"
+      "failed": "建立失敗",
+      "autoPrefix": "系統將自動建立 ~/.m2.<名稱> 目錄作為獨立的 Maven 配置空間"
     },
     "edit": {
       "button": "在編輯器中開啟",
