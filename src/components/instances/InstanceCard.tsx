@@ -122,11 +122,11 @@ export function InstanceCard({
         </div>
       )}
 
-      {/* Path display */}
+      {/* Path display - show parent directory instead of just JAR filename */}
       <div className="mb-3 text-sm">
         <span className="opacity-70">{t('instance.card.path')}</span>
         <span className="ml-2 font-medium truncate" title={instance.path}>
-          {instance.path.split('/').pop()}
+          {instance.path.replace(/[/\\][^/\\]+$/, '')}
         </span>
       </div>
 

@@ -32,13 +32,11 @@ export function AemInstanceCards() {
   const [statusResults, setStatusResults] = useState<Map<string, InstanceStatusResult>>(new Map());
   const [lastStatusCheck, setLastStatusCheck] = useState<string | null>(null);
 
-  // Get Author and Publish instances from active profile
+  // Get Author and Publish instances explicitly configured in the active profile
   const instances = activeProfile
     ? allInstances.filter(
         (inst) =>
-          inst.profileId === activeProfile.id ||
-          inst.id === activeProfile.authorInstanceId ||
-          inst.id === activeProfile.publishInstanceId
+          inst.id === activeProfile.authorInstanceId || inst.id === activeProfile.publishInstanceId
       )
     : [];
 
