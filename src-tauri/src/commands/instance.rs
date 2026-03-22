@@ -1292,7 +1292,8 @@ fn save_stored_credentials(instance_id: &str, username: &str, password: &str) ->
 
     let mut credentials: HashMap<String, (String, String)> = if file_path.exists() {
         let content = std::fs::read_to_string(&file_path).map_err(|e| e.to_string())?;
-        serde_json::from_str(&content).unwrap_or_default()
+        serde_json::from_str(&content)
+            .map_err(|e| format!("Failed to parse credentials file: {}. Please check or delete {:?} to reset.", e, file_path))?
     } else {
         HashMap::new()
     };

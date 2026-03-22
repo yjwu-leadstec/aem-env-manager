@@ -37,9 +37,17 @@ impl PlatformOps for WindowsPlatform {
         // For current process
         std::env::set_var(name, value);
 
-        // For persistence, use setx command (user-level)
-        let command = format!("setx {} \"{}\"", name, value);
-        self.executor.execute(&command)?;
+        // For persistence, use setx directly with args to avoid shell injection
+        let output = std::process::Command::new("setx")
+            .arg(name)
+            .arg(value)
+            .output()
+            .map_err(|e| format!("Failed to execute setx: {}", e))?;
+
+        if !output.status.success() {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            return Err(format!("setx failed: {}", stderr));
+        }
         Ok(())
     }
 
